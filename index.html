@@ -3,27 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Finance Tracker</title>
+    <title>Finance Tracker Plus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        .loader { border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        tfoot tr { border-top: 2px solid #334155; }
         .tab-active { background-color: #3b82f6; color: #fff; }
         .sortable { cursor: pointer; user-select: none; }
-        .sortable:hover { color: #f1f5f9; }
-        .calendar-day { min-height: 6rem; }
-        .calendar-day:hover { background-color: #334155; }
     </style>
 </head>
 <body class="bg-slate-900 min-h-screen p-2 sm:p-4 text-slate-300">
@@ -31,7 +24,6 @@
     <div id="pin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-sm border border-slate-700 text-center">
             <h2 class="text-2xl font-bold text-slate-100 mb-4">Secure Access</h2>
-            <p class="text-slate-400 mb-6">Enter PIN to access Finance Tracker</p>
             <form id="pin-form">
                 <input type="password" id="pin-input" class="w-full text-center text-2xl tracking-[.5em] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200" maxlength="4" required autocomplete="off">
                 <p id="pin-error" class="text-red-400 text-sm mt-2 min-h-[20px]"></p>
@@ -40,35 +32,24 @@
         </div>
     </div>
 
-    <div id="main-content" class="hidden bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto border border-slate-700">
-
-        <div class="flex justify-between items-start mb-8">
-            <div class="text-left">
-                <h1 class="text-2xl sm:text-3xl font-bold text-slate-100">Finance Tracker</h1>
-                <p class="text-slate-400 mt-1 text-sm sm:text-base">Track Income, Expenses, and Account Balances.</p>
+    <div id="main-content" class="hidden bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-7xl mx-auto border border-slate-700">
+        
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-100">Finance Tracker</h1>
+                <p class="text-slate-400 text-sm">Income, Expense & Transfer Manager</p>
             </div>
-            <div class="flex items-center gap-2">
-                 <button id="export-dashboard-btn" title="Export Dashboard" class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Export</span>
-                </button>
-                <button id="logout-btn" title="Logout" class="p-2 rounded-full hover:bg-slate-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                </button>
+            <div class="flex gap-2">
+                <button id="export-btn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-xs font-medium">Export</button>
+                <button id="logout-btn" class="p-2 rounded-full hover:bg-slate-700 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             </div>
         </div>
 
         <div class="mb-6 border-b border-slate-700">
-            <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2">
-                <button id="tab-dashboard" class="tab-btn tab-active px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg whitespace-nowrap">Dashboard</button>
-                <button id="tab-transactions" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Transactions</button>
-                <button id="tab-daily" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Daily</button>
-                <button id="tab-calendar" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Calendar</button>
-                <button id="tab-add" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Add Entry</button>
+            <nav class="flex space-x-2 overflow-x-auto pb-2">
+                <button id="tab-dashboard" class="tab-btn tab-active px-4 py-2 text-sm font-medium rounded-t-lg">Dashboard</button>
+                <button id="tab-transactions" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Transactions</button>
+                <button id="tab-add" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Add Entry / Transfer</button>
             </nav>
         </div>
 
@@ -77,705 +58,438 @@
             <div id="view-dashboard" class="tab-view">
                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-6">
-                        <div class="bg-slate-700/50 p-4 sm:p-6 rounded-lg border border-slate-700">
-                            <h3 class="text-lg font-semibold text-slate-200 mb-4">Account Balances</h3>
-                            <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                </div>
+                        <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
+                            <h3 class="font-semibold text-slate-200 mb-4">Account Balances</h3>
+                            <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                         </div>
-
-                        <div class="bg-slate-700/50 p-4 sm:p-6 rounded-lg border border-slate-700">
-                            <h3 class="text-lg font-semibold text-slate-200 mb-4">Cash Flow Summary</h3>
-                            <div id="summary-cards-container" class="grid grid-cols-2 gap-4 text-center">
-                                </div>
+                        <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
+                            <h3 class="font-semibold text-slate-200 mb-4">Summary</h3>
+                            <div id="summary-cards-container" class="grid grid-cols-2 gap-3 text-center"></div>
                         </div>
                     </div>
-
-                    <div class="bg-slate-700/50 p-4 sm:p-6 rounded-lg border border-slate-700 flex flex-col">
+                    <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 flex flex-col">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-slate-200">Expenses by Category</h3>
-                            <select id="chart-currency-toggle" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-slate-300">
-                                <option value="IDR">IDR</option>
-                                <option value="USD">USD</option>
-                            </select>
+                            <h3 class="font-semibold text-slate-200">Expenses</h3>
+                            <select id="chart-currency-toggle" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-slate-300"><option value="IDR">IDR</option><option value="USD">USD</option></select>
                         </div>
-                        <div class="relative h-64 md:h-72 flex-grow">
-                           <canvas id="expense-pie-chart"></canvas>
-                        </div>
-                        <div id="expense-category-details" class="mt-6 space-y-2 border-t border-slate-600 pt-4 overflow-y-auto max-h-60">
-                        </div>
+                        <div class="relative h-64 flex-grow"><canvas id="expense-pie-chart"></canvas></div>
+                        <div id="expense-details" class="mt-4 space-y-2 border-t border-slate-600 pt-2 overflow-y-auto max-h-40"></div>
                     </div>
                 </div>
             </div>
 
             <div id="view-transactions" class="tab-view hidden">
-                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 mb-6">
-                    <h3 class="font-semibold text-slate-200 mb-3">Filter Transactions</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
-                        <div><label class="block text-xs text-slate-400 mb-1">From</label><input type="date" id="filter-start-date" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">To</label><input type="date" id="filter-end-date" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Category</label><select id="filter-category" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"></select></div>
-                         <div><label class="block text-xs text-slate-400 mb-1">Account</label><select id="filter-account" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"><option value="all">All Accounts</option></select></div>
-                        <div class="sm:col-span-2 md:col-span-5"><input type="text" id="filter-search" placeholder="Search description..." class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 placeholder-slate-500 text-sm"></div>
+                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 mb-4">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+                        <input type="date" id="filter-start" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full">
+                        <input type="date" id="filter-end" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full">
+                        <select id="filter-cat" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full"></select>
+                        <select id="filter-acc" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full"></select>
+                        <input type="text" id="filter-search" placeholder="Search..." class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full">
                     </div>
                 </div>
-                
                 <div class="overflow-x-auto rounded-lg border border-slate-700">
                     <table class="min-w-full divide-y divide-slate-700">
-                        <thead id="trans-thead" class="bg-slate-700">
+                        <thead class="bg-slate-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="date">Date <span class="sort-indicator"></span></th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Description</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Account</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Category</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="amount">Amount <span class="sort-indicator"></span></th>
-                                <th class="px-2 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Action</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="date">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Account</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Category</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="amount">Amount</th>
+                                <th class="px-2 py-3 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="data-body" class="divide-y divide-slate-700"></tbody>
                     </table>
                 </div>
             </div>
-            
-            <div id="view-daily" class="tab-view hidden">
-                <div class="overflow-x-auto rounded-lg border border-slate-700">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead id="daily-thead" class="bg-slate-700">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="date">Date <span class="sort-indicator"></span></th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Total (IDR)</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Total (USD)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="daily-summary-body" class="divide-y divide-slate-700"></tbody>
-                    </table>
-                </div>
-            </div>
 
-            <div id="view-calendar" class="tab-view hidden">
-                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <button id="prev-month-btn" class="p-2 rounded-full hover:bg-slate-600">&lt;</button>
-                        <h2 id="calendar-header" class="text-lg font-semibold text-slate-100"></h2>
-                        <button id="next-month-btn" class="p-2 rounded-full hover:bg-slate-600">&gt;</button>
-                    </div>
-                    <div class="grid grid-cols-7 text-center text-xs text-slate-400 mb-2">
-                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                    </div>
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-                </div>
-            </div>
-            
             <div id="view-add" class="tab-view hidden">
-                 <div class="p-4 sm:p-6 bg-slate-700/50 rounded-lg border border-slate-700 max-w-4xl mx-auto">
-                    <h2 class="text-lg sm:text-xl font-bold text-slate-100 mb-4">Add Transaction</h2>
-                    <form id="add-entry-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Description</label>
-                            <input type="text" id="entry-description" placeholder="Ex: Grocery Shopping" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200" required>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Date</label>
-                            <input type="date" id="entry-date" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200" required>
-                        </div>
+                 <div class="p-6 bg-slate-700/50 rounded-lg border border-slate-700 max-w-3xl mx-auto">
+                    <h2 class="text-xl font-bold text-slate-100 mb-6">New Transaction</h2>
+                    
+                    <div class="flex gap-4 mb-6">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="entry-type" value="expense" class="peer hidden" checked>
+                            <div class="py-3 text-center rounded border border-slate-600 bg-slate-800 peer-checked:bg-red-900/50 peer-checked:border-red-500 peer-checked:text-red-400 transition">Expense</div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="entry-type" value="income" class="peer hidden">
+                            <div class="py-3 text-center rounded border border-slate-600 bg-slate-800 peer-checked:bg-green-900/50 peer-checked:border-green-500 peer-checked:text-green-400 transition">Income</div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="entry-type" value="transfer" class="peer hidden">
+                            <div class="py-3 text-center rounded border border-slate-600 bg-slate-800 peer-checked:bg-blue-900/50 peer-checked:border-blue-500 peer-checked:text-blue-400 transition">Transfer</div>
+                        </label>
+                    </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Account / Wallet</label>
-                            <select id="entry-account" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200">
-                                <option value="Jenius">Jenius</option>
-                                <option value="Mandiri">Mandiri</option>
-                                <option value="Line Bank">Line Bank</option>
-                                <option value="Jago">Jago</option>
-                                <option value="GoPay">GoPay</option>
-                                <option value="ShopeePay">ShopeePay</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Other">Other...</option>
-                            </select>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <div class="w-1/3">
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Currency</label>
-                                <select id="entry-currency" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200">
-                                    <option value="IDR">IDR (Rp)</option>
-                                    <option value="USD">USD ($)</option>
+                    <form id="add-entry-form" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm text-slate-400 mb-1">Description</label>
+                                <input type="text" id="entry-desc" placeholder="Details..." class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-1">Date</label>
+                                <input type="date" id="entry-date" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required>
+                            </div>
+                            <div id="category-group">
+                                <label class="block text-sm text-slate-400 mb-1">Category</label>
+                                <select id="entry-cat" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                    <option>Food & Drink</option><option>Transportation</option><option>Groceries</option><option>Shopping</option><option>Bills</option><option>Salary</option><option>Freelance</option><option value="Other">Other...</option>
                                 </select>
-                            </div>
-                            <div class="w-2/3">
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
-                                <input type="number" id="entry-amount" placeholder="0" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200" required>
+                                <input type="text" id="entry-cat-other" placeholder="New Category" class="hidden w-full mt-2 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-1">Category</label>
-                            <select id="entry-category" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200">
-                                <option>Salary</option>
-                                <option>Other Salary</option>
-                                <option>Food & Drink</option>
-                                <option>Jajan</option>
-                                <option>Transportation</option>
-                                <option>Groceries</option>
-                                <option>Shopping</option>
-                                <option>Bills & Utilities</option>
-                                <option>Entertainment</option>
-                                <option>Healthcare</option>
-                                <option>Transfer</option>
-                                <option value="Other">Other...</option>
-                            </select>
-                            <input type="text" id="other-category-input" placeholder="New category name" class="hidden w-full mt-2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200">
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Type</label>
-                            <div class="flex gap-4">
-                                <label class="flex items-center cursor-pointer p-3 border border-slate-600 rounded hover:bg-slate-700 flex-1 justify-center">
-                                    <input type="radio" name="entry-type" value="expense" class="h-4 w-4 bg-slate-700 border-slate-600" checked>
-                                    <span class="ml-2 text-red-400 font-medium">Expense</span>
-                                </label>
-                                <label class="flex items-center cursor-pointer p-3 border border-slate-600 rounded hover:bg-slate-700 flex-1 justify-center">
-                                    <input type="radio" name="entry-type" value="income" class="h-4 w-4 bg-slate-700 border-slate-600">
-                                    <span class="ml-2 text-green-400 font-medium">Income</span>
-                                </label>
+                        <div class="p-4 bg-slate-800/50 rounded border border-slate-600">
+                            <label id="lbl-source-acc" class="block text-xs font-bold text-slate-400 uppercase mb-3">Account Details</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-1">Account</label>
+                                    <select id="entry-acc-source" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                        <option value="Jenius">Jenius</option><option value="Mandiri">Mandiri</option><option value="Line Bank">Line Bank</option><option value="Jago">Jago</option><option value="GoPay">GoPay</option><option value="ShopeePay">ShopeePay</option><option value="Cash">Cash</option><option value="Other">Other...</option>
+                                    </select>
+                                </div>
+                                <div class="flex gap-2">
+                                    <div class="w-1/3">
+                                        <label class="block text-sm text-slate-400 mb-1">Curr</label>
+                                        <select id="entry-curr-source" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                            <option value="IDR">IDR</option><option value="USD">USD</option>
+                                        </select>
+                                    </div>
+                                    <div class="w-2/3">
+                                        <label class="block text-sm text-slate-400 mb-1">Amount</label>
+                                        <input type="number" id="entry-amt-source" placeholder="0" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="md:col-span-2 pt-4">
-                            <button type="submit" id="submit-entry-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition">Save Transaction</button>
+                        <div id="transfer-target-group" class="hidden p-4 bg-slate-800/50 rounded border border-slate-600">
+                            <label class="block text-xs font-bold text-blue-400 uppercase mb-3">Transfer Destination</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-1">To Account</label>
+                                    <select id="entry-acc-target" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                        <option value="Jenius">Jenius</option><option value="Mandiri">Mandiri</option><option value="Line Bank">Line Bank</option><option value="Jago">Jago</option><option value="GoPay">GoPay</option><option value="ShopeePay">ShopeePay</option><option value="Cash">Cash</option><option value="Other">Other...</option>
+                                    </select>
+                                </div>
+                                <div class="flex gap-2">
+                                    <div class="w-1/3">
+                                        <label class="block text-sm text-slate-400 mb-1">Curr</label>
+                                        <select id="entry-curr-target" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                            <option value="IDR">IDR</option><option value="USD">USD</option>
+                                        </select>
+                                    </div>
+                                    <div class="w-2/3">
+                                        <label class="block text-sm text-slate-400 mb-1">Amount Received</label>
+                                        <input type="number" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2">* Leave Amount Received empty if same as Source Amount.</p>
                         </div>
+
+                        <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mt-4">Save Transaction</button>
                     </form>
-                    <div id="form-status" class="text-center mt-4 min-h-[20px]"></div>
+                    <div id="form-msg" class="text-center mt-4 min-h-[20px] text-sm"></div>
                 </div>
             </div>
+
         </div>
     </div>
 
-    <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-700 rounded-lg shadow-xl p-6 w-full max-w-sm border border-slate-600">
-            <h3 class="text-lg font-bold text-slate-100 mb-2">Confirm Deletion</h3><p class="text-slate-300 mb-6">Are you sure? This action cannot be undone.</p>
-            <div id="delete-modal-item" class="text-sm bg-slate-800 p-3 rounded-md mb-6 border border-slate-600"></div>
-            <div class="flex justify-end gap-4"><button id="cancel-delete-btn" class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-md">Cancel</button><button id="confirm-delete-btn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md">Delete</button></div>
+    <div id="delete-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-700 rounded-lg p-6 w-full max-w-sm border border-slate-600">
+            <h3 class="font-bold text-white mb-2">Confirm Delete</h3><p class="text-slate-300 mb-4">Cannot undo.</p>
+            <div id="del-item-preview" class="bg-slate-800 p-2 rounded mb-4 text-sm"></div>
+            <div class="flex justify-end gap-2"><button id="del-cancel" class="px-3 py-1 bg-slate-600 text-white rounded">Cancel</button><button id="del-confirm" class="px-3 py-1 bg-red-600 text-white rounded">Delete</button></div>
         </div>
     </div>
-
-    <div id="calendar-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-700 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-600">
-            <div class="flex justify-between items-center mb-4">
-                 <h3 id="calendar-detail-title" class="text-lg font-bold text-slate-100">Transactions</h3>
-                 <button id="close-calendar-detail-btn" class="text-slate-400 hover:text-white">&times;</button>
-            </div>
-            <div id="calendar-detail-content" class="text-sm space-y-2 max-h-80 overflow-y-auto"></div>
-        </div>
-    </div>
-
-    <div id="toast" class="hidden fixed bottom-5 right-5 bg-slate-700 text-white px-6 py-3 rounded-lg shadow-lg border border-slate-500 transition-opacity duration-300 flex items-center gap-2">
-        <span id="toast-message">Notification</span>
-    </div>
+    <div id="toast" class="hidden fixed bottom-5 right-5 bg-slate-700 text-white px-4 py-2 rounded shadow border border-slate-500"></div>
 
     <script>
-        // --- CONFIG & STATE ---
-        const CORRECT_PIN = "1907"; // Your PIN
-        
-        // !!! REPLACE THESE WITH YOUR OWN ID AND URL !!!
+        // CONFIG
+        const PIN = "1907"; 
         const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
-        const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwohCuFH5bVNYBjxsD6cXZCAhfHxGt7t28BHOvois74MrKDfRJsQ-TYIsT9a1hjDMeAFA/exec";
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
 
-        const INCOME_SHEET_NAME = "Income";
-        const EXPENSE_SHEET_NAME = "Expenses";
-        // Range updated to fetch 6 columns (A to F)
-        const DATA_RANGE = 'A2:F'; 
-        
-        // Approx rate for dashboard display estimation only
-        const EST_USD_TO_IDR = 15800; 
+        let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'};
 
-        let masterData = [];
-        let expenseChart = null;
-        let transSortState = { key: 'date', order: 'desc' };
-        let itemToDelete = null;
-        let calendarDate = new Date();
-
-        // --- DOM ELEMENTS ---
-        const pinModal = document.getElementById('pin-modal');
-        const pinForm = document.getElementById('pin-form');
-        const pinInput = document.getElementById('pin-input');
-        const pinError = document.getElementById('pin-error');
-        const mainContent = document.getElementById('main-content');
-        
-        const tableBody = document.getElementById('data-body');
-        const dailySummaryBody = document.getElementById('daily-summary-body');
-        const addEntryForm = document.getElementById('add-entry-form');
-        const formStatus = document.getElementById('form-status');
-        const categorySelect = document.getElementById('entry-category');
-        const otherCategoryInput = document.getElementById('other-category-input');
-        const categoryFilter = document.getElementById('filter-category');
-        const accountFilter = document.getElementById('filter-account');
-        const filterInputs = document.querySelectorAll('.filter-input');
-        const chartCurrencyToggle = document.getElementById('chart-currency-toggle');
-        
-        // --- INITIALIZATION ---
+        // AUTH & INIT
         document.getElementById('entry-date').valueAsDate = new Date();
-
-        function checkAuth() {
-            if (sessionStorage.getItem('isAuthenticated') === 'true') {
-                pinModal.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                fetchData();
-            }
-        }
-
-        pinForm.addEventListener('submit', (e) => {
+        if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); }
+        
+        document.getElementById('pin-form').addEventListener('submit',e=>{
             e.preventDefault();
-            if (pinInput.value === CORRECT_PIN) {
-                sessionStorage.setItem('isAuthenticated', 'true');
-                checkAuth();
+            if(document.getElementById('pin-input').value===PIN){
+                sessionStorage.setItem('auth','true');
+                document.getElementById('pin-modal').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                fetchData();
+            } else document.getElementById('pin-error').textContent="Wrong PIN";
+        });
+        document.getElementById('logout-btn').addEventListener('click', ()=>{ sessionStorage.removeItem('auth'); location.reload(); });
+
+        // TABS
+        document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', e => {
+            document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(t=>{t.classList.remove('tab-active','text-white'); t.classList.add('text-slate-400');});
+            document.getElementById(e.target.id.replace('tab','view')).classList.remove('hidden');
+            e.target.classList.add('tab-active','text-white'); e.target.classList.remove('text-slate-400');
+        }));
+
+        // FORM LOGIC
+        const typeRadios = document.getElementsByName('entry-type');
+        const targetGroup = document.getElementById('transfer-target-group');
+        const categoryGroup = document.getElementById('category-group');
+        const lblSource = document.getElementById('lbl-source-acc');
+
+        typeRadios.forEach(r => r.addEventListener('change', () => {
+            const val = document.querySelector('input[name="entry-type"]:checked').value;
+            if(val === 'transfer') {
+                targetGroup.classList.remove('hidden');
+                categoryGroup.classList.add('hidden');
+                lblSource.textContent = "FROM ACCOUNT (SOURCE)";
+                document.getElementById('submit-btn').textContent = "Process Transfer";
+                document.getElementById('submit-btn').classList.replace('bg-green-600','bg-blue-600'); 
+                document.getElementById('submit-btn').classList.replace('bg-red-600','bg-blue-600');
             } else {
-                pinError.textContent = "Incorrect PIN";
-                pinInput.value = '';
-            }
-        });
-
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            sessionStorage.removeItem('isAuthenticated');
-            window.location.reload();
-        });
-
-        // --- DATA FETCHING ---
-        async function fetchData() {
-            const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`; 
-            try {
-                // Fetch Income and Expenses
-                const [incomeRes, expenseRes] = await Promise.all([ 
-                    fetch(`${baseUrl}/${INCOME_SHEET_NAME}!${DATA_RANGE}?key=${API_KEY}`), 
-                    fetch(`${baseUrl}/${EXPENSE_SHEET_NAME}!${DATA_RANGE}?key=${API_KEY}`) 
-                ]); 
-                
-                const incomeJson = await incomeRes.json();
-                const expenseJson = await expenseRes.json();
-                
-                if (incomeJson.error) throw new Error(incomeJson.error.message);
-                if (expenseJson.error) throw new Error(expenseJson.error.message);
-                
-                processData(incomeJson.values, expenseJson.values);
-                renderAll(masterData);
-
-            } catch (error) { 
-                showToast("Error loading data: " + error.message, 'error');
-            }
-        }
-
-        function processData(incomeRows, expenseRows) { 
-            masterData = []; 
-            // Helper to parse row
-            const parseRow = (row, type) => {
-                if(!row[0]) return;
-                // Columns: 0:Date, 1:Desc, 2:Cat, 3:Account, 4:Currency, 5:Amount
-                const amount = parseFloat((row[5] || '0').replace(/,/g, ''));
-                return {
-                    type: type,
-                    date: row[0],
-                    description: row[1],
-                    category: row[2] || 'Uncategorized',
-                    account: row[3] || 'General',
-                    currency: row[4] || 'IDR',
-                    amount: Math.abs(amount) // Ensure positive storage, type defines sign
-                };
-            };
-
-            if (incomeRows) incomeRows.forEach(row => { const d = parseRow(row, 'income'); if(d) masterData.push(d); });
-            if (expenseRows) expenseRows.forEach(row => { const d = parseRow(row, 'expense'); if(d) masterData.push(d); });
-            
-            // Populate Filters
-            const categories = [...new Set(masterData.map(item => item.category))].sort();
-            const accounts = [...new Set(masterData.map(item => item.account))].sort();
-            
-            categoryFilter.innerHTML = '<option value="all">All Categories</option>';
-            categories.forEach(c => categoryFilter.innerHTML += `<option value="${c}">${c}</option>`);
-
-            accountFilter.innerHTML = '<option value="all">All Accounts</option>';
-            accounts.forEach(a => accountFilter.innerHTML += `<option value="${a}">${a}</option>`);
-        }
-
-        // --- RENDER FUNCTIONS ---
-        function renderAll(data) {
-            renderDashboard(data);
-            renderTable(data);
-            renderDaily(data);
-            renderCalendar(data);
-            updateSortIndicators();
-        }
-
-        function renderDashboard(data) {
-            // 1. Calculate Account Balances
-            let accounts = {};
-            let totalIncomeIDR = 0, totalExpenseIDR = 0;
-            let totalIncomeUSD = 0, totalExpenseUSD = 0;
-
-            data.forEach(item => {
-                const isIncome = item.type === 'income';
-                const key = `${item.account}-${item.currency}`; // Key example: "BCA-IDR" or "PayPal-USD"
-                
-                if (!accounts[key]) accounts[key] = { name: item.account, currency: item.currency, balance: 0 };
-                
-                if (isIncome) {
-                    accounts[key].balance += item.amount;
-                    if(item.currency === 'IDR') totalIncomeIDR += item.amount;
-                    if(item.currency === 'USD') totalIncomeUSD += item.amount;
+                targetGroup.classList.add('hidden');
+                categoryGroup.classList.remove('hidden');
+                lblSource.textContent = "ACCOUNT DETAILS";
+                document.getElementById('submit-btn').textContent = "Save Transaction";
+                if(val === 'income') {
+                   document.getElementById('submit-btn').className = "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition mt-4";
                 } else {
-                    accounts[key].balance -= item.amount;
-                    if(item.currency === 'IDR') totalExpenseIDR += item.amount;
-                    if(item.currency === 'USD') totalExpenseUSD += item.amount;
+                   document.getElementById('submit-btn').className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4"; 
                 }
-            });
+            }
+        }));
 
-            // Render Account Cards
-            const accountContainer = document.getElementById('account-balances-container');
-            accountContainer.innerHTML = '';
-            Object.values(accounts).sort((a,b) => a.name.localeCompare(b.name)).forEach(acc => {
-                if(acc.balance === 0) return; // Hide empty accounts
-                const color = acc.balance >= 0 ? 'text-blue-400' : 'text-red-400';
-                accountContainer.innerHTML += `
-                    <div class="bg-slate-800 p-3 rounded border border-slate-600 flex justify-between items-center">
-                        <span class="font-medium text-slate-300">${acc.name}</span>
-                        <span class="font-bold ${color}">${formatCurrency(acc.balance, acc.currency)}</span>
-                    </div>
-                `;
-            });
+        document.getElementById('entry-cat').addEventListener('change', e => document.getElementById('entry-cat-other').classList.toggle('hidden', e.target.value!=='Other'));
 
-            // Render Summary Cards (Combined Estimation)
-            const summaryContainer = document.getElementById('summary-cards-container');
-            const netIDR = totalIncomeIDR - totalExpenseIDR;
-            const netUSD = totalIncomeUSD - totalExpenseUSD;
+        // DATA FETCH
+        async function fetchData() {
+            try {
+                const base = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`;
+                const [inc, exp] = await Promise.all([
+                    fetch(`${base}/Income!A2:F?key=${API_KEY}`).then(r=>r.json()),
+                    fetch(`${base}/Expenses!A2:F?key=${API_KEY}`).then(r=>r.json())
+                ]);
+                
+                masterData = [];
+                const parse = (rows, type) => {
+                    if(!rows) return;
+                    rows.forEach(r => {
+                        if(!r[0]) return;
+                        masterData.push({
+                            type, date: r[0], desc: r[1], cat: r[2], acc: r[3], curr: r[4], 
+                            amt: Math.abs(parseFloat((r[5]||'0').replace(/,/g,'')))
+                        });
+                    });
+                };
+                parse(inc.values, 'income');
+                parse(exp.values, 'expense');
+                
+                // Populate Filters
+                const cats = [...new Set(masterData.map(d=>d.cat))].sort();
+                const accs = [...new Set(masterData.map(d=>d.acc))].sort();
+                document.getElementById('filter-cat').innerHTML = '<option value="all">All Cats</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+                document.getElementById('filter-acc').innerHTML = '<option value="all">All Accs</option>' + accs.map(a=>`<option>${a}</option>`).join('');
+                
+                renderAll();
+            } catch(e) { showToast(e.message); }
+        }
+
+        function renderAll() {
+            // 1. Balances
+            const bals = {};
+            let incIDR=0, expIDR=0, incUSD=0, expUSD=0;
             
-            // We display pure totals per currency
-            summaryContainer.innerHTML = `
-                <div class="bg-slate-800 p-3 rounded border border-green-900/50">
-                    <div class="text-xs text-green-400 uppercase">Total Income</div>
-                    <div class="font-bold text-slate-100">${formatCurrency(totalIncomeIDR, 'IDR')}</div>
-                    <div class="font-bold text-slate-100 text-sm">${formatCurrency(totalIncomeUSD, 'USD')}</div>
+            masterData.forEach(d => {
+                const k = `${d.acc}-${d.curr}`;
+                if(!bals[k]) bals[k] = {n:d.acc, c:d.curr, v:0};
+                if(d.type==='income') { bals[k].v += d.amt; if(d.curr==='IDR') incIDR+=d.amt; else incUSD+=d.amt; }
+                else { bals[k].v -= d.amt; if(d.curr==='IDR') expIDR+=d.amt; else expUSD+=d.amt; }
+            });
+            
+            const balCont = document.getElementById('account-balances-container');
+            balCont.innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map(b => `
+                <div class="flex justify-between p-2 bg-slate-800 rounded border border-slate-600">
+                    <span>${b.n}</span><span class="font-bold ${b.v>=0?'text-blue-400':'text-red-400'}">${fmt(b.v,b.c)}</span>
                 </div>
-                <div class="bg-slate-800 p-3 rounded border border-red-900/50">
-                    <div class="text-xs text-red-400 uppercase">Total Expenses</div>
-                    <div class="font-bold text-slate-100">${formatCurrency(totalExpenseIDR, 'IDR')}</div>
-                    <div class="font-bold text-slate-100 text-sm">${formatCurrency(totalExpenseUSD, 'USD')}</div>
-                </div>
+            `).join('');
+
+            // 2. Summary
+            document.getElementById('summary-cards-container').innerHTML = `
+                <div class="bg-slate-800 p-2 rounded border border-green-900"><div class="text-xs text-green-400">INCOME</div><div>${fmt(incIDR,'IDR')}</div><div class="text-sm">${fmt(incUSD,'USD')}</div></div>
+                <div class="bg-slate-800 p-2 rounded border border-red-900"><div class="text-xs text-red-400">EXPENSE</div><div>${fmt(expIDR,'IDR')}</div><div class="text-sm">${fmt(expUSD,'USD')}</div></div>
             `;
 
-            updatePieChart(data);
-        }
-
-        function updatePieChart(data) {
-            const selectedCurrency = chartCurrencyToggle.value; // IDR or USD
-            
-            const expenses = data.filter(d => d.type === 'expense' && d.currency === selectedCurrency);
-            const catTotals = {};
-            expenses.forEach(d => {
-                catTotals[d.category] = (catTotals[d.category] || 0) + d.amount;
-            });
-
-            const labels = Object.keys(catTotals);
-            const values = Object.values(catTotals);
-            const ctx = document.getElementById('expense-pie-chart').getContext('2d');
-
-            if (expenseChart) expenseChart.destroy();
-
-            expenseChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: ['#f87171', '#fb923c', '#facc15', '#4ade80', '#38bdf8', '#818cf8', '#c084fc', '#f472b6'],
-                        borderColor: '#1e293b',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            // Update details list
-            const detailContainer = document.getElementById('expense-category-details');
-            detailContainer.innerHTML = '';
-            const sortedParams = labels.map((l, i) => ({l, v: values[i]})).sort((a,b) => b.v - a.v);
-            
-            if(sortedParams.length === 0) detailContainer.innerHTML = '<p class="text-center text-slate-500 text-sm">No expenses in ' + selectedCurrency + '</p>';
-
-            sortedParams.forEach(item => {
-                detailContainer.innerHTML += `
-                    <div class="flex justify-between items-center text-sm py-1 border-b border-slate-700/50">
-                        <span class="text-slate-300">${item.l}</span>
-                        <span class="font-medium text-slate-100">${formatCurrency(item.v, selectedCurrency)}</span>
-                    </div>
-                `;
-            });
-        }
-
-        function renderTable(data) {
-            tableBody.innerHTML = '';
-            if (data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500">No transactions found</td></tr>';
-                return;
-            }
-            data.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-700/50 transition";
-                const amountColor = item.type === 'income' ? 'text-green-400' : 'text-red-400';
-                const sign = item.type === 'income' ? '+' : '-';
-                
-                tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400">${item.date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-200 font-medium">${item.description}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400"><span class="bg-slate-700 px-2 py-1 rounded text-xs">${item.account}</span></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400">${item.category}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${amountColor}">${sign} ${formatCurrency(item.amount, item.currency)}</td>
-                    <td class="px-2 py-4 whitespace-nowrap text-center">
-                        <button class="delete-btn text-slate-500 hover:text-red-400" data-item='${JSON.stringify(item)}'>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        }
-
-        function renderDaily(data) {
-            const daily = {};
-            data.filter(d => d.type === 'expense').forEach(d => {
-                if(!daily[d.date]) daily[d.date] = { idr: 0, usd: 0 };
-                if(d.currency === 'IDR') daily[d.date].idr += d.amount;
-                if(d.currency === 'USD') daily[d.date].usd += d.amount;
-            });
-
-            dailySummaryBody.innerHTML = '';
-            Object.keys(daily).sort().reverse().forEach(date => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-6 py-4 text-sm text-slate-200">${date}</td>
-                    <td class="px-6 py-4 text-sm text-right text-red-400">${daily[date].idr > 0 ? formatCurrency(daily[date].idr, 'IDR') : '-'}</td>
-                    <td class="px-6 py-4 text-sm text-right text-red-400">${daily[date].usd > 0 ? formatCurrency(daily[date].usd, 'USD') : '-'}</td>
-                `;
-                dailySummaryBody.appendChild(tr);
-            });
-        }
-
-        function renderCalendar(data) {
-            const grid = document.getElementById('calendar-grid');
-            grid.innerHTML = '';
-            const year = calendarDate.getFullYear();
-            const month = calendarDate.getMonth();
-            
-            document.getElementById('calendar-header').textContent = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            // Empty slots
-            for(let i=0; i<firstDay; i++) grid.appendChild(document.createElement('div'));
-
-            for(let d=1; d<=daysInMonth; d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const dayTrans = data.filter(item => item.date === dateStr);
-                
-                const el = document.createElement('div');
-                el.className = "calendar-day border border-slate-700 p-1 rounded hover:bg-slate-700/50 cursor-pointer flex flex-col";
-                el.innerHTML = `<span class="text-slate-500 text-xs mb-1">${d}</span>`;
-                
-                if(dayTrans.length > 0) {
-                    const hasIncome = dayTrans.some(t => t.type === 'income');
-                    const hasExpense = dayTrans.some(t => t.type === 'expense');
-                    
-                    if(hasIncome) el.innerHTML += `<div class="h-1.5 w-1.5 rounded-full bg-green-500 mb-1"></div>`;
-                    if(hasExpense) el.innerHTML += `<div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>`;
-                    
-                    el.addEventListener('click', () => {
-                        document.getElementById('calendar-detail-title').textContent = dateStr;
-                        const content = document.getElementById('calendar-detail-content');
-                        content.innerHTML = '';
-                        dayTrans.forEach(t => {
-                            content.innerHTML += `
-                                <div class="flex justify-between border-b border-slate-600 pb-1 mb-1">
-                                    <span>${t.description}</span>
-                                    <span class="${t.type==='income'?'text-green-400':'text-red-400'}">${formatCurrency(t.amount, t.currency)}</span>
-                                </div>
-                            `;
-                        });
-                        document.getElementById('calendar-detail-modal').classList.remove('hidden');
-                    });
-                }
-                grid.appendChild(el);
-            }
-        }
-
-        // --- HANDLERS ---
-        function applyFilters() {
-            const start = document.getElementById('filter-start-date').value;
-            const end = document.getElementById('filter-end-date').value;
-            const cat = categoryFilter.value;
-            const acc = accountFilter.value;
+            // 3. Transactions Table
+            const start = document.getElementById('filter-start').value;
+            const end = document.getElementById('filter-end').value;
+            const fCat = document.getElementById('filter-cat').value;
+            const fAcc = document.getElementById('filter-acc').value;
             const search = document.getElementById('filter-search').value.toLowerCase();
 
-            let filtered = masterData.filter(item => {
-                if (start && item.date < start) return false;
-                if (end && item.date > end) return false;
-                if (cat !== 'all' && item.category !== cat) return false;
-                if (acc !== 'all' && item.account !== acc) return false;
-                if (search && !item.description.toLowerCase().includes(search)) return false;
+            let filtered = masterData.filter(d => {
+                if(start && d.date < start) return false;
+                if(end && d.date > end) return false;
+                if(fCat!=='all' && d.cat!==fCat) return false;
+                if(fAcc!=='all' && d.acc!==fAcc) return false;
+                if(search && !d.desc.toLowerCase().includes(search)) return false;
                 return true;
-            });
+            }).sort((a,b) => sortState.o==='asc' ? (a[sortState.k]>b[sortState.k]?1:-1) : (a[sortState.k]<b[sortState.k]?1:-1));
 
-            // Sort
-            filtered.sort((a,b) => {
-                const valA = transSortState.key === 'date' ? new Date(a.date) : a[transSortState.key];
-                const valB = transSortState.key === 'date' ? new Date(b.date) : b[transSortState.key];
-                return transSortState.order === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
-            });
+            document.getElementById('data-body').innerHTML = filtered.map(d => `
+                <tr class="hover:bg-slate-800">
+                    <td class="px-4 py-3 text-sm text-slate-400">${d.date}</td>
+                    <td class="px-4 py-3 text-sm text-slate-200">${d.desc}</td>
+                    <td class="px-4 py-3 text-sm text-slate-400"><span class="bg-slate-700 px-1 rounded text-xs">${d.acc}</span></td>
+                    <td class="px-4 py-3 text-sm text-slate-400">${d.cat}</td>
+                    <td class="px-4 py-3 text-sm text-right ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</td>
+                    <td class="px-2 py-3 text-center"><button class="text-slate-500 hover:text-red-400 del-btn" data-item='${JSON.stringify(d)}'>&times;</button></td>
+                </tr>
+            `).join('');
+            if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-500">No data</td></tr>';
 
-            renderAll(filtered);
+            // 4. Chart
+            updateChart(masterData);
         }
 
-        addEntryForm.addEventListener('submit', (e) => {
+        let myChart;
+        function updateChart(data) {
+            const curr = document.getElementById('chart-currency-toggle').value;
+            const exps = data.filter(d => d.type === 'expense' && d.curr === curr);
+            const totals = {};
+            exps.forEach(d => totals[d.cat] = (totals[d.cat]||0) + d.amt);
+            
+            const labels = Object.keys(totals);
+            const vals = Object.values(totals);
+            const ctx = document.getElementById('expense-pie-chart').getContext('2d');
+            
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels, datasets: [{ data: vals, backgroundColor: ['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#a855f7','#ec4899'], borderWidth:0 }] },
+                options: { plugins: { legend: { display: false } }, cutout: '70%' }
+            });
+
+            document.getElementById('expense-details').innerHTML = Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+                <div class="flex justify-between text-xs border-b border-slate-700 pb-1"><span>${k}</span><span>${fmt(v,curr)}</span></div>
+            `).join('');
+        }
+
+        // SUBMIT
+        document.getElementById('add-entry-form').addEventListener('submit', e => {
             e.preventDefault();
-            const btn = document.getElementById('submit-entry-button');
+            const btn = document.getElementById('submit-btn');
             const originalText = btn.textContent;
-            btn.innerHTML = '<div class="loader mx-auto"></div>';
-            btn.disabled = true;
+            btn.innerHTML = '<div class="loader mx-auto"></div>'; btn.disabled=true;
 
             const type = document.querySelector('input[name="entry-type"]:checked').value;
-            let cat = categorySelect.value;
-            if(cat === 'Other') cat = otherCategoryInput.value;
+            const date = document.getElementById('entry-date').value;
+            const desc = document.getElementById('entry-desc').value;
+            
+            let payload = {};
 
-            const payload = {
-                action: 'add',
-                sheetName: type === 'income' ? INCOME_SHEET_NAME : EXPENSE_SHEET_NAME,
-                date: document.getElementById('entry-date').value,
-                description: document.getElementById('entry-description').value,
-                category: cat,
-                account: document.getElementById('entry-account').value,
-                currency: document.getElementById('entry-currency').value,
-                amount: parseFloat(document.getElementById('entry-amount').value)
-            };
+            if(type === 'transfer') {
+                const fromAmt = parseFloat(document.getElementById('entry-amt-source').value);
+                const toAmtInput = document.getElementById('entry-amt-target').value;
+                // If Target Amount is empty, assume same as Source Amount (simple 1:1 transfer)
+                const toAmt = toAmtInput ? parseFloat(toAmtInput) : fromAmt;
 
-            fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    showToast("Transaction Saved!", "success");
-                    addEntryForm.reset();
+                if(document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && 
+                   document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) {
+                     showToast("Source and Target accounts cannot be identical.");
+                     btn.innerHTML = originalText; btn.disabled=false; return;
+                }
+
+                payload = {
+                    action: 'transfer',
+                    date: date,
+                    description: desc,
+                    fromAccount: document.getElementById('entry-acc-source').value,
+                    fromCurrency: document.getElementById('entry-curr-source').value,
+                    fromAmount: Math.abs(fromAmt),
+                    toAccount: document.getElementById('entry-acc-target').value,
+                    toCurrency: document.getElementById('entry-curr-target').value,
+                    toAmount: Math.abs(toAmt)
+                };
+            } else {
+                let cat = document.getElementById('entry-cat').value;
+                if(cat==='Other') cat = document.getElementById('entry-cat-other').value;
+                
+                payload = {
+                    action: 'add',
+                    sheetName: type==='income'?'Income':'Expenses',
+                    date: date, description: desc, category: cat,
+                    account: document.getElementById('entry-acc-source').value,
+                    currency: document.getElementById('entry-curr-source').value,
+                    amount: Math.abs(parseFloat(document.getElementById('entry-amt-source').value))
+                };
+            }
+
+            fetch(WEB_APP_URL, {method:'POST', body:JSON.stringify(payload)})
+            .then(r=>r.json())
+            .then(d => {
+                if(d.status==='success') {
+                    showToast(d.message);
+                    document.getElementById('add-entry-form').reset();
                     document.getElementById('entry-date').valueAsDate = new Date();
-                    setTimeout(fetchData, 1000);
-                } else throw new Error(data.message);
+                    setTimeout(fetchData, 1500);
+                } else throw new Error(d.message);
             })
-            .catch(err => showToast(err.message))
-            .finally(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
+            .catch(e => showToast("Error: "+e.message))
+            .finally(() => { btn.innerHTML = originalText; btn.disabled=false; });
         });
 
-        tableBody.addEventListener('click', (e) => {
-            const btn = e.target.closest('.delete-btn');
+        // DELETE
+        document.getElementById('data-body').addEventListener('click', e => {
+            const btn = e.target.closest('.del-btn');
             if(btn) {
                 itemToDelete = JSON.parse(btn.dataset.item);
-                document.getElementById('delete-modal-item').innerHTML = `
-                    <p class="font-bold text-slate-100">${itemToDelete.description}</p>
-                    <p class="text-slate-400">${itemToDelete.date} • ${itemToDelete.account}</p>
-                    <p class="${itemToDelete.type==='income'?'text-green-400':'text-red-400'}">${formatCurrency(itemToDelete.amount, itemToDelete.currency)}</p>
-                `;
+                document.getElementById('del-item-preview').textContent = `${itemToDelete.desc} (${fmt(itemToDelete.amt, itemToDelete.curr)})`;
                 document.getElementById('delete-modal').classList.remove('hidden');
             }
         });
-
-        document.getElementById('confirm-delete-btn').addEventListener('click', () => {
-            if(!itemToDelete) return;
-            const btn = document.getElementById('confirm-delete-btn');
-            btn.innerHTML = '...';
-            
+        document.getElementById('del-cancel').addEventListener('click', ()=>document.getElementById('delete-modal').classList.add('hidden'));
+        document.getElementById('del-confirm').addEventListener('click', ()=>{
+            const btn = document.getElementById('del-confirm');
+            btn.textContent = '...';
             fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'delete',
-                    sheetName: itemToDelete.type === 'income' ? INCOME_SHEET_NAME : EXPENSE_SHEET_NAME,
+                method:'POST', 
+                body:JSON.stringify({
+                    action:'delete', 
+                    sheetName: itemToDelete.type==='income'?'Income':'Expenses', 
                     originalData: itemToDelete
                 })
             }).then(() => {
                 document.getElementById('delete-modal').classList.add('hidden');
+                btn.textContent = 'Delete';
                 fetchData();
-            }).finally(() => {
-                btn.innerHTML = 'Delete';
             });
         });
 
-        // UI Utils
-        function formatCurrency(val, curr) {
-            return new Intl.NumberFormat(curr === 'IDR' ? 'id-ID' : 'en-US', {
-                style: 'currency', currency: curr, maximumFractionDigits: 0
-            }).format(val);
-        }
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = msg;
-            t.classList.remove('hidden');
-            setTimeout(() => t.classList.add('hidden'), 3000);
-        }
-
-        function updateSortIndicators() {
-            document.querySelectorAll('.sort-indicator').forEach(el => el.textContent = '');
-            const active = document.querySelector(`[data-sort="${transSortState.key}"] .sort-indicator`);
-            if(active) active.textContent = transSortState.order === 'asc' ? ' ▲' : ' ▼';
-        }
-
-        // Listeners for filters and tabs
-        filterInputs.forEach(i => i.addEventListener('input', applyFilters));
-        categorySelect.addEventListener('change', () => otherCategoryInput.classList.toggle('hidden', categorySelect.value !== 'Other'));
-        chartCurrencyToggle.addEventListener('change', () => updatePieChart(masterData));
+        // HELPERS
+        function fmt(n,c) { return new Intl.NumberFormat(c==='IDR'?'id-ID':'en-US',{style:'currency',currency:c,maximumFractionDigits:0}).format(n); }
+        function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3000); }
         
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'text-white'));
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-slate-400'));
-                
-                const id = e.target.id;
-                document.getElementById(id.replace('tab-', 'view-')).classList.remove('hidden');
-                e.target.classList.add('tab-active', 'text-white');
-                e.target.classList.remove('text-slate-400');
-            });
+        // LISTENERS
+        ['filter-start','filter-end','filter-cat','filter-acc','filter-search'].forEach(i => document.getElementById(i).addEventListener('input', renderAll));
+        document.getElementById('chart-currency-toggle').addEventListener('change', ()=>updateChart(masterData));
+        document.querySelectorAll('.sortable').forEach(s => s.addEventListener('click', e => {
+            sortState.k = e.target.dataset.sort; sortState.o = sortState.o==='asc'?'desc':'asc'; renderAll();
+        }));
+        document.getElementById('export-btn').addEventListener('click', async () => {
+             const c = await html2canvas(document.getElementById('view-dashboard'), {backgroundColor:'#1e293b', scale:2});
+             const a = document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='dashboard.png'; a.click();
         });
-
-        document.getElementById('cancel-delete-btn').addEventListener('click', () => document.getElementById('delete-modal').classList.add('hidden'));
-        document.getElementById('close-calendar-detail-btn').addEventListener('click', () => document.getElementById('calendar-detail-modal').classList.add('hidden'));
-        document.getElementById('prev-month-btn').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth()-1); renderCalendar(masterData); });
-        document.getElementById('next-month-btn').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth()+1); renderCalendar(masterData); });
-        
-        document.querySelectorAll('.sortable').forEach(th => {
-            th.addEventListener('click', () => {
-                const key = th.dataset.sort;
-                if(transSortState.key === key) transSortState.order = transSortState.order === 'asc' ? 'desc' : 'asc';
-                else { transSortState.key = key; transSortState.order = 'desc'; }
-                applyFilters();
-            });
-        });
-
-        document.getElementById('export-dashboard-btn').addEventListener('click', async () => {
-            const dash = document.getElementById('view-dashboard');
-            const canvas = await html2canvas(dash, { backgroundColor: '#1e293b', scale: 2 });
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL('image/png');
-            a.download = `finance_dashboard_${new Date().toISOString().slice(0,10)}.png`;
-            a.click();
-        });
-
-        // Run
-        checkAuth();
 
     </script>
 </body>
