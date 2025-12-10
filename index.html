@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker Ultimate (IDR Summary)</title>
+    <title>Finance Tracker Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 8px; }
@@ -42,7 +43,7 @@
             </div>
             <div class="flex gap-2">
                 <button id="export-btn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-xs font-medium">Export</button>
-                <button id="logout-btn" class="p-2 rounded-full hover:bg-slate-700 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
+                <button id="logout-btn" class="p-2 rounded-full hover:bg-slate-700 text-slate-400"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
 
@@ -66,13 +67,13 @@
                             <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                         </div>
                         <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Real Cash Flow - Converted to IDR)</h3>
+                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Real Cash Flow)</h3>
                             <div id="summary-cards-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center"></div>
                         </div>
                     </div>
                     <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 flex flex-col">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-semibold text-slate-200">Expenses</h3>
+                            <h3 class="font-semibold text-slate-200">Expenses (No Transfer)</h3>
                             <select id="chart-currency-toggle" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-slate-300"><option value="IDR">IDR</option><option value="USD">USD</option></select>
                         </div>
                         <div class="relative h-64 flex-grow"><canvas id="expense-pie-chart"></canvas></div>
@@ -142,9 +143,12 @@
 
             <div id="view-add" class="tab-view hidden">
                  <div class="p-6 bg-slate-700/50 rounded-lg border border-slate-700 max-w-3xl mx-auto">
-                    <h2 class="text-xl font-bold text-slate-100 mb-6">New Transaction</h2>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-slate-100" id="form-title">New Transaction</h2>
+                        <button id="cancel-edit-btn" class="hidden text-xs bg-gray-600 px-3 py-1 rounded hover:bg-gray-500">Cancel Edit</button>
+                    </div>
                     
-                    <div class="flex gap-4 mb-6">
+                    <div class="flex gap-4 mb-6" id="type-selector">
                         <label class="flex-1 cursor-pointer">
                             <input type="radio" name="entry-type" value="expense" class="peer hidden" checked>
                             <div class="py-3 text-center rounded border border-slate-600 bg-slate-800 peer-checked:bg-red-900/50 peer-checked:border-red-500 peer-checked:text-red-400 transition">Expense</div>
@@ -291,6 +295,10 @@
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'};
         let calendarDate = new Date();
         let exchangeRate = 16000; 
+        
+        // EDIT STATE
+        let isEditing = false;
+        let editItem = null;
 
         // --- DOM REFERENCES ---
         const typeRadios = document.getElementsByName('entry-type');
@@ -298,10 +306,11 @@
         const targetGroup = document.getElementById('transfer-target-group');
         const categoryGroup = document.getElementById('category-group');
         const lblSource = document.getElementById('lbl-source-acc');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
         // --- AUTH & INIT ---
         document.getElementById('entry-date').valueAsDate = new Date();
-        updateCategoryOptions('expense'); // Default Init
+        updateCategoryOptions('expense'); 
 
         if(sessionStorage.getItem('auth')==='true') { 
             document.getElementById('pin-modal').classList.add('hidden'); 
@@ -323,11 +332,16 @@
 
         // --- TABS ---
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', e => {
+            switchTab(e.target.id.replace('tab','view'));
+        }));
+
+        function switchTab(viewId) {
             document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(t=>{t.classList.remove('tab-active','text-white'); t.classList.add('text-slate-400');});
-            document.getElementById(e.target.id.replace('tab','view')).classList.remove('hidden');
-            e.target.classList.add('tab-active','text-white'); e.target.classList.remove('text-slate-400');
-        }));
+            document.getElementById(viewId).classList.remove('hidden');
+            const btn = document.getElementById(viewId.replace('view','tab'));
+            if(btn) { btn.classList.add('tab-active','text-white'); btn.classList.remove('text-slate-400'); }
+        }
 
         // --- LOGIC: CATEGORY SWITCHER ---
         function updateCategoryOptions(type) {
@@ -344,30 +358,33 @@
 
         typeRadios.forEach(r => r.addEventListener('change', () => {
             const val = document.querySelector('input[name="entry-type"]:checked').value;
-            
+            updateUIForType(val);
+        }));
+
+        function updateUIForType(val) {
             if(val === 'transfer') {
                 targetGroup.classList.remove('hidden');
                 categoryGroup.classList.add('hidden');
                 lblSource.textContent = "FROM ACCOUNT (SOURCE)";
                 const btn = document.getElementById('submit-btn');
-                btn.textContent = "Process Transfer";
+                btn.textContent = isEditing ? "Update Transfer" : "Process Transfer";
                 btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mt-4";
             } else {
                 targetGroup.classList.add('hidden');
                 categoryGroup.classList.remove('hidden');
                 lblSource.textContent = "ACCOUNT DETAILS";
                 const btn = document.getElementById('submit-btn');
-                btn.textContent = "Save Transaction";
+                btn.textContent = isEditing ? "Update Transaction" : "Save Transaction";
                 
-                updateCategoryOptions(val); // Update Dropdown
+                updateCategoryOptions(val);
 
                 if(val === 'income') {
-                   btn.className = "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition mt-4";
+                   btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded transition mt-4" : "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition mt-4";
                 } else {
-                   btn.className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4"; 
+                   btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded transition mt-4" : "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4"; 
                 }
             }
-        }));
+        }
 
         document.getElementById('entry-cat').addEventListener('change', e => document.getElementById('entry-cat-other').classList.toggle('hidden', e.target.value!=='Other'));
 
@@ -409,7 +426,7 @@
         }
 
         function renderAll() {
-            // 1. Balances (INCLUDING TRANSFER)
+            // Balances
             const bals = {};
             let incIDR=0, expIDR=0, incUSD=0, expUSD=0;
             
@@ -419,15 +436,12 @@
                 
                 if(d.type==='income') { 
                     bals[k].v += d.amt; 
-                    // ONLY COUNT FOR SUMMARY IF NOT TRANSFER
-                    // AND NOT INITIAL BALANCE
                     if(d.cat !== 'Transfer' && d.cat !== 'Initial Balance') {
                         if(d.curr==='IDR') incIDR+=d.amt; else incUSD+=d.amt; 
                     }
                 }
                 else { 
                     bals[k].v -= d.amt; 
-                    // ONLY COUNT FOR SUMMARY IF NOT TRANSFER
                     if(d.cat !== 'Transfer') {
                         if(d.curr==='IDR') expIDR+=d.amt; else expUSD+=d.amt; 
                     }
@@ -441,24 +455,17 @@
                 </div>
             `).join('');
 
-            // 2. Summary (CONVERTED TO IDR ONLY)
-            // Calculate Total Real Income (IDR + USD Converted)
+            // Summary
             const totalIncReal = incIDR + (incUSD * exchangeRate);
-            
-            // Calculate Total Real Expense (IDR + USD Converted)
             const totalExpReal = expIDR + (expUSD * exchangeRate);
-            
-            // Net Cash Flow (IDR)
             const netCashFlowIDR = totalIncReal - totalExpReal;
 
-            // Total Wealth Estimation (Asset)
             let totalAssetIDR = 0;
             Object.values(bals).forEach(b => {
                 if(b.c === 'IDR') totalAssetIDR += b.v;
                 if(b.c === 'USD') totalAssetIDR += (b.v * exchangeRate);
             });
 
-            // Savings Rate Calculation
             let saveRate = 0;
             if(totalIncReal > 0) {
                 saveRate = ((totalIncReal - totalExpReal) / totalIncReal) * 100;
@@ -487,7 +494,7 @@
                 </div>
             `;
 
-            // 3. Transactions
+            // Table
             const start = document.getElementById('filter-start').value;
             const end = document.getElementById('filter-end').value;
             const fCat = document.getElementById('filter-cat').value;
@@ -510,7 +517,10 @@
                     <td class="px-4 py-3 text-sm text-slate-400"><span class="bg-slate-700 px-1 rounded text-xs">${d.acc}</span></td>
                     <td class="px-4 py-3 text-sm text-slate-400">${d.cat}</td>
                     <td class="px-4 py-3 text-sm text-right ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</td>
-                    <td class="px-2 py-3 text-center"><button class="text-slate-500 hover:text-red-400 del-btn" data-item='${JSON.stringify(d)}'>&times;</button></td>
+                    <td class="px-2 py-3 text-center flex justify-center gap-2">
+                        <button class="text-slate-500 hover:text-blue-400 edit-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-pencil-alt"></i></button>
+                        <button class="text-slate-500 hover:text-red-400 del-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button>
+                    </td>
                 </tr>
             `).join('');
             if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-500">No data</td></tr>';
@@ -523,7 +533,7 @@
         // --- SUB-RENDERS ---
         function renderDaily(data) {
             const daily = {};
-            data.filter(d => d.type === 'expense' && d.cat !== 'Transfer').forEach(d => { // EXCLUDE TRANSFER
+            data.filter(d => d.type === 'expense' && d.cat !== 'Transfer').forEach(d => {
                 if(!daily[d.date]) daily[d.date] = { idr: 0, usd: 0 };
                 if(d.curr === 'IDR') daily[d.date].idr += d.amt;
                 if(d.curr === 'USD') daily[d.date].usd += d.amt;
@@ -581,7 +591,6 @@
         let myChart;
         function updateChart(data) {
             const curr = document.getElementById('chart-currency-toggle').value;
-            // EXCLUDE TRANSFER FROM CHART
             const exps = data.filter(d => d.type === 'expense' && d.curr === curr && d.cat !== 'Transfer');
             const totals = {};
             exps.forEach(d => totals[d.cat] = (totals[d.cat]||0) + d.amt);
@@ -602,7 +611,7 @@
             `).join('');
         }
 
-        // --- SUB-RENDERS ---
+        // --- SUBMIT ---
         document.getElementById('add-entry-form').addEventListener('submit', e => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
@@ -615,39 +624,61 @@
             
             let payload = {};
 
-            if(type === 'transfer') {
-                const fromAmt = parseFloat(document.getElementById('entry-amt-source').value);
-                const toAmtInput = document.getElementById('entry-amt-target').value;
-                const toAmt = toAmtInput ? parseFloat(toAmtInput) : fromAmt;
-
-                if(document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && 
-                   document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) {
-                     showToast("Source and Target accounts cannot be identical.");
-                     btn.innerHTML = originalText; btn.disabled=false; return;
-                }
-
-                payload = {
-                    action: 'transfer',
-                    date: date, description: desc,
-                    fromAccount: document.getElementById('entry-acc-source').value,
-                    fromCurrency: document.getElementById('entry-curr-source').value,
-                    fromAmount: Math.abs(fromAmt),
-                    toAccount: document.getElementById('entry-acc-target').value,
-                    toCurrency: document.getElementById('entry-curr-target').value,
-                    toAmount: Math.abs(toAmt)
-                };
-            } else {
+            if(isEditing) {
+                // EDIT MODE PAYLOAD
                 let cat = document.getElementById('entry-cat').value;
                 if(cat==='Other') cat = document.getElementById('entry-cat-other').value;
-                
+
                 payload = {
-                    action: 'add',
-                    sheetName: type==='income'?'Income':'Expenses',
-                    date: date, description: desc, category: cat,
-                    account: document.getElementById('entry-acc-source').value,
-                    currency: document.getElementById('entry-curr-source').value,
-                    amount: Math.abs(parseFloat(document.getElementById('entry-amt-source').value))
+                    action: 'edit',
+                    oldSheetName: editItem.type === 'income' ? 'Income' : 'Expenses',
+                    originalData: editItem,
+                    newSheetName: type === 'income' ? 'Income' : 'Expenses',
+                    newData: {
+                        date: date,
+                        description: desc,
+                        category: cat,
+                        account: document.getElementById('entry-acc-source').value,
+                        currency: document.getElementById('entry-curr-source').value,
+                        amount: Math.abs(parseFloat(document.getElementById('entry-amt-source').value))
+                    }
                 };
+            } else {
+                // ADD MODE PAYLOAD
+                if(type === 'transfer') {
+                    const fromAmt = parseFloat(document.getElementById('entry-amt-source').value);
+                    const toAmtInput = document.getElementById('entry-amt-target').value;
+                    const toAmt = toAmtInput ? parseFloat(toAmtInput) : fromAmt;
+
+                    if(document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && 
+                       document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) {
+                         showToast("Source and Target accounts cannot be identical.");
+                         btn.innerHTML = originalText; btn.disabled=false; return;
+                    }
+
+                    payload = {
+                        action: 'transfer',
+                        date: date, description: desc,
+                        fromAccount: document.getElementById('entry-acc-source').value,
+                        fromCurrency: document.getElementById('entry-curr-source').value,
+                        fromAmount: Math.abs(fromAmt),
+                        toAccount: document.getElementById('entry-acc-target').value,
+                        toCurrency: document.getElementById('entry-curr-target').value,
+                        toAmount: Math.abs(toAmt)
+                    };
+                } else {
+                    let cat = document.getElementById('entry-cat').value;
+                    if(cat==='Other') cat = document.getElementById('entry-cat-other').value;
+                    
+                    payload = {
+                        action: 'add',
+                        sheetName: type==='income'?'Income':'Expenses',
+                        date: date, description: desc, category: cat,
+                        account: document.getElementById('entry-acc-source').value,
+                        currency: document.getElementById('entry-curr-source').value,
+                        amount: Math.abs(parseFloat(document.getElementById('entry-amt-source').value))
+                    };
+                }
             }
 
             fetch(WEB_APP_URL, {method:'POST', body:JSON.stringify(payload)})
@@ -655,29 +686,80 @@
             .then(d => {
                 if(d.status==='success') {
                     showToast(d.message);
-                    document.getElementById('add-entry-form').reset();
-                    document.getElementById('entry-date').valueAsDate = new Date();
-                    
-                    // Reset UI to Expense
-                    document.querySelector('input[name="entry-type"][value="expense"]').checked = true;
-                    document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
-                    
+                    resetForm();
                     setTimeout(fetchData, 1500);
                 } else throw new Error(d.message);
             })
             .catch(e => showToast("Error: "+e.message))
-            .finally(() => { btn.innerHTML = originalText; btn.disabled=false; });
+            .finally(() => { btn.innerHTML = isEditing ? 'Update' : 'Save Transaction'; btn.disabled=false; });
         });
 
-        // --- DELETE ---
+        function resetForm() {
+            document.getElementById('add-entry-form').reset();
+            document.getElementById('entry-date').valueAsDate = new Date();
+            isEditing = false; editItem = null;
+            document.getElementById('form-title').textContent = "New Transaction";
+            cancelEditBtn.classList.add('hidden');
+            
+            // Reset to Expense
+            document.querySelector('input[name="entry-type"][value="expense"]').checked = true;
+            // Disable transfer specific fields logic
+            document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
+        }
+
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        // --- EDIT & DELETE HANDLERS ---
         document.getElementById('data-body').addEventListener('click', e => {
-            const btn = e.target.closest('.del-btn');
-            if(btn) {
-                itemToDelete = JSON.parse(btn.dataset.item);
+            const btnEdit = e.target.closest('.edit-btn');
+            const btnDel = e.target.closest('.del-btn');
+            
+            if(btnDel) {
+                itemToDelete = JSON.parse(btnDel.dataset.item);
                 document.getElementById('del-item-preview').textContent = `${itemToDelete.desc} (${fmt(itemToDelete.amt, itemToDelete.curr)})`;
                 document.getElementById('delete-modal').classList.remove('hidden');
             }
+
+            if(btnEdit) {
+                const item = JSON.parse(btnEdit.dataset.item);
+                if(item.cat === 'Transfer') {
+                    showToast("To edit a transfer, please delete and create a new one.");
+                    return;
+                }
+                
+                isEditing = true;
+                editItem = item;
+                
+                // Populate Form
+                document.getElementById('form-title').textContent = "Edit Transaction";
+                cancelEditBtn.classList.remove('hidden');
+                switchTab('view-add');
+
+                // Set Type
+                document.querySelector(`input[name="entry-type"][value="${item.type}"]`).checked = true;
+                updateUIForType(item.type);
+
+                // Set Values
+                document.getElementById('entry-desc').value = item.desc;
+                // Convert date format if needed, assuming YYYY-MM-DD from API
+                document.getElementById('entry-date').value = item.date; 
+                
+                // Set Category
+                const catSelect = document.getElementById('entry-cat');
+                if([...catSelect.options].map(o=>o.value).includes(item.cat)) {
+                    catSelect.value = item.cat;
+                } else {
+                    catSelect.value = 'Other';
+                    document.getElementById('entry-cat-other').classList.remove('hidden');
+                    document.getElementById('entry-cat-other').value = item.cat;
+                }
+
+                document.getElementById('entry-acc-source').value = item.acc;
+                document.getElementById('entry-curr-source').value = item.curr;
+                document.getElementById('entry-amt-source').value = item.amt;
+            }
         });
+
         document.getElementById('del-cancel').addEventListener('click', ()=>document.getElementById('delete-modal').classList.add('hidden'));
         document.getElementById('del-confirm').addEventListener('click', ()=>{
             const btn = document.getElementById('del-confirm');
@@ -689,10 +771,15 @@
                     sheetName: itemToDelete.type==='income'?'Income':'Expenses', 
                     originalData: itemToDelete
                 })
-            }).then(() => {
-                document.getElementById('delete-modal').classList.add('hidden');
-                btn.textContent = 'Delete';
-                fetchData();
+            }).then(r=>r.json()).then(d => {
+                if(d.status === 'success') {
+                    document.getElementById('delete-modal').classList.add('hidden');
+                    btn.textContent = 'Delete';
+                    fetchData();
+                } else {
+                    showToast(d.message);
+                    btn.textContent = 'Delete';
+                }
             });
         });
 
