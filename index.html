@@ -67,7 +67,7 @@
                             <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                         </div>
                         <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Converted to IDR)</h3>
+                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Real Cash Flow)</h3>
                             <div id="summary-cards-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center"></div>
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Acc</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Cat</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="amount">Amount</th>
-                                <th class="px-2 py-3 text-center">Action</th>
+                                <th class="px-2 py-3 text-center">Act</th>
                             </tr>
                         </thead>
                         <tbody id="data-body" class="divide-y divide-slate-700"></tbody>
@@ -111,7 +111,7 @@
 
             <div id="view-daily" class="tab-view hidden">
                 <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                    <h3 class="font-semibold text-slate-200 mb-4">Daily Expenses</h3>
+                    <h3 class="font-semibold text-slate-200 mb-4">Daily Expense Summary</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-slate-700">
                             <thead class="bg-slate-700"><tr><th class="px-6 py-3 text-left text-xs font-medium text-slate-400">Date</th><th class="px-6 py-3 text-right text-xs font-medium text-slate-400">Total (IDR)</th><th class="px-6 py-3 text-right text-xs font-medium text-slate-400">Total (USD)</th></tr></thead>
@@ -153,7 +153,25 @@
                         <div class="p-4 bg-slate-800/50 rounded border border-slate-600">
                             <label id="lbl-source-acc" class="block text-xs font-bold text-slate-400 uppercase mb-3">Account Details</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="block text-sm text-slate-400 mb-1">Account</label><select id="entry-acc-source" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"><option value="Jenius IDR">Jenius IDR</option><option value="Jenius USD">Jenius USD</option><option value="Mandiri">Mandiri</option><option value="BSI">BSI</option><option value="BLU BCA">BLU BCA</option><option value="Line Bank">Line Bank</option><option value="Jago">Jago</option><option value="GoPay">GoPay</option><option value="OVO">OVO</option><option value="Dana">Dana</option><option value="ShopeePay">ShopeePay</option><option value="Cash">Cash</option><option value="Other">Other...</option></select></div>
+                                <div><label class="block text-sm text-slate-400 mb-1">Account</label><select id="entry-acc-source" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                    <option value="Jenius IDR">Jenius IDR</option>
+                                    <option value="Jenius USD">Jenius USD</option>
+                                    <option value="Mandiri">Mandiri</option>
+                                    <option value="BSI">BSI</option>
+                                    <option value="BLU BCA">BLU BCA</option>
+                                    <option value="Line Bank">Line Bank</option>
+                                    <option value="Jago">Jago</option>
+                                    <option value="Tokocrypto">Tokocrypto</option>
+                                    <option value="Bibit">Bibit</option>
+                                    <option value="Pintu">Pintu</option>
+                                    <option value="Binance">Binance</option>
+                                    <option value="GoPay">GoPay</option>
+                                    <option value="OVO">OVO</option>
+                                    <option value="Dana">Dana</option>
+                                    <option value="ShopeePay">ShopeePay</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Other">Other...</option>
+                                </select></div>
                                 <div class="flex gap-2">
                                     <div class="w-1/3"><label class="block text-sm text-slate-400 mb-1">Curr</label><select id="entry-curr-source" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"><option value="IDR">IDR</option><option value="USD">USD</option></select></div>
                                     <div class="w-2/3"><label class="block text-sm text-slate-400 mb-1">Amount</label><input type="number" step="any" id="entry-amt-source" placeholder="0" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required></div>
@@ -163,7 +181,25 @@
                         <div id="transfer-target-group" class="hidden p-4 bg-slate-800/50 rounded border border-slate-600">
                             <label class="block text-xs font-bold text-blue-400 uppercase mb-3">Transfer Destination</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="block text-sm text-slate-400 mb-1">To Account</label><select id="entry-acc-target" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"><option value="Jenius IDR">Jenius IDR</option><option value="Jenius USD">Jenius USD</option><option value="Mandiri">Mandiri</option><option value="BSI">BSI</option><option value="BLU BCA">BLU BCA</option><option value="Line Bank">Line Bank</option><option value="Jago">Jago</option><option value="GoPay">GoPay</option><option value="OVO">OVO</option><option value="Dana">Dana</option><option value="ShopeePay">ShopeePay</option><option value="Cash">Cash</option><option value="Other">Other...</option></select></div>
+                                <div><label class="block text-sm text-slate-400 mb-1">To Account</label><select id="entry-acc-target" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                    <option value="Jenius IDR">Jenius IDR</option>
+                                    <option value="Jenius USD">Jenius USD</option>
+                                    <option value="Mandiri">Mandiri</option>
+                                    <option value="BSI">BSI</option>
+                                    <option value="BLU BCA">BLU BCA</option>
+                                    <option value="Line Bank">Line Bank</option>
+                                    <option value="Jago">Jago</option>
+                                    <option value="Tokocrypto">Tokocrypto</option>
+                                    <option value="Bibit">Bibit</option>
+                                    <option value="Pintu">Pintu</option>
+                                    <option value="Binance">Binance</option>
+                                    <option value="GoPay">GoPay</option>
+                                    <option value="OVO">OVO</option>
+                                    <option value="Dana">Dana</option>
+                                    <option value="ShopeePay">ShopeePay</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Other">Other...</option>
+                                </select></div>
                                 <div class="flex gap-2">
                                     <div class="w-1/3"><label class="block text-sm text-slate-400 mb-1">Curr</label><select id="entry-curr-target" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"><option value="IDR">IDR</option><option value="USD">USD</option></select></div>
                                     <div class="w-2/3"><label class="block text-sm text-slate-400 mb-1">Amount Received</label><input type="number" step="any" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"></div>
@@ -193,13 +229,11 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- CONFIG ---
         const PIN = "1907"; 
         const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw_t4_6oYlT-SeQBMzJP7caUrBEFJjD8MsffGP5ilkIlc2Z7eLdWboXs-RN20j54d38AA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwohCuFH5bVNYBjxsD6cXZCAhfHxGt7t28BHOvois74MrKDfRJsQ-TYIsT9a1hjDMeAFA/exec";
         const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
-
-        // CATEGORIES
+        
         const EXPENSE_CATS = ["Food & Drink", "Transportation", "Groceries", "Shopping", "Bills & Utilities", "Entertainment", "Healthcare", "Transfer", "Other"];
         const INCOME_CATS = ["Main Salary", "Bonus Salary", "Other Salary", "Initial Balance", "Other"];
 
@@ -265,7 +299,6 @@
                     if(!rows) return;
                     rows.forEach(r => {
                         if(!r[0]) return;
-                        // Cleaning string amount to float
                         let amt = parseFloat(String(r[5] || '0').replace(/,/g, ''));
                         masterData.push({ type, date: r[0], desc: r[1], cat: r[2], acc: r[3], curr: r[4], amt: Math.abs(amt) });
                     });
