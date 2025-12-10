@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finance Tracker Ultimate (Mobile)</title>
+    <title>Finance Tracker V5 (Stable)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -20,8 +20,7 @@
         .calendar-day { min-height: 4rem; } 
         @media (min-width: 640px) { .calendar-day { min-height: 6rem; } }
         .sortable { cursor: pointer; user-select: none; }
-        /* Prevent auto-zoom on input focus in iOS */
-        input, select, textarea { font-size: 16px !important; }
+        input, select { font-size: 16px !important; } /* Prevent iOS Zoom */
     </style>
 </head>
 <body class="bg-slate-950 min-h-screen text-slate-300 pb-10">
@@ -29,7 +28,6 @@
     <div id="pin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-xs border border-slate-700 text-center">
             <h2 class="text-xl font-bold text-slate-100 mb-2">Secure Access</h2>
-            <p class="text-xs text-slate-400 mb-6">Enter PIN to verify identity</p>
             <form id="pin-form">
                 <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" class="w-full text-center text-3xl tracking-[.5em] px-3 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 transition" maxlength="4" required autocomplete="off">
                 <p id="pin-error" class="text-red-400 text-xs mt-3 min-h-[16px]"></p>
@@ -43,7 +41,7 @@
         <div class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex justify-between items-center">
             <div>
                 <h1 class="text-lg font-bold text-slate-100">Finance Tracker</h1>
-                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Ultimate</p>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Dashboard</p>
             </div>
             <div class="flex gap-2">
                 <button id="export-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-xs transition"><i class="fas fa-camera"></i></button>
@@ -93,7 +91,6 @@
                         <div class="relative h-56 w-full flex justify-center"><canvas id="expense-pie-chart"></canvas></div>
                         <div id="expense-details" class="mt-4 space-y-2 max-h-48 overflow-y-auto pr-2 custom-scroll"></div>
                     </div>
-
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <h3 class="text-sm font-semibold text-slate-200 mb-4">Wallet Balances</h3>
                         <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
@@ -111,7 +108,7 @@
                         <select id="filter-cat" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200"></select>
                         <select id="filter-acc" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200"></select>
                     </div>
-                    <input type="text" id="filter-search" placeholder="Search description..." class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
+                    <input type="text" id="filter-search" placeholder="Search..." class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
                 </div>
                 
                 <div id="mobile-trans-list" class="space-y-3 lg:hidden"></div>
@@ -121,10 +118,10 @@
                         <thead class="bg-slate-900/50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Date</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Desc</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Acc</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Cat</th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Amount</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Amt</th>
                                 <th class="px-2 py-3 text-center text-xs font-medium text-slate-400 uppercase">Act</th>
                             </tr>
                         </thead>
@@ -271,6 +268,8 @@
         let isEditing = false, editItem = null;
 
         document.getElementById('entry-date').valueAsDate = new Date();
+        
+        // --- INITIALIZE CATEGORIES ---
         updateCategoryOptions('expense'); 
 
         // --- AUTH ---
