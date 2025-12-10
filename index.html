@@ -66,13 +66,13 @@
                             <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                         </div>
                         <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                            <h3 class="font-semibold text-slate-200 mb-4">Summary</h3>
+                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Real Cash Flow)</h3>
                             <div id="summary-cards-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center"></div>
                         </div>
                     </div>
                     <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 flex flex-col">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-semibold text-slate-200">Expenses</h3>
+                            <h3 class="font-semibold text-slate-200">Expenses (No Transfer)</h3>
                             <select id="chart-currency-toggle" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-slate-300"><option value="IDR">IDR</option><option value="USD">USD</option></select>
                         </div>
                         <div class="relative h-64 flex-grow"><canvas id="expense-pie-chart"></canvas></div>
@@ -110,7 +110,7 @@
 
             <div id="view-daily" class="tab-view hidden">
                 <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                    <h3 class="font-semibold text-slate-200 mb-4">Daily Expense Summary</h3>
+                    <h3 class="font-semibold text-slate-200 mb-4">Daily Expense Summary (Excl. Transfer)</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-slate-700">
                             <thead class="bg-slate-700">
@@ -385,15 +385,28 @@
         }
 
         function renderAll() {
-            // 1. Balances
+            // 1. Balances (INCLUDING TRANSFER)
             const bals = {};
             let incIDR=0, expIDR=0, incUSD=0, expUSD=0;
             
             masterData.forEach(d => {
                 const k = `${d.acc}-${d.curr}`;
                 if(!bals[k]) bals[k] = {n:d.acc, c:d.curr, v:0};
-                if(d.type==='income') { bals[k].v += d.amt; if(d.curr==='IDR') incIDR+=d.amt; else incUSD+=d.amt; }
-                else { bals[k].v -= d.amt; if(d.curr==='IDR') expIDR+=d.amt; else expUSD+=d.amt; }
+                
+                if(d.type==='income') { 
+                    bals[k].v += d.amt; 
+                    // ONLY COUNT FOR SUMMARY IF NOT TRANSFER
+                    if(d.cat !== 'Transfer') {
+                        if(d.curr==='IDR') incIDR+=d.amt; else incUSD+=d.amt; 
+                    }
+                }
+                else { 
+                    bals[k].v -= d.amt; 
+                    // ONLY COUNT FOR SUMMARY IF NOT TRANSFER
+                    if(d.cat !== 'Transfer') {
+                        if(d.curr==='IDR') expIDR+=d.amt; else expUSD+=d.amt; 
+                    }
+                }
             });
             
             const balCont = document.getElementById('account-balances-container');
@@ -482,7 +495,7 @@
         // --- SUB-RENDERS ---
         function renderDaily(data) {
             const daily = {};
-            data.filter(d => d.type === 'expense').forEach(d => {
+            data.filter(d => d.type === 'expense' && d.cat !== 'Transfer').forEach(d => { // EXCLUDE TRANSFER
                 if(!daily[d.date]) daily[d.date] = { idr: 0, usd: 0 };
                 if(d.curr === 'IDR') daily[d.date].idr += d.amt;
                 if(d.curr === 'USD') daily[d.date].usd += d.amt;
@@ -540,7 +553,8 @@
         let myChart;
         function updateChart(data) {
             const curr = document.getElementById('chart-currency-toggle').value;
-            const exps = data.filter(d => d.type === 'expense' && d.curr === curr);
+            // EXCLUDE TRANSFER FROM CHART
+            const exps = data.filter(d => d.type === 'expense' && d.curr === curr && d.cat !== 'Transfer');
             const totals = {};
             exps.forEach(d => totals[d.cat] = (totals[d.cat]||0) + d.amt);
             
@@ -618,7 +632,6 @@
                     
                     // Reset UI to Expense
                     document.querySelector('input[name="entry-type"][value="expense"]').checked = true;
-                    // Trigger manual change event to reset categories
                     document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
                     
                     setTimeout(fetchData, 1500);
