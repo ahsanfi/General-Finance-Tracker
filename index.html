@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker Ultimate</title>
+    <title>Finance Tracker Ultimate (US Format)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -475,9 +475,9 @@
                 </div>
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center relative overflow-hidden">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Est. Net Worth</div>
-                    <div class="text-white font-bold text-lg">${new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(totalAssetIDR)}</div>
+                    <div class="text-white font-bold text-lg">${new Intl.NumberFormat('en-US', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(totalAssetIDR)}</div>
                     <div class="mt-1 flex items-center justify-center gap-1">
-                        <span class="text-[10px] text-slate-400">Rate: ${new Intl.NumberFormat('id-ID').format(exchangeRate)} | Save:</span>
+                        <span class="text-[10px] text-slate-400">Rate: ${new Intl.NumberFormat('en-US').format(exchangeRate)} | Save:</span>
                         <span class="text-xs font-bold ${saveRate>=20 ? 'text-green-400' : (saveRate>0 ? 'text-yellow-400' : 'text-red-400')}">${saveRate.toFixed(1)}%</span>
                     </div>
                 </div>
@@ -693,7 +693,14 @@
         });
 
         // --- HELPERS ---
-        function fmt(n,c) { return new Intl.NumberFormat(c==='IDR'?'id-ID':'en-US',{style:'currency',currency:c,minimumFractionDigits:0,maximumFractionDigits:2}).format(n); }
+        function fmt(n, c) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: c,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }).format(n);
+        }
         function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3000); }
         
         // --- EVENT LISTENERS ---
