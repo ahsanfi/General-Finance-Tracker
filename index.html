@@ -172,8 +172,7 @@
                             <div id="category-group">
                                 <label class="block text-sm text-slate-400 mb-1">Category</label>
                                 <select id="entry-cat" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
-                                    <option>Food & Drink</option><option>Transportation</option><option>Groceries</option><option>Shopping</option><option>Bills</option><option>Salary</option><option>Freelance</option><option value="Other">Other...</option>
-                                </select>
+                                    </select>
                                 <input type="text" id="entry-cat-other" placeholder="New Category" class="hidden w-full mt-2 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
                             </div>
                         </div>
@@ -260,12 +259,19 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwohCuFH5bVNYBjxsD6cXZCAhfHxGt7t28BHOvois74MrKDfRJsQ-TYIsT9a1hjDMeAFA/exec";
         const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
 
+        // CATEGORIES CONFIGURATION
+        const EXPENSE_CATS = ["Food & Drink", "Transportation", "Groceries", "Shopping", "Bills & Utilities", "Entertainment", "Healthcare", "Transfer", "Other"];
+        const INCOME_CATS = ["Main Salary", "Bonus Salary", "Other Salary", "Initial Balance", "Other"];
+
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'};
         let calendarDate = new Date();
         let exchangeRate = 16000; // Fallback default
 
         // AUTH & INIT
         document.getElementById('entry-date').valueAsDate = new Date();
+        // Set Default Categories to Expense on Load
+        updateCategoryOptions('expense');
+        
         if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); }
         
         document.getElementById('pin-form').addEventListener('submit',e=>{
@@ -292,9 +298,25 @@
         const targetGroup = document.getElementById('transfer-target-group');
         const categoryGroup = document.getElementById('category-group');
         const lblSource = document.getElementById('lbl-source-acc');
+        const entryCatSelect = document.getElementById('entry-cat');
+
+        function updateCategoryOptions(type) {
+            entryCatSelect.innerHTML = '';
+            let options = type === 'income' ? INCOME_CATS : EXPENSE_CATS;
+            options.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                entryCatSelect.appendChild(opt);
+            });
+             // Hide custom input initially
+             document.getElementById('entry-cat-other').classList.add('hidden');
+        }
 
         typeRadios.forEach(r => r.addEventListener('change', () => {
             const val = document.querySelector('input[name="entry-type"]:checked').value;
+            
+            // Update UI based on type
             if(val === 'transfer') {
                 targetGroup.classList.remove('hidden');
                 categoryGroup.classList.add('hidden');
@@ -306,6 +328,10 @@
                 categoryGroup.classList.remove('hidden');
                 lblSource.textContent = "ACCOUNT DETAILS";
                 document.getElementById('submit-btn').textContent = "Save Transaction";
+                
+                // Update Categories based on Income vs Expense
+                updateCategoryOptions(val);
+
                 if(val === 'income') {
                    document.getElementById('submit-btn').className = "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition mt-4";
                 } else {
@@ -326,7 +352,6 @@
                     fetch(`${base}/Expenses!G1?key=${API_KEY}`).then(r=>r.json())
                 ]);
                 
-                // Parse Data
                 masterData = [];
                 const parse = (rows, type) => {
                     if(!rows) return;
@@ -341,12 +366,10 @@
                 parse(inc.values, 'income');
                 parse(exp.values, 'expense');
 
-                // Parse Rate (Expenses!G1)
                 if (rateData.values && rateData.values[0] && rateData.values[0][0]) {
                      exchangeRate = parseFloat(rateData.values[0][0].replace(/,/g, '').replace(/[^\d.]/g, ''));
                 }
                 
-                // Populate Filters
                 const cats = [...new Set(masterData.map(d=>d.cat))].sort();
                 const accs = [...new Set(masterData.map(d=>d.acc))].sort();
                 document.getElementById('filter-cat').innerHTML = '<option value="all">All Cats</option>' + cats.map(c=>`<option>${c}</option>`).join('');
@@ -375,18 +398,16 @@
                 </div>
             `).join('');
 
-            // 2. Summary (Informatif)
+            // 2. Summary
             const netIDR = incIDR - expIDR;
             const netUSD = incUSD - expUSD;
 
-            // Total Wealth Estimation
             let totalAssetIDR = 0;
             Object.values(bals).forEach(b => {
                 if(b.c === 'IDR') totalAssetIDR += b.v;
                 if(b.c === 'USD') totalAssetIDR += (b.v * exchangeRate);
             });
 
-            // Savings Rate Logic
             const totalIncCombined = incIDR + (incUSD * exchangeRate);
             const totalExpCombined = expIDR + (expUSD * exchangeRate);
             let saveRate = 0;
@@ -420,7 +441,7 @@
                 </div>
             `;
 
-            // 3. Transactions Table
+            // 3. Transactions
             const start = document.getElementById('filter-start').value;
             const end = document.getElementById('filter-end').value;
             const fCat = document.getElementById('filter-cat').value;
@@ -596,6 +617,11 @@
                     showToast(d.message);
                     document.getElementById('add-entry-form').reset();
                     document.getElementById('entry-date').valueAsDate = new Date();
+                    // Reset Categories to default Expense
+                    document.querySelector('input[name="entry-type"][value="expense"]').checked = true;
+                    updateCategoryOptions('expense');
+                    document.getElementById('submit-btn').className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4";
+                    
                     setTimeout(fetchData, 1500);
                 } else throw new Error(d.message);
             })
