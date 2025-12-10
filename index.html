@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker Plus</title>
+    <title>Finance Tracker Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -16,6 +16,7 @@
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .tab-active { background-color: #3b82f6; color: #fff; }
+        .calendar-day { min-height: 6rem; }
         .sortable { cursor: pointer; user-select: none; }
     </style>
 </head>
@@ -37,7 +38,7 @@
         <div class="flex justify-between items-start mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-slate-100">Finance Tracker</h1>
-                <p class="text-slate-400 text-sm">Income, Expense & Transfer Manager</p>
+                <p class="text-slate-400 text-sm">Transfer, Calendar & Daily Analytics</p>
             </div>
             <div class="flex gap-2">
                 <button id="export-btn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-xs font-medium">Export</button>
@@ -49,7 +50,9 @@
             <nav class="flex space-x-2 overflow-x-auto pb-2">
                 <button id="tab-dashboard" class="tab-btn tab-active px-4 py-2 text-sm font-medium rounded-t-lg">Dashboard</button>
                 <button id="tab-transactions" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Transactions</button>
-                <button id="tab-add" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Add Entry / Transfer</button>
+                <button id="tab-daily" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Daily</button>
+                <button id="tab-calendar" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Calendar</button>
+                <button id="tab-add" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Add / Transfer</button>
             </nav>
         </div>
 
@@ -102,6 +105,38 @@
                         </thead>
                         <tbody id="data-body" class="divide-y divide-slate-700"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <div id="view-daily" class="tab-view hidden">
+                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
+                    <h3 class="font-semibold text-slate-200 mb-4">Daily Expense Summary</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-700">
+                            <thead class="bg-slate-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Total (IDR)</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Total (USD)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daily-body" class="divide-y divide-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-calendar" class="tab-view hidden">
+                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <button id="prev-month" class="p-2 rounded hover:bg-slate-600">&lt;</button>
+                        <h2 id="calendar-header" class="text-lg font-semibold text-slate-100"></h2>
+                        <button id="next-month" class="p-2 rounded hover:bg-slate-600">&gt;</button>
+                    </div>
+                    <div class="grid grid-cols-7 text-center text-xs text-slate-400 mb-2">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
                 </div>
             </div>
 
@@ -208,6 +243,14 @@
             <div class="flex justify-end gap-2"><button id="del-cancel" class="px-3 py-1 bg-slate-600 text-white rounded">Cancel</button><button id="del-confirm" class="px-3 py-1 bg-red-600 text-white rounded">Delete</button></div>
         </div>
     </div>
+    
+    <div id="calendar-detail-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-700 rounded-lg p-6 w-full max-w-md border border-slate-600">
+            <div class="flex justify-between items-center mb-4"><h3 id="cal-detail-title" class="font-bold text-white"></h3><button id="cal-close" class="text-slate-400">&times;</button></div>
+            <div id="cal-detail-content" class="max-h-80 overflow-y-auto space-y-2 text-sm"></div>
+        </div>
+    </div>
+
     <div id="toast" class="hidden fixed bottom-5 right-5 bg-slate-700 text-white px-4 py-2 rounded shadow border border-slate-500"></div>
 
     <script>
@@ -218,6 +261,7 @@
         const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
 
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'};
+        let calendarDate = new Date();
 
         // AUTH & INIT
         document.getElementById('entry-date').valueAsDate = new Date();
@@ -242,7 +286,7 @@
             e.target.classList.add('tab-active','text-white'); e.target.classList.remove('text-slate-400');
         }));
 
-        // FORM LOGIC
+        // FORM LOGIC (TRANSFER SWITCH)
         const typeRadios = document.getElementsByName('entry-type');
         const targetGroup = document.getElementById('transfer-target-group');
         const categoryGroup = document.getElementById('category-group');
@@ -255,8 +299,7 @@
                 categoryGroup.classList.add('hidden');
                 lblSource.textContent = "FROM ACCOUNT (SOURCE)";
                 document.getElementById('submit-btn').textContent = "Process Transfer";
-                document.getElementById('submit-btn').classList.replace('bg-green-600','bg-blue-600'); 
-                document.getElementById('submit-btn').classList.replace('bg-red-600','bg-blue-600');
+                document.getElementById('submit-btn').className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mt-4";
             } else {
                 targetGroup.classList.add('hidden');
                 categoryGroup.classList.remove('hidden');
@@ -358,10 +401,76 @@
             `).join('');
             if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-500">No data</td></tr>';
 
-            // 4. Chart
+            // 4. Daily
+            renderDaily(masterData);
+
+            // 5. Calendar
+            renderCalendar(masterData);
+
+            // 6. Chart
             updateChart(masterData);
         }
 
+        // DAILY
+        function renderDaily(data) {
+            const daily = {};
+            data.filter(d => d.type === 'expense').forEach(d => {
+                if(!daily[d.date]) daily[d.date] = { idr: 0, usd: 0 };
+                if(d.curr === 'IDR') daily[d.date].idr += d.amt;
+                if(d.curr === 'USD') daily[d.date].usd += d.amt;
+            });
+            document.getElementById('daily-body').innerHTML = Object.keys(daily).sort().reverse().map(dt => `
+                <tr class="hover:bg-slate-800">
+                    <td class="px-6 py-4 text-sm text-slate-200">${dt}</td>
+                    <td class="px-6 py-4 text-sm text-right text-red-400">${daily[dt].idr > 0 ? fmt(daily[dt].idr, 'IDR') : '-'}</td>
+                    <td class="px-6 py-4 text-sm text-right text-red-400">${daily[dt].usd > 0 ? fmt(daily[dt].usd, 'USD') : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // CALENDAR
+        function renderCalendar(data) {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            const y = calendarDate.getFullYear(), m = calendarDate.getMonth();
+            document.getElementById('calendar-header').textContent = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+            for(let i=0; i<firstDay; i++) grid.appendChild(document.createElement('div'));
+            
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const items = data.filter(i => i.date === dateStr);
+                const el = document.createElement('div');
+                el.className = "calendar-day border border-slate-700 p-1 rounded hover:bg-slate-700/50 cursor-pointer flex flex-col relative";
+                el.innerHTML = `<span class="text-slate-500 text-xs">${d}</span>`;
+                
+                if(items.length > 0) {
+                    const hasInc = items.some(x=>x.type==='income');
+                    const hasExp = items.some(x=>x.type==='expense');
+                    el.innerHTML += `<div class="flex gap-1 mt-1">${hasInc?'<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>':''}${hasExp?'<div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>':''}</div>`;
+                    
+                    el.addEventListener('click', () => {
+                        document.getElementById('cal-detail-title').textContent = dateStr;
+                        document.getElementById('cal-detail-content').innerHTML = items.map(x=>`
+                            <div class="flex justify-between border-b border-slate-600 pb-1">
+                                <span class="text-slate-300">${x.desc}</span>
+                                <span class="${x.type==='income'?'text-green-400':'text-red-400'}">${fmt(x.amt,x.curr)}</span>
+                            </div>
+                        `).join('');
+                        document.getElementById('calendar-detail-modal').classList.remove('hidden');
+                    });
+                }
+                grid.appendChild(el);
+            }
+        }
+        document.getElementById('prev-month').addEventListener('click', ()=>{ calendarDate.setMonth(calendarDate.getMonth()-1); renderCalendar(masterData); });
+        document.getElementById('next-month').addEventListener('click', ()=>{ calendarDate.setMonth(calendarDate.getMonth()+1); renderCalendar(masterData); });
+        document.getElementById('cal-close').addEventListener('click', ()=>document.getElementById('calendar-detail-modal').classList.add('hidden'));
+
+        // CHART
         let myChart;
         function updateChart(data) {
             const curr = document.getElementById('chart-currency-toggle').value;
@@ -385,7 +494,7 @@
             `).join('');
         }
 
-        // SUBMIT
+        // SUBMIT FORM
         document.getElementById('add-entry-form').addEventListener('submit', e => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
@@ -401,7 +510,6 @@
             if(type === 'transfer') {
                 const fromAmt = parseFloat(document.getElementById('entry-amt-source').value);
                 const toAmtInput = document.getElementById('entry-amt-target').value;
-                // If Target Amount is empty, assume same as Source Amount (simple 1:1 transfer)
                 const toAmt = toAmtInput ? parseFloat(toAmtInput) : fromAmt;
 
                 if(document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && 
@@ -412,8 +520,7 @@
 
                 payload = {
                     action: 'transfer',
-                    date: date,
-                    description: desc,
+                    date: date, description: desc,
                     fromAccount: document.getElementById('entry-acc-source').value,
                     fromCurrency: document.getElementById('entry-curr-source').value,
                     fromAmount: Math.abs(fromAmt),
