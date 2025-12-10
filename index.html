@@ -207,7 +207,7 @@
                                     </div>
                                     <div class="w-2/3">
                                         <label class="block text-sm text-slate-400 mb-1">Amount</label>
-                                        <input type="number" id="entry-amt-source" placeholder="0" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required>
+                                        <input type="number" step="any" id="entry-amt-source" placeholder="0" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required>
                                     </div>
                                 </div>
                             </div>
@@ -243,7 +243,7 @@
                                     </div>
                                     <div class="w-2/3">
                                         <label class="block text-sm text-slate-400 mb-1">Amount Received</label>
-                                        <input type="number" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
+                                        <input type="number" step="any" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
                                     </div>
                                 </div>
                             </div>
@@ -693,7 +693,7 @@
         });
 
         // --- HELPERS ---
-        function fmt(n,c) { return new Intl.NumberFormat(c==='IDR'?'id-ID':'en-US',{style:'currency',currency:c,maximumFractionDigits:0}).format(n); }
+        function fmt(n,c) { return new Intl.NumberFormat(c==='IDR'?'id-ID':'en-US',{style:'currency',currency:c,minimumFractionDigits:0,maximumFractionDigits:2}).format(n); }
         function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3000); }
         
         // --- EVENT LISTENERS ---
