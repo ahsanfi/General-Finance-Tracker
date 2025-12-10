@@ -2,106 +2,130 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker Ultimate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Finance Tracker Ultimate (Mobile)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 8px; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .tab-active { background-color: #3b82f6; color: #fff; }
-        .calendar-day { min-height: 6rem; }
+        .tab-active { background-color: #3b82f6; color: #fff; border-bottom-color: transparent; }
+        .calendar-day { min-height: 4rem; } 
+        @media (min-width: 640px) { .calendar-day { min-height: 6rem; } }
         .sortable { cursor: pointer; user-select: none; }
+        /* Prevent auto-zoom on input focus in iOS */
+        input, select, textarea { font-size: 16px !important; }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen p-2 sm:p-4 text-slate-300">
+<body class="bg-slate-950 min-h-screen text-slate-300 pb-10">
 
     <div id="pin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm">
-        <div class="bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-sm border border-slate-700 text-center">
-            <h2 class="text-2xl font-bold text-slate-100 mb-4">Secure Access</h2>
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-xs border border-slate-700 text-center">
+            <h2 class="text-xl font-bold text-slate-100 mb-2">Secure Access</h2>
+            <p class="text-xs text-slate-400 mb-6">Enter PIN to verify identity</p>
             <form id="pin-form">
-                <input type="password" id="pin-input" class="w-full text-center text-2xl tracking-[.5em] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200" maxlength="4" required autocomplete="off">
-                <p id="pin-error" class="text-red-400 text-sm mt-2 min-h-[20px]"></p>
-                <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">Enter</button>
+                <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" class="w-full text-center text-3xl tracking-[.5em] px-3 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 transition" maxlength="4" required autocomplete="off">
+                <p id="pin-error" class="text-red-400 text-xs mt-3 min-h-[16px]"></p>
+                <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-500 active:scale-95 transition">Enter</button>
             </form>
         </div>
     </div>
 
-    <div id="main-content" class="hidden bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-7xl mx-auto border border-slate-700">
+    <div id="main-content" class="hidden w-full max-w-7xl mx-auto">
         
-        <div class="flex justify-between items-start mb-6">
+        <div class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold text-slate-100">Finance Tracker</h1>
-                <p class="text-slate-400 text-sm">Dashboard & Analytics (IDR Summary)</p>
+                <h1 class="text-lg font-bold text-slate-100">Finance Tracker</h1>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Ultimate</p>
             </div>
             <div class="flex gap-2">
-                <button id="export-btn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-xs font-medium">Export</button>
-                <button id="logout-btn" class="p-2 rounded-full hover:bg-slate-700 text-slate-400"><i class="fas fa-sign-out-alt"></i></button>
+                <button id="export-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-xs transition"><i class="fas fa-camera"></i></button>
+                <button id="logout-btn" class="bg-red-900/30 hover:bg-red-900/50 text-red-400 p-2 rounded-lg transition"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
 
-        <div class="mb-6 border-b border-slate-700">
-            <nav class="flex space-x-2 overflow-x-auto pb-2">
-                <button id="tab-dashboard" class="tab-btn tab-active px-4 py-2 text-sm font-medium rounded-t-lg">Dashboard</button>
-                <button id="tab-transactions" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Transactions</button>
-                <button id="tab-daily" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Daily</button>
-                <button id="tab-calendar" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Calendar</button>
-                <button id="tab-add" class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-white">Add / Transfer</button>
+        <div class="px-4 pt-4 pb-2">
+            <nav class="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
+                <button id="tab-dashboard" class="tab-btn tab-active px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap border border-transparent">Dashboard</button>
+                <button id="tab-transactions" class="tab-btn px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-700">Transactions</button>
+                <button id="tab-add" class="tab-btn px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-700">Add / Transfer</button>
+                <button id="tab-daily" class="tab-btn px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-700">Daily</button>
+                <button id="tab-calendar" class="tab-btn px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-700">Calendar</button>
             </nav>
         </div>
 
-        <div id="tab-content">
+        <div id="tab-content" class="p-4">
             
-            <div id="view-dashboard" class="tab-view">
-                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                            <h3 class="font-semibold text-slate-200 mb-4">Account Balances</h3>
-                            <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-                        </div>
-                        <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Real Cash Flow)</h3>
-                            <div id="summary-cards-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center"></div>
-                        </div>
+            <div id="view-dashboard" class="tab-view space-y-6">
+                 <div class="grid grid-cols-2 gap-3">
+                    <div id="summary-income" class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-between h-24">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Income</div>
+                        <div class="text-green-400 font-bold text-lg truncate">...</div>
                     </div>
-                    <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 flex flex-col">
+                    <div id="summary-expense" class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-between h-24">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Expense</div>
+                        <div class="text-red-400 font-bold text-lg truncate">...</div>
+                    </div>
+                    <div id="summary-net" class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-between h-24">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Net Flow</div>
+                        <div class="text-slate-200 font-bold text-lg truncate">...</div>
+                    </div>
+                    <div id="summary-wealth" class="bg-gradient-to-br from-blue-900 to-slate-800 p-4 rounded-xl border border-blue-800 flex flex-col justify-between h-24 relative overflow-hidden">
+                        <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider z-10">Net Worth</div>
+                        <div class="text-white font-bold text-lg truncate z-10">...</div>
+                        <div class="absolute -bottom-2 -right-2 text-6xl text-white opacity-5"><i class="fas fa-wallet"></i></div>
+                    </div>
+                 </div>
+
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-semibold text-slate-200">Expenses (No Transfer)</h3>
-                            <select id="chart-currency-toggle" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-slate-300"><option value="IDR">IDR</option><option value="USD">USD</option></select>
+                            <h3 class="text-sm font-semibold text-slate-200">Expense Breakdown</h3>
+                            <select id="chart-currency-toggle" class="bg-slate-900 border border-slate-600 text-xs rounded px-2 py-1 text-slate-400"><option value="IDR">IDR</option><option value="USD">USD</option></select>
                         </div>
-                        <div class="relative h-64 flex-grow"><canvas id="expense-pie-chart"></canvas></div>
-                        <div id="expense-details" class="mt-4 space-y-2 border-t border-slate-600 pt-2 overflow-y-auto max-h-40"></div>
+                        <div class="relative h-56 w-full flex justify-center"><canvas id="expense-pie-chart"></canvas></div>
+                        <div id="expense-details" class="mt-4 space-y-2 max-h-48 overflow-y-auto pr-2 custom-scroll"></div>
                     </div>
-                </div>
+
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4">Wallet Balances</h3>
+                        <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                    </div>
+                 </div>
             </div>
 
-            <div id="view-transactions" class="tab-view hidden">
-                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 mb-4">
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
-                        <input type="date" id="filter-start" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full">
-                        <input type="date" id="filter-end" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full">
-                        <select id="filter-cat" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full"></select>
-                        <select id="filter-acc" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full"></select>
-                        <input type="text" id="filter-search" placeholder="Search..." class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm w-full">
+            <div id="view-transactions" class="tab-view hidden space-y-4">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <input type="date" id="filter-start" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
+                        <input type="date" id="filter-end" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
                     </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <select id="filter-cat" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200"></select>
+                        <select id="filter-acc" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200"></select>
+                    </div>
+                    <input type="text" id="filter-search" placeholder="Search description..." class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
                 </div>
-                <div class="overflow-x-auto rounded-lg border border-slate-700">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead class="bg-slate-700">
+                
+                <div id="mobile-trans-list" class="space-y-3 lg:hidden"></div>
+
+                <div class="hidden lg:block overflow-x-auto rounded-xl border border-slate-700">
+                    <table class="min-w-full divide-y divide-slate-700 bg-slate-800">
+                        <thead class="bg-slate-900/50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="date">Date</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Desc</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Acc</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Cat</th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="amount">Amount</th>
-                                <th class="px-2 py-3 text-center">Act</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Acc</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Cat</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Amount</th>
+                                <th class="px-2 py-3 text-center text-xs font-medium text-slate-400 uppercase">Act</th>
                             </tr>
                         </thead>
                         <tbody id="data-body" class="divide-y divide-slate-700"></tbody>
@@ -110,11 +134,11 @@
             </div>
 
             <div id="view-daily" class="tab-view hidden">
-                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                    <h3 class="font-semibold text-slate-200 mb-4">Daily Expense Summary</h3>
+                <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                    <div class="p-4 bg-slate-900/50 border-b border-slate-700"><h3 class="text-sm font-semibold text-slate-200">Daily Expenses</h3></div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-700">
-                            <thead class="bg-slate-700"><tr><th class="px-6 py-3 text-left text-xs font-medium text-slate-400">Date</th><th class="px-6 py-3 text-right text-xs font-medium text-slate-400">Total (IDR)</th><th class="px-6 py-3 text-right text-xs font-medium text-slate-400">Total (USD)</th></tr></thead>
+                        <table class="min-w-full divide-y divide-slate-700 text-sm">
+                            <thead class="bg-slate-900/30"><tr><th class="px-4 py-3 text-left">Date</th><th class="px-4 py-3 text-right">IDR</th><th class="px-4 py-3 text-right">USD</th></tr></thead>
                             <tbody id="daily-body" class="divide-y divide-slate-700"></tbody>
                         </table>
                     </div>
@@ -122,118 +146,124 @@
             </div>
 
             <div id="view-calendar" class="tab-view hidden">
-                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <button id="prev-month" class="p-2 rounded hover:bg-slate-600">&lt;</button><h2 id="calendar-header" class="text-lg font-semibold"></h2><button id="next-month" class="p-2 rounded hover:bg-slate-600">&gt;</button>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <div class="flex items-center justify-between mb-6">
+                        <button id="prev-month" class="p-2 bg-slate-700 rounded-lg hover:bg-slate-600"><i class="fas fa-chevron-left"></i></button>
+                        <h2 id="calendar-header" class="text-lg font-bold text-slate-100"></h2>
+                        <button id="next-month" class="p-2 bg-slate-700 rounded-lg hover:bg-slate-600"><i class="fas fa-chevron-right"></i></button>
                     </div>
-                    <div class="grid grid-cols-7 text-center text-xs text-slate-400 mb-2"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+                    <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-500 mb-2"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
                     <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
                 </div>
             </div>
 
             <div id="view-add" class="tab-view hidden">
-                 <div class="p-6 bg-slate-700/50 rounded-lg border border-slate-700 max-w-3xl mx-auto">
+                 <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 max-w-2xl mx-auto shadow-lg">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-slate-100" id="form-title">New Transaction</h2>
-                        <button id="cancel-edit-btn" class="hidden text-xs bg-gray-600 px-3 py-1 rounded hover:bg-gray-500 text-white">Cancel Edit</button>
+                        <h2 class="text-lg font-bold text-slate-100" id="form-title">New Entry</h2>
+                        <button id="cancel-edit-btn" class="hidden text-xs bg-slate-600 text-white px-3 py-1.5 rounded-lg">Cancel</button>
                     </div>
                     
-                    <div class="flex gap-4 mb-6" id="type-selector">
-                        <label class="flex-1 cursor-pointer"><input type="radio" name="entry-type" value="expense" class="peer hidden" checked><div class="py-3 text-center rounded border border-slate-600 bg-slate-800 peer-checked:bg-red-900/50 peer-checked:border-red-500 peer-checked:text-red-400 transition">Expense</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="radio" name="entry-type" value="income" class="peer hidden"><div class="py-3 text-center rounded border border-slate-600 bg-slate-800 peer-checked:bg-green-900/50 peer-checked:border-green-500 peer-checked:text-green-400 transition">Income</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="radio" name="entry-type" value="transfer" class="peer hidden"><div class="py-3 text-center rounded border border-slate-600 bg-slate-800 peer-checked:bg-blue-900/50 peer-checked:border-blue-500 peer-checked:text-blue-400 transition">Transfer</div></label>
+                    <div class="grid grid-cols-3 gap-2 mb-6 p-1 bg-slate-900 rounded-lg">
+                        <label class="cursor-pointer"><input type="radio" name="entry-type" value="expense" class="peer hidden" checked><div class="py-2 text-center text-xs font-medium rounded-md text-slate-400 peer-checked:bg-slate-800 peer-checked:text-red-400 peer-checked:shadow transition">Expense</div></label>
+                        <label class="cursor-pointer"><input type="radio" name="entry-type" value="income" class="peer hidden"><div class="py-2 text-center text-xs font-medium rounded-md text-slate-400 peer-checked:bg-slate-800 peer-checked:text-green-400 peer-checked:shadow transition">Income</div></label>
+                        <label class="cursor-pointer"><input type="radio" name="entry-type" value="transfer" class="peer hidden"><div class="py-2 text-center text-xs font-medium rounded-md text-slate-400 peer-checked:bg-slate-800 peer-checked:text-blue-400 peer-checked:shadow transition">Transfer</div></label>
                     </div>
 
-                    <form id="add-entry-form" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="md:col-span-2"><label class="block text-sm text-slate-400 mb-1">Description</label><input type="text" id="entry-desc" placeholder="Details..." class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required></div>
-                            <div><label class="block text-sm text-slate-400 mb-1">Date</label><input type="date" id="entry-date" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required></div>
-                            <div id="category-group"><label class="block text-sm text-slate-400 mb-1">Category</label><select id="entry-cat" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"></select><input type="text" id="entry-cat-other" placeholder="New Category" class="hidden w-full mt-2 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"></div>
+                    <form id="add-entry-form" class="space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs text-slate-400 mb-1 ml-1">Description</label>
+                                <input type="text" id="entry-desc" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1 ml-1">Date</label>
+                                <input type="date" id="entry-date" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
+                            </div>
+                            <div id="category-group">
+                                <label class="block text-xs text-slate-400 mb-1 ml-1">Category</label>
+                                <select id="entry-cat" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition appearance-none"></select>
+                                <input type="text" id="entry-cat-other" placeholder="Custom Category" class="hidden w-full mt-2 bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200">
+                            </div>
                         </div>
-                        <div class="p-4 bg-slate-800/50 rounded border border-slate-600">
-                            <label id="lbl-source-acc" class="block text-xs font-bold text-slate-400 uppercase mb-3">Account Details</label>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="block text-sm text-slate-400 mb-1">Account</label><select id="entry-acc-source" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
-                                    <option value="Jenius IDR">Jenius IDR</option>
-                                    <option value="Jenius USD">Jenius USD</option>
-                                    <option value="Mandiri">Mandiri</option>
-                                    <option value="BSI">BSI</option>
-                                    <option value="BLU BCA">BLU BCA</option>
-                                    <option value="Line Bank">Line Bank</option>
-                                    <option value="Jago">Jago</option>
-                                    <option value="Tokocrypto">Tokocrypto</option>
-                                    <option value="Bibit">Bibit</option>
-                                    <option value="Pintu">Pintu</option>
-                                    <option value="Binance">Binance</option>
-                                    <option value="GoPay">GoPay</option>
-                                    <option value="OVO">OVO</option>
-                                    <option value="Dana">Dana</option>
-                                    <option value="ShopeePay">ShopeePay</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Other">Other...</option>
-                                </select></div>
+
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                            <label id="lbl-source-acc" class="block text-xs font-bold text-slate-500 uppercase mb-3">From / Account</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <select id="entry-acc-source" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 focus:outline-none">
+                                        <optgroup label="Bank"><option value="Jenius IDR">Jenius IDR</option><option value="Jenius USD">Jenius USD</option><option value="Mandiri">Mandiri</option><option value="BSI">BSI</option><option value="BLU BCA">BLU BCA</option><option value="Line Bank">Line Bank</option><option value="Jago">Jago</option></optgroup>
+                                        <optgroup label="E-Wallet"><option value="GoPay">GoPay</option><option value="OVO">OVO</option><option value="Dana">Dana</option><option value="ShopeePay">ShopeePay</option></optgroup>
+                                        <optgroup label="Investment"><option value="Tokocrypto">Tokocrypto</option><option value="Bibit">Bibit</option><option value="Pintu">Pintu</option><option value="Binance">Binance</option></optgroup>
+                                        <optgroup label="Physical"><option value="Cash">Cash</option><option value="Other">Other...</option></optgroup>
+                                    </select>
+                                </div>
                                 <div class="flex gap-2">
-                                    <div class="w-1/3"><label class="block text-sm text-slate-400 mb-1">Curr</label><select id="entry-curr-source" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"><option value="IDR">IDR</option><option value="USD">USD</option></select></div>
-                                    <div class="w-2/3"><label class="block text-sm text-slate-400 mb-1">Amount</label><input type="number" step="any" id="entry-amt-source" placeholder="0" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200" required></div>
+                                    <select id="entry-curr-source" class="w-1/3 bg-slate-700 border border-slate-600 rounded-lg px-2 py-3 text-slate-200 text-center"><option value="IDR">IDR</option><option value="USD">USD</option></select>
+                                    <input type="number" step="any" id="entry-amt-source" placeholder="0.00" class="w-2/3 bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 font-mono text-right focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
                                 </div>
                             </div>
                         </div>
-                        <div id="transfer-target-group" class="hidden p-4 bg-slate-800/50 rounded border border-slate-600">
-                            <label class="block text-xs font-bold text-blue-400 uppercase mb-3">Transfer Destination</label>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="block text-sm text-slate-400 mb-1">To Account</label><select id="entry-acc-target" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200">
-                                    <option value="Jenius IDR">Jenius IDR</option>
-                                    <option value="Jenius USD">Jenius USD</option>
-                                    <option value="Mandiri">Mandiri</option>
-                                    <option value="BSI">BSI</option>
-                                    <option value="BLU BCA">BLU BCA</option>
-                                    <option value="Line Bank">Line Bank</option>
-                                    <option value="Jago">Jago</option>
-                                    <option value="Tokocrypto">Tokocrypto</option>
-                                    <option value="Bibit">Bibit</option>
-                                    <option value="Pintu">Pintu</option>
-                                    <option value="Binance">Binance</option>
-                                    <option value="GoPay">GoPay</option>
-                                    <option value="OVO">OVO</option>
-                                    <option value="Dana">Dana</option>
-                                    <option value="ShopeePay">ShopeePay</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Other">Other...</option>
-                                </select></div>
+
+                        <div id="transfer-target-group" class="hidden p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                            <label class="block text-xs font-bold text-blue-400 uppercase mb-3">To Destination</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <select id="entry-acc-target" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 focus:outline-none">
+                                        <optgroup label="Bank"><option value="Jenius IDR">Jenius IDR</option><option value="Jenius USD">Jenius USD</option><option value="Mandiri">Mandiri</option><option value="BSI">BSI</option><option value="BLU BCA">BLU BCA</option><option value="Line Bank">Line Bank</option><option value="Jago">Jago</option></optgroup>
+                                        <optgroup label="E-Wallet"><option value="GoPay">GoPay</option><option value="OVO">OVO</option><option value="Dana">Dana</option><option value="ShopeePay">ShopeePay</option></optgroup>
+                                        <optgroup label="Investment"><option value="Tokocrypto">Tokocrypto</option><option value="Bibit">Bibit</option><option value="Pintu">Pintu</option><option value="Binance">Binance</option></optgroup>
+                                        <optgroup label="Physical"><option value="Cash">Cash</option><option value="Other">Other...</option></optgroup>
+                                    </select>
+                                </div>
                                 <div class="flex gap-2">
-                                    <div class="w-1/3"><label class="block text-sm text-slate-400 mb-1">Curr</label><select id="entry-curr-target" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"><option value="IDR">IDR</option><option value="USD">USD</option></select></div>
-                                    <div class="w-2/3"><label class="block text-sm text-slate-400 mb-1">Amount Received</label><input type="number" step="any" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-slate-200"></div>
+                                    <select id="entry-curr-target" class="w-1/3 bg-slate-700 border border-slate-600 rounded-lg px-2 py-3 text-slate-200 text-center"><option value="IDR">IDR</option><option value="USD">USD</option></select>
+                                    <input type="number" step="any" id="entry-amt-target" placeholder="Auto" class="w-2/3 bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 font-mono text-right focus:ring-2 focus:ring-blue-500 focus:outline-none">
                                 </div>
                             </div>
                         </div>
-                        <button type="submit" id="submit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4">Save Transaction</button>
+
+                        <button type="submit" id="submit-btn" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+                            <span>Save Transaction</span>
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="delete-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-700 rounded-lg p-6 w-full max-w-sm border border-slate-600">
-            <h3 class="font-bold text-white mb-2">Confirm Delete</h3><p class="text-slate-300 mb-4">Cannot undo.</p><div id="del-item-preview" class="bg-slate-800 p-2 rounded mb-4 text-sm"></div>
-            <div class="flex justify-end gap-2"><button id="del-cancel" class="px-3 py-1 bg-slate-600 text-white rounded">Cancel</button><button id="del-confirm" class="px-3 py-1 bg-red-600 text-white rounded">Delete</button></div>
+    <div id="delete-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-xl p-6 w-full max-w-sm border border-slate-700 text-center">
+            <div class="w-12 h-12 bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-trash-alt text-xl"></i></div>
+            <h3 class="font-bold text-white text-lg mb-2">Delete Transaction?</h3>
+            <div id="del-item-preview" class="bg-slate-900 p-3 rounded-lg mb-6 text-sm text-slate-300 border border-slate-700"></div>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="del-cancel" class="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">Cancel</button>
+                <button id="del-confirm" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+            </div>
         </div>
     </div>
-    <div id="calendar-detail-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-700 rounded-lg p-6 w-full max-w-md border border-slate-600">
-            <div class="flex justify-between items-center mb-4"><h3 id="cal-detail-title" class="font-bold text-white"></h3><button id="cal-close" class="text-slate-400">&times;</button></div>
-            <div id="cal-detail-content" class="max-h-80 overflow-y-auto space-y-2 text-sm"></div>
+    
+    <div id="calendar-detail-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-end sm:items-center justify-center sm:p-4">
+        <div class="bg-slate-800 rounded-t-xl sm:rounded-xl p-5 w-full max-w-md border-t sm:border border-slate-700 h-[80vh] sm:h-auto flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700">
+                <h3 id="cal-detail-title" class="font-bold text-white text-lg"></h3>
+                <button id="cal-close" class="text-slate-400 p-2"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="cal-detail-content" class="flex-grow overflow-y-auto space-y-3 custom-scroll"></div>
         </div>
     </div>
-    <div id="toast" class="hidden fixed bottom-5 right-5 bg-slate-700 text-white px-4 py-2 rounded shadow border border-slate-500"></div>
+
+    <div id="toast" class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl border border-slate-600 z-50 flex items-center gap-3 min-w-[200px] justify-center transition-all duration-300 translate-y-[-100px] opacity-0"></div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- CONFIG ---
         const PIN = "1907"; 
         const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwohCuFH5bVNYBjxsD6cXZCAhfHxGt7t28BHOvois74MrKDfRJsQ-TYIsT9a1hjDMeAFA/exec";
         const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
-        
+
         const EXPENSE_CATS = ["Food & Drink", "Transportation", "Groceries", "Shopping", "Bills & Utilities", "Entertainment", "Healthcare", "Transfer", "Other"];
         const INCOME_CATS = ["Main Salary", "Bonus Salary", "Other Salary", "Initial Balance", "Other"];
 
@@ -245,17 +275,17 @@
 
         // --- AUTH ---
         if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); }
-        document.getElementById('pin-form').addEventListener('submit',e=>{ e.preventDefault(); if(document.getElementById('pin-input').value===PIN){ sessionStorage.setItem('auth','true'); document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); } else document.getElementById('pin-error').textContent="Wrong PIN"; });
+        document.getElementById('pin-form').addEventListener('submit',e=>{ e.preventDefault(); if(document.getElementById('pin-input').value===PIN){ sessionStorage.setItem('auth','true'); document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); } else document.getElementById('pin-error').textContent="Incorrect PIN"; });
         document.getElementById('logout-btn').addEventListener('click', ()=>{ sessionStorage.removeItem('auth'); location.reload(); });
 
         // --- NAVIGATION ---
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', e => switchTab(e.target.id.replace('tab','view'))));
         function switchTab(viewId) {
             document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(t=>{t.classList.remove('tab-active','text-white'); t.classList.add('text-slate-400');});
+            document.querySelectorAll('.tab-btn').forEach(t=>{t.classList.remove('tab-active','text-white','bg-blue-600','border-transparent'); t.classList.add('text-slate-400','border-slate-700');});
             document.getElementById(viewId).classList.remove('hidden');
             const btn = document.getElementById(viewId.replace('view','tab'));
-            if(btn) { btn.classList.add('tab-active','text-white'); btn.classList.remove('text-slate-400'); }
+            if(btn) { btn.classList.add('tab-active','text-white','bg-blue-600','border-transparent'); btn.classList.remove('text-slate-400','border-slate-700'); }
         }
 
         // --- LOGIC ---
@@ -271,15 +301,15 @@
         function updateUIForType(val) {
             const tg = document.getElementById('transfer-target-group'), cg = document.getElementById('category-group'), ls = document.getElementById('lbl-source-acc'), btn = document.getElementById('submit-btn');
             if(val === 'transfer') {
-                tg.classList.remove('hidden'); cg.classList.add('hidden'); ls.textContent = "FROM ACCOUNT (SOURCE)";
-                btn.textContent = isEditing ? "Update Transfer" : "Process Transfer";
-                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mt-4";
+                tg.classList.remove('hidden'); cg.classList.add('hidden'); ls.textContent = "FROM / SOURCE";
+                btn.innerHTML = `<span>${isEditing ? "Update Transfer" : "Process Transfer"}</span>`;
+                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2";
             } else {
-                tg.classList.add('hidden'); cg.classList.remove('hidden'); ls.textContent = "ACCOUNT DETAILS";
-                btn.textContent = isEditing ? "Update Transaction" : "Save Transaction";
+                tg.classList.add('hidden'); cg.classList.remove('hidden'); ls.textContent = "FROM / ACCOUNT";
+                btn.innerHTML = `<span>${isEditing ? "Update Transaction" : "Save Transaction"}</span>`;
                 updateCategoryOptions(val);
-                if(val === 'income') btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded transition mt-4" : "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition mt-4";
-                else btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded transition mt-4" : "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4"; 
+                if(val === 'income') btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2" : "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2";
+                else btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2" : "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2";
             }
         }
         document.getElementById('entry-cat').addEventListener('change', e => document.getElementById('entry-cat-other').classList.toggle('hidden', e.target.value!=='Other'));
@@ -307,10 +337,10 @@
                 if (rateData.values && rateData.values[0]) exchangeRate = parseFloat(rateData.values[0][0].replace(/,/g, '').replace(/[^\d.]/g, ''));
                 
                 const cats = [...new Set(masterData.map(d=>d.cat))].sort(), accs = [...new Set(masterData.map(d=>d.acc))].sort();
-                document.getElementById('filter-cat').innerHTML = '<option value="all">All Cats</option>' + cats.map(c=>`<option>${c}</option>`).join('');
-                document.getElementById('filter-acc').innerHTML = '<option value="all">All Accs</option>' + accs.map(a=>`<option>${a}</option>`).join('');
+                document.getElementById('filter-cat').innerHTML = '<option value="all">All Categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+                document.getElementById('filter-acc').innerHTML = '<option value="all">All Accounts</option>' + accs.map(a=>`<option>${a}</option>`).join('');
                 renderAll();
-            } catch(e) { showToast("Error loading data: " + e.message); }
+            } catch(e) { showToast("Error loading data: " + e.message, 'error'); }
         }
 
         // --- RENDER ---
@@ -328,21 +358,27 @@
                 }
             });
             
-            document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map(b => `<div class="flex justify-between p-2 bg-slate-800 rounded border border-slate-600"><span>${b.n}</span><span class="font-bold ${b.v>=0?'text-blue-400':'text-red-400'}">${fmt(b.v,b.c)}</span></div>`).join('');
+            document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map(b => 
+                `<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700 hover:border-slate-500 transition">
+                    <span class="text-sm text-slate-300 font-medium">${b.n}</span>
+                    <span class="font-bold font-mono ${b.v>=0?'text-blue-400':'text-red-400'}">${fmt(b.v,b.c)}</span>
+                </div>`
+            ).join('');
 
             const totalIncReal = incIDR + (incUSD * exchangeRate);
             const totalExpReal = expIDR + (expUSD * exchangeRate);
             const netCashFlowIDR = totalIncReal - totalExpReal;
             let totalAssetIDR = 0; Object.values(bals).forEach(b => { if(b.c==='IDR') totalAssetIDR+=b.v; if(b.c==='USD') totalAssetIDR+=(b.v*exchangeRate); });
-            let saveRate = totalIncReal > 0 ? ((totalIncReal - totalExpReal) / totalIncReal) * 100 : 0;
+            
+            // Update Summary Cards (Mobile & Desktop)
+            document.querySelector('#summary-income div:last-child').textContent = fmt(totalIncReal,'IDR');
+            document.querySelector('#summary-expense div:last-child').textContent = fmt(totalExpReal,'IDR');
+            document.querySelector('#summary-net div:last-child').textContent = fmt(netCashFlowIDR,'IDR');
+            const netEl = document.querySelector('#summary-net div:last-child');
+            netEl.className = `font-bold text-lg truncate ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
+            document.querySelector('#summary-wealth div:nth-child(2)').textContent = new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR);
 
-            document.getElementById('summary-cards-container').innerHTML = `
-                <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center"><div class="text-xs text-slate-400 uppercase font-bold mb-1">Total Income</div><div class="text-green-400 font-bold">${fmt(totalIncReal,'IDR')}</div></div>
-                <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center"><div class="text-xs text-slate-400 uppercase font-bold mb-1">Total Expense</div><div class="text-red-400 font-bold">${fmt(totalExpReal,'IDR')}</div></div>
-                <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center"><div class="text-xs text-slate-400 uppercase font-bold mb-1">Net Cash Flow</div><div class="${netCashFlowIDR>=0?'text-blue-400':'text-orange-400'} font-bold">${fmt(netCashFlowIDR,'IDR')}</div></div>
-                <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center relative overflow-hidden"><div class="text-xs text-slate-400 uppercase font-bold mb-1">Est. Net Worth</div><div class="text-white font-bold text-lg">${new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR)}</div><div class="mt-1 flex items-center justify-center gap-1"><span class="text-[10px] text-slate-400">Rate: ${new Intl.NumberFormat('en-US').format(exchangeRate)} | Save:</span><span class="text-xs font-bold ${saveRate>=20?'text-green-400':(saveRate>0?'text-yellow-400':'text-red-400')}">${saveRate.toFixed(1)}%</span></div></div>
-            `;
-
+            // Transactions List
             const s=document.getElementById('filter-search').value.toLowerCase(), start=document.getElementById('filter-start').value, end=document.getElementById('filter-end').value, fCat=document.getElementById('filter-cat').value, fAcc=document.getElementById('filter-acc').value;
             let filtered = masterData.filter(d => {
                 if(start && d.date < start) return false; if(end && d.date > end) return false;
@@ -350,17 +386,51 @@
                 if(s && !d.desc.toLowerCase().includes(s)) return false; return true;
             }).sort((a,b) => sortState.o==='asc' ? (a[sortState.k]>b[sortState.k]?1:-1) : (a[sortState.k]<b[sortState.k]?1:-1));
 
-            document.getElementById('data-body').innerHTML = filtered.map(d => `
-                <tr class="hover:bg-slate-800"><td class="px-4 py-3 text-sm text-slate-400">${d.date}</td><td class="px-4 py-3 text-sm text-slate-200">${d.desc}</td><td class="px-4 py-3 text-sm text-slate-400"><span class="bg-slate-700 px-1 rounded text-xs">${d.acc}</span></td><td class="px-4 py-3 text-sm text-slate-400">${d.cat}</td><td class="px-4 py-3 text-sm text-right ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</td><td class="px-2 py-3 text-center flex justify-center gap-2"><button class="text-slate-500 hover:text-blue-400 edit-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-pencil-alt"></i></button><button class="text-slate-500 hover:text-red-400 del-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button></td></tr>
+            // Mobile List View
+            document.getElementById('mobile-trans-list').innerHTML = filtered.map(d => `
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center active:bg-slate-700 transition">
+                    <div class="flex flex-col max-w-[60%]">
+                        <span class="text-sm font-bold text-slate-100 truncate">${d.desc}</span>
+                        <div class="flex items-center gap-2 text-xs text-slate-400">
+                            <span>${d.date.slice(5)}</span> • <span class="bg-slate-700 px-1 rounded">${d.acc}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="font-bold text-sm ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</span>
+                        <div class="flex gap-3 mt-1">
+                            <button class="text-slate-500 hover:text-blue-400 edit-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-pen"></i></button>
+                            <button class="text-slate-500 hover:text-red-400 del-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
             `).join('');
-            if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-500">No data</td></tr>';
+            if(filtered.length===0) document.getElementById('mobile-trans-list').innerHTML = '<div class="text-center text-slate-500 py-4 text-xs">No transactions found</div>';
+
+            // Desktop Table View
+            document.getElementById('data-body').innerHTML = filtered.map(d => `
+                <tr class="hover:bg-slate-700/50 transition border-b border-slate-700 last:border-0">
+                    <td class="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">${d.date}</td>
+                    <td class="px-4 py-3 text-sm text-slate-200 font-medium">${d.desc}</td>
+                    <td class="px-4 py-3 text-sm text-slate-400"><span class="bg-slate-700 px-2 py-0.5 rounded text-xs">${d.acc}</span></td>
+                    <td class="px-4 py-3 text-sm text-slate-400">${d.cat}</td>
+                    <td class="px-4 py-3 text-sm text-right font-mono ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</td>
+                    <td class="px-2 py-3 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button class="p-1 text-slate-500 hover:text-blue-400 edit-btn transition" data-item='${JSON.stringify(d)}'><i class="fas fa-pencil-alt"></i></button>
+                            <button class="p-1 text-slate-500 hover:text-red-400 del-btn transition" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500 text-sm">No data found</td></tr>';
 
             renderDaily(masterData); renderCalendar(masterData); updateChart(masterData);
         }
 
+        // ... [Rest of Helper Functions & Logic same as before] ...
         function renderDaily(data) {
             const dly={}; data.filter(d=>d.type==='expense'&&d.cat!=='Transfer').forEach(d=>{ if(!dly[d.date]) dly[d.date]={idr:0,usd:0}; if(d.curr==='IDR') dly[d.date].idr+=d.amt; else dly[d.date].usd+=d.amt; });
-            document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr class="hover:bg-slate-800"><td class="px-6 py-4 text-sm text-slate-200">${dt}</td><td class="px-6 py-4 text-sm text-right text-red-400">${dly[dt].idr>0?fmt(dly[dt].idr,'IDR'):'-'}</td><td class="px-6 py-4 text-sm text-right text-red-400">${dly[dt].usd>0?fmt(dly[dt].usd,'USD'):'-'}</td></tr>`).join('');
+            document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr class="hover:bg-slate-700/50 border-b border-slate-700"><td class="px-4 py-3 text-sm text-slate-300 font-medium">${dt}</td><td class="px-4 py-3 text-sm text-right text-red-400 font-mono">${dly[dt].idr>0?fmt(dly[dt].idr,'IDR'):'-'}</td><td class="px-4 py-3 text-sm text-right text-red-400 font-mono">${dly[dt].usd>0?fmt(dly[dt].usd,'USD'):'-'}</td></tr>`).join('');
         }
 
         function renderCalendar(data) {
@@ -368,8 +438,20 @@
             for(let i=0; i<new Date(y,m,1).getDay(); i++) g.appendChild(document.createElement('div'));
             for(let d=1; d<=new Date(y,m+1,0).getDate(); d++) {
                 const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, items = data.filter(i=>i.date===dateStr), el = document.createElement('div');
-                el.className = "calendar-day border border-slate-700 p-1 rounded hover:bg-slate-700/50 cursor-pointer flex flex-col relative"; el.innerHTML = `<span class="text-slate-500 text-xs">${d}</span>`;
-                if(items.length>0) { el.innerHTML += `<div class="flex gap-1 mt-1">${items.some(x=>x.type==='income')?'<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>':''}${items.some(x=>x.type==='expense')?'<div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>':''}</div>`; el.addEventListener('click', () => { document.getElementById('cal-detail-title').textContent = dateStr; document.getElementById('cal-detail-content').innerHTML = items.map(x=>`<div class="flex justify-between border-b border-slate-600 pb-1"><span class="text-slate-300">${x.desc}</span><span class="${x.type==='income'?'text-green-400':'text-red-400'}">${fmt(x.amt,x.curr)}</span></div>`).join(''); document.getElementById('calendar-detail-modal').classList.remove('hidden'); }); }
+                el.className = "calendar-day bg-slate-900/50 border border-slate-700 rounded-lg p-1 flex flex-col items-center justify-start hover:bg-slate-800 transition active:scale-95"; 
+                el.innerHTML = `<span class="text-[10px] text-slate-500 mb-1">${d}</span>`;
+                if(items.length>0) { 
+                    el.innerHTML += `<div class="flex gap-1 mt-auto pb-1">${items.some(x=>x.type==='income')?'<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>':''}${items.some(x=>x.type==='expense')?'<div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>':''}</div>`; 
+                    el.onclick = () => { 
+                        document.getElementById('cal-detail-title').textContent = `${dateStr}`; 
+                        document.getElementById('cal-detail-content').innerHTML = items.map(x=>`
+                            <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
+                                <div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-xs text-slate-500">${x.cat}</div></div>
+                                <div class="${x.type==='income'?'text-green-400':'text-red-400'} font-mono text-sm">${fmt(x.amt,x.curr)}</div>
+                            </div>`).join(''); 
+                        document.getElementById('calendar-detail-modal').classList.remove('hidden'); 
+                    }; 
+                }
                 g.appendChild(el);
             }
         }
@@ -381,12 +463,12 @@
         function updateChart(data) {
             const curr = document.getElementById('chart-currency-toggle').value; const exps = data.filter(d=>d.type==='expense'&&d.curr===curr&&d.cat!=='Transfer'); const totals={}; exps.forEach(d=>totals[d.cat]=(totals[d.cat]||0)+d.amt);
             const ctx=document.getElementById('expense-pie-chart').getContext('2d'); if(myChart) myChart.destroy();
-            myChart = new Chart(ctx, {type:'doughnut',data:{labels:Object.keys(totals),datasets:[{data:Object.values(totals),backgroundColor:['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#a855f7','#ec4899'],borderWidth:0}]},options:{plugins:{legend:{display:false}},cutout:'70%'}});
-            document.getElementById('expense-details').innerHTML = Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="flex justify-between text-xs border-b border-slate-700 pb-1"><span>${k}</span><span>${fmt(v,curr)}</span></div>`).join('');
+            myChart = new Chart(ctx, {type:'doughnut',data:{labels:Object.keys(totals),datasets:[{data:Object.values(totals),backgroundColor:['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#a855f7','#ec4899','#6366f1'],borderWidth:0}]},options:{plugins:{legend:{display:false}},cutout:'70%'}});
+            document.getElementById('expense-details').innerHTML = Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="flex justify-between text-xs py-2 border-b border-slate-700 last:border-0"><span class="text-slate-300">${k}</span><span class="font-mono text-slate-100">${fmt(v,curr)}</span></div>`).join('');
         }
 
         document.getElementById('add-entry-form').addEventListener('submit', e => {
-            e.preventDefault(); const btn=document.getElementById('submit-btn'); const origTxt=btn.textContent; btn.innerHTML='<div class="loader mx-auto"></div>'; btn.disabled=true;
+            e.preventDefault(); const btn=document.getElementById('submit-btn'); const origTxt=btn.innerHTML; btn.innerHTML='<div class="loader"></div>'; btn.disabled=true;
             const type = document.querySelector('input[name="entry-type"]:checked').value, date=document.getElementById('entry-date').value, desc=document.getElementById('entry-desc').value;
             let payload = {};
 
@@ -402,7 +484,7 @@
             } else {
                 if(type === 'transfer') {
                     const fromAmt = parseFloat(document.getElementById('entry-amt-source').value), toAmtInput = document.getElementById('entry-amt-target').value, toAmt = toAmtInput ? parseFloat(toAmtInput) : fromAmt;
-                    if(document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) { showToast("Accounts match!"); btn.innerHTML=origTxt; btn.disabled=false; return; }
+                    if(document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) { showToast("Accounts match!", 'error'); btn.innerHTML=origTxt; btn.disabled=false; return; }
                     payload = { action: 'transfer', date, description: desc, fromAccount: document.getElementById('entry-acc-source').value, fromCurrency: document.getElementById('entry-curr-source').value, fromAmount: Math.abs(fromAmt), toAccount: document.getElementById('entry-acc-target').value, toCurrency: document.getElementById('entry-curr-target').value, toAmount: Math.abs(toAmt) };
                 } else {
                     let cat = document.getElementById('entry-cat').value; if(cat==='Other') cat = document.getElementById('entry-cat-other').value;
@@ -411,26 +493,32 @@
             }
 
             fetch(WEB_APP_URL, {method:'POST', body:JSON.stringify(payload)}).then(r=>r.json()).then(d => {
-                if(d.status==='success') { showToast(d.message); resetForm(); setTimeout(fetchData, 1500); } else throw new Error(d.message);
-            }).catch(e => showToast("Error: "+e.message)).finally(() => { btn.innerHTML=origTxt; btn.disabled=false; });
+                if(d.status==='success') { showToast(d.message, 'success'); resetForm(); setTimeout(fetchData, 1500); } else throw new Error(d.message);
+            }).catch(e => showToast("Error: "+e.message, 'error')).finally(() => { btn.innerHTML=origTxt; btn.disabled=false; });
         });
 
         function resetForm() {
             document.getElementById('add-entry-form').reset(); document.getElementById('entry-date').valueAsDate = new Date();
-            isEditing=false; editItem=null; document.getElementById('form-title').textContent="New Transaction"; document.getElementById('cancel-edit-btn').classList.add('hidden');
+            isEditing=false; editItem=null; document.getElementById('form-title').textContent="New Entry"; document.getElementById('cancel-edit-btn').classList.add('hidden');
             document.querySelector('input[name="entry-type"][value="expense"]').checked = true; document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
         }
         document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
 
-        document.getElementById('data-body').addEventListener('click', e => {
+        // Global Listeners for Edit/Delete
+        document.addEventListener('click', e => {
             const btnEdit = e.target.closest('.edit-btn'), btnDel = e.target.closest('.del-btn');
             
-            if(btnDel) { itemToDelete = JSON.parse(btnDel.dataset.item); document.getElementById('del-item-preview').textContent = `${itemToDelete.desc} (${fmt(itemToDelete.amt, itemToDelete.curr)})`; document.getElementById('delete-modal').classList.remove('hidden'); }
+            if(btnDel) { 
+                itemToDelete = JSON.parse(btnDel.dataset.item); 
+                document.getElementById('del-item-preview').innerHTML = `<div class="font-bold text-white">${itemToDelete.desc}</div><div class="${itemToDelete.type==='income'?'text-green-400':'text-red-400'}">${fmt(itemToDelete.amt, itemToDelete.curr)}</div>`; 
+                document.getElementById('delete-modal').classList.remove('hidden'); 
+            }
             
             if(btnEdit) {
                 const item = JSON.parse(btnEdit.dataset.item);
-                if(item.cat === 'Transfer') { showToast("Delete & recreate transfer."); return; }
-                isEditing=true; editItem=item; document.getElementById('form-title').textContent="Edit Transaction"; document.getElementById('cancel-edit-btn').classList.remove('hidden'); switchTab('view-add');
+                if(item.cat === 'Transfer') { showToast("Delete & recreate transfer.", 'error'); return; }
+                isEditing=true; editItem=item; 
+                document.getElementById('form-title').textContent="Edit Transaction"; document.getElementById('cancel-edit-btn').classList.remove('hidden'); switchTab('view-add');
                 document.querySelector(`input[name="entry-type"][value="${item.type}"]`).checked = true; updateUIForType(item.type);
                 document.getElementById('entry-desc').value = item.desc; document.getElementById('entry-date').value = item.date; 
                 const catSelect = document.getElementById('entry-cat'); if([...catSelect.options].map(o=>o.value).includes(item.cat)) catSelect.value = item.cat; else { catSelect.value = 'Other'; document.getElementById('entry-cat-other').classList.remove('hidden'); document.getElementById('entry-cat-other').value = item.cat; }
@@ -440,26 +528,32 @@
 
         document.getElementById('del-cancel').addEventListener('click', ()=>document.getElementById('delete-modal').classList.add('hidden'));
         document.getElementById('del-confirm').addEventListener('click', ()=>{
-            const btn = document.getElementById('del-confirm'); btn.textContent='...';
-            // PENTING: Mengirim seluruh objek (originalData) agar Smart Matching di backend bisa bekerja
+            const btn = document.getElementById('del-confirm'); const origTxt = btn.textContent; btn.textContent='...';
             fetch(WEB_APP_URL, {
                 method:'POST', 
-                body:JSON.stringify({
-                    action:'delete', 
-                    sheetName: itemToDelete.type==='income'?'Income':'Expenses', 
-                    originalData: itemToDelete 
-                })
+                body:JSON.stringify({ action:'delete', sheetName: itemToDelete.type==='income'?'Income':'Expenses', originalData: itemToDelete })
             }).then(r=>r.json()).then(d => {
-                document.getElementById('delete-modal').classList.add('hidden'); btn.textContent='Delete'; if(d.status==='success') fetchData(); else showToast(d.message);
+                document.getElementById('delete-modal').classList.add('hidden'); btn.textContent=origTxt; if(d.status==='success') { showToast("Deleted successfully", 'success'); fetchData(); } else showToast(d.message, 'error');
             });
         });
 
         function fmt(n, c) { return new Intl.NumberFormat('en-US', {style:'currency',currency:c,minimumFractionDigits:0,maximumFractionDigits:2}).format(n); }
-        function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3000); }
+        function showToast(m, type) { 
+            const t=document.getElementById('toast'); 
+            t.className = `fixed top-5 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl border z-50 flex items-center gap-3 min-w-[200px] justify-center transition-all duration-300 translate-y-0 opacity-100 ${type==='error'?'bg-red-900/90 border-red-700 text-red-100':'bg-slate-800/90 border-slate-600 text-slate-100'}`;
+            t.innerHTML = `${type==='error'?'<i class="fas fa-exclamation-circle"></i>':'<i class="fas fa-check-circle text-green-400"></i>'} <span>${m}</span>`;
+            t.classList.remove('hidden'); 
+            setTimeout(()=>{ t.classList.add('translate-y-[-100px]', 'opacity-0'); setTimeout(()=>t.classList.add('hidden'),300); }, 3000); 
+        }
+        
         ['filter-start','filter-end','filter-cat','filter-acc','filter-search'].forEach(i => document.getElementById(i).addEventListener('input', renderAll));
         document.getElementById('chart-currency-toggle').addEventListener('change', ()=>updateChart(masterData));
         document.querySelectorAll('.sortable').forEach(s => s.addEventListener('click', e => { sortState.k = e.target.dataset.sort; sortState.o = sortState.o==='asc'?'desc':'asc'; renderAll(); }));
-        document.getElementById('export-btn').addEventListener('click', async () => { const c = await html2canvas(document.getElementById('view-dashboard'), {backgroundColor:'#1e293b', scale:2}); const a = document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='dashboard.png'; a.click(); });
+        document.getElementById('export-btn').addEventListener('click', async () => { 
+            const el = document.getElementById('view-dashboard');
+            const c = await html2canvas(el, {backgroundColor:'#0f172a', scale:2}); 
+            const a = document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='finance_dashboard.png'; a.click(); 
+        });
     });
     </script>
 </body>
