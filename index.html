@@ -420,7 +420,8 @@
                 if(d.type==='income') { 
                     bals[k].v += d.amt; 
                     // ONLY COUNT FOR SUMMARY IF NOT TRANSFER
-                    if(d.cat !== 'Transfer') {
+                    // AND NOT INITIAL BALANCE
+                    if(d.cat !== 'Transfer' && d.cat !== 'Initial Balance') {
                         if(d.curr==='IDR') incIDR+=d.amt; else incUSD+=d.amt; 
                     }
                 }
