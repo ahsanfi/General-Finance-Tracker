@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .loader { border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        tfoot tr { border-top: 2px solid #334155; }
+        .tab-active { background-color: #3b82f6; color: #fff; }
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { color: #f1f5f9; }
+        .calendar-day { min-height: 6rem; }
+        .calendar-day:hover { background-color: #334155; }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen p-2 sm:p-4 text-slate-300">
+
+    <div id="pin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-sm border border-slate-700 text-center">
+            <h2 class="text-2xl font-bold text-slate-100 mb-4">Secure Access</h2>
+            <p class="text-slate-400 mb-6">Enter PIN to access Finance Tracker</p>
+            <form id="pin-form">
+                <input type="password" id="pin-input" class="w-full text-center text-2xl tracking-[.5em] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200" maxlength="4" required autocomplete="off">
+                <p id="pin-error" class="text-red-400 text-sm mt-2 min-h-[20px]"></p>
+                <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">Enter</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-content" class="hidden bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto border border-slate-700">
+
+        <div class="flex justify-between items-start mb-8">
+            <div class="text-left">
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-100">Finance Tracker</h1>
+                <p class="text-slate-400 mt-1 text-sm sm:text-base">Track Income, Expenses, and Account Balances.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                 <button id="export-dashboard-btn" title="Export Dashboard" class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Export</span>
+                </button>
+                <button id="logout-btn" title="Logout" class="p-2 rounded-full hover:bg-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="mb-6 border-b border-slate-700">
+            <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2">
+                <button id="tab-dashboard" class="tab-btn tab-active px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg whitespace-nowrap">Dashboard</button>
+                <button id="tab-transactions" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Transactions</button>
+                <button id="tab-daily" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Daily</button>
+                <button id="tab-calendar" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Calendar</button>
+                <button id="tab-add" class="tab-btn px-3 sm:px-4 py-2 font-medium text-sm rounded-t-lg text-slate-400 hover:text-white whitespace-nowrap">Add Entry</button>
+            </nav>
+        </div>
+
+        <div id="tab-content">
+            
+            <div id="view-dashboard" class="tab-view">
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-slate-700/50 p-4 sm:p-6 rounded-lg border border-slate-700">
+                            <h3 class="text-lg font-semibold text-slate-200 mb-4">Account Balances</h3>
+                            <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                </div>
+                        </div>
+
+                        <div class="bg-slate-700/50 p-4 sm:p-6 rounded-lg border border-slate-700">
+                            <h3 class="text-lg font-semibold text-slate-200 mb-4">Cash Flow Summary</h3>
+                            <div id="summary-cards-container" class="grid grid-cols-2 gap-4 text-center">
+                                </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-700/50 p-4 sm:p-6 rounded-lg border border-slate-700 flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-slate-200">Expenses by Category</h3>
+                            <select id="chart-currency-toggle" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-slate-300">
+                                <option value="IDR">IDR</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div class="relative h-64 md:h-72 flex-grow">
+                           <canvas id="expense-pie-chart"></canvas>
+                        </div>
+                        <div id="expense-category-details" class="mt-6 space-y-2 border-t border-slate-600 pt-4 overflow-y-auto max-h-60">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-transactions" class="tab-view hidden">
+                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700 mb-6">
+                    <h3 class="font-semibold text-slate-200 mb-3">Filter Transactions</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                        <div><label class="block text-xs text-slate-400 mb-1">From</label><input type="date" id="filter-start-date" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"></div>
+                        <div><label class="block text-xs text-slate-400 mb-1">To</label><input type="date" id="filter-end-date" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"></div>
+                        <div><label class="block text-xs text-slate-400 mb-1">Category</label><select id="filter-category" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"></select></div>
+                         <div><label class="block text-xs text-slate-400 mb-1">Account</label><select id="filter-account" class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 text-sm"><option value="all">All Accounts</option></select></div>
+                        <div class="sm:col-span-2 md:col-span-5"><input type="text" id="filter-search" placeholder="Search description..." class="filter-input w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 placeholder-slate-500 text-sm"></div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto rounded-lg border border-slate-700">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead id="trans-thead" class="bg-slate-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="date">Date <span class="sort-indicator"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Description</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Account</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Category</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="amount">Amount <span class="sort-indicator"></span></th>
+                                <th class="px-2 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-body" class="divide-y divide-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="view-daily" class="tab-view hidden">
+                <div class="overflow-x-auto rounded-lg border border-slate-700">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead id="daily-thead" class="bg-slate-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sortable" data-sort="date">Date <span class="sort-indicator"></span></th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Total (IDR)</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Total (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daily-summary-body" class="divide-y divide-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-calendar" class="tab-view hidden">
+                <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <button id="prev-month-btn" class="p-2 rounded-full hover:bg-slate-600">&lt;</button>
+                        <h2 id="calendar-header" class="text-lg font-semibold text-slate-100"></h2>
+                        <button id="next-month-btn" class="p-2 rounded-full hover:bg-slate-600">&gt;</button>
+                    </div>
+                    <div class="grid grid-cols-7 text-center text-xs text-slate-400 mb-2">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                </div>
+            </div>
+            
+            <div id="view-add" class="tab-view hidden">
+                 <div class="p-4 sm:p-6 bg-slate-700/50 rounded-lg border border-slate-700 max-w-4xl mx-auto">
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-100 mb-4">Add Transaction</h2>
+                    <form id="add-entry-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Description</label>
+                            <input type="text" id="entry-description" placeholder="Ex: Grocery Shopping" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Date</label>
+                            <input type="date" id="entry-date" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Account / Wallet</label>
+                            <select id="entry-account" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200">
+                                <option value="BCA">Bank BCA</option>
+                                <option value="Mandiri">Bank Mandiri</option>
+                                <option value="Jenius">Jenius/BTPN</option>
+                                <option value="GoPay">GoPay</option>
+                                <option value="OVO">OVO</option>
+                                <option value="Cash">Cash (Physical)</option>
+                                <option value="PayPal">PayPal</option>
+                                <option value="Other">Other...</option>
+                            </select>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <div class="w-1/3">
+                                <label class="block text-sm font-medium text-slate-300 mb-1">Currency</label>
+                                <select id="entry-currency" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200">
+                                    <option value="IDR">IDR (Rp)</option>
+                                    <option value="USD">USD ($)</option>
+                                </select>
+                            </div>
+                            <div class="w-2/3">
+                                <label class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
+                                <input type="number" id="entry-amount" placeholder="0" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Category</label>
+                            <select id="entry-category" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm text-slate-200">
+                                <option>Salary</option>
+                                <option>Freelance</option>
+                                <option>Food & Drink</option>
+                                <option>Transportation</option>
+                                <option>Groceries</option>
+                                <option>Shopping</option>
+                                <option>Bills & Utilities</option>
+                                <option>Entertainment</option>
+                                <option>Healthcare</option>
+                                <option>Transfer</option>
+                                <option value="Other">Other...</option>
+                            </select>
+                            <input type="text" id="other-category-input" placeholder="New category name" class="hidden w-full mt-2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Type</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center cursor-pointer p-3 border border-slate-600 rounded hover:bg-slate-700 flex-1 justify-center">
+                                    <input type="radio" name="entry-type" value="expense" class="h-4 w-4 bg-slate-700 border-slate-600" checked>
+                                    <span class="ml-2 text-red-400 font-medium">Expense</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer p-3 border border-slate-600 rounded hover:bg-slate-700 flex-1 justify-center">
+                                    <input type="radio" name="entry-type" value="income" class="h-4 w-4 bg-slate-700 border-slate-600">
+                                    <span class="ml-2 text-green-400 font-medium">Income</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 pt-4">
+                            <button type="submit" id="submit-entry-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition">Save Transaction</button>
+                        </div>
+                    </form>
+                    <div id="form-status" class="text-center mt-4 min-h-[20px]"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-700 rounded-lg shadow-xl p-6 w-full max-w-sm border border-slate-600">
+            <h3 class="text-lg font-bold text-slate-100 mb-2">Confirm Deletion</h3><p class="text-slate-300 mb-6">Are you sure? This action cannot be undone.</p>
+            <div id="delete-modal-item" class="text-sm bg-slate-800 p-3 rounded-md mb-6 border border-slate-600"></div>
+            <div class="flex justify-end gap-4"><button id="cancel-delete-btn" class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-md">Cancel</button><button id="confirm-delete-btn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md">Delete</button></div>
+        </div>
+    </div>
+
+    <div id="calendar-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-700 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-600">
+            <div class="flex justify-between items-center mb-4">
+                 <h3 id="calendar-detail-title" class="text-lg font-bold text-slate-100">Transactions</h3>
+                 <button id="close-calendar-detail-btn" class="text-slate-400 hover:text-white">&times;</button>
+            </div>
+            <div id="calendar-detail-content" class="text-sm space-y-2 max-h-80 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-5 right-5 bg-slate-700 text-white px-6 py-3 rounded-lg shadow-lg border border-slate-500 transition-opacity duration-300 flex items-center gap-2">
+        <span id="toast-message">Notification</span>
+    </div>
+
+    <script>
+        // --- CONFIG & STATE ---
+        const CORRECT_PIN = "1907"; // Your PIN
+        
+        // !!! REPLACE THESE WITH YOUR OWN ID AND URL !!!
+        const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
+        const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwohCuFH5bVNYBjxsD6cXZCAhfHxGt7t28BHOvois74MrKDfRJsQ-TYIsT9a1hjDMeAFA/exec";
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        const INCOME_SHEET_NAME = "Income";
+        const EXPENSE_SHEET_NAME = "Expenses";
+        // Range updated to fetch 6 columns (A to F)
+        const DATA_RANGE = 'A2:F'; 
+        
+        // Approx rate for dashboard display estimation only
+        const EST_USD_TO_IDR = 15800; 
+
+        let masterData = [];
+        let expenseChart = null;
+        let transSortState = { key: 'date', order: 'desc' };
+        let itemToDelete = null;
+        let calendarDate = new Date();
+
+        // --- DOM ELEMENTS ---
+        const pinModal = document.getElementById('pin-modal');
+        const pinForm = document.getElementById('pin-form');
+        const pinInput = document.getElementById('pin-input');
+        const pinError = document.getElementById('pin-error');
+        const mainContent = document.getElementById('main-content');
+        
+        const tableBody = document.getElementById('data-body');
+        const dailySummaryBody = document.getElementById('daily-summary-body');
+        const addEntryForm = document.getElementById('add-entry-form');
+        const formStatus = document.getElementById('form-status');
+        const categorySelect = document.getElementById('entry-category');
+        const otherCategoryInput = document.getElementById('other-category-input');
+        const categoryFilter = document.getElementById('filter-category');
+        const accountFilter = document.getElementById('filter-account');
+        const filterInputs = document.querySelectorAll('.filter-input');
+        const chartCurrencyToggle = document.getElementById('chart-currency-toggle');
+        
+        // --- INITIALIZATION ---
+        document.getElementById('entry-date').valueAsDate = new Date();
+
+        function checkAuth() {
+            if (sessionStorage.getItem('isAuthenticated') === 'true') {
+                pinModal.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                fetchData();
+            }
+        }
+
+        pinForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (pinInput.value === CORRECT_PIN) {
+                sessionStorage.setItem('isAuthenticated', 'true');
+                checkAuth();
+            } else {
+                pinError.textContent = "Incorrect PIN";
+                pinInput.value = '';
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('isAuthenticated');
+            window.location.reload();
+        });
+
+        // --- DATA FETCHING ---
+        async function fetchData() {
+            const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`; 
+            try {
+                // Fetch Income and Expenses
+                const [incomeRes, expenseRes] = await Promise.all([ 
+                    fetch(`${baseUrl}/${INCOME_SHEET_NAME}!${DATA_RANGE}?key=${API_KEY}`), 
+                    fetch(`${baseUrl}/${EXPENSE_SHEET_NAME}!${DATA_RANGE}?key=${API_KEY}`) 
+                ]); 
+                
+                const incomeJson = await incomeRes.json();
+                const expenseJson = await expenseRes.json();
+                
+                if (incomeJson.error) throw new Error(incomeJson.error.message);
+                if (expenseJson.error) throw new Error(expenseJson.error.message);
+                
+                processData(incomeJson.values, expenseJson.values);
+                renderAll(masterData);
+
+            } catch (error) { 
+                showToast("Error loading data: " + error.message, 'error');
+            }
+        }
+
+        function processData(incomeRows, expenseRows) { 
+            masterData = []; 
+            // Helper to parse row
+            const parseRow = (row, type) => {
+                if(!row[0]) return;
+                // Columns: 0:Date, 1:Desc, 2:Cat, 3:Account, 4:Currency, 5:Amount
+                const amount = parseFloat((row[5] || '0').replace(/,/g, ''));
+                return {
+                    type: type,
+                    date: row[0],
+                    description: row[1],
+                    category: row[2] || 'Uncategorized',
+                    account: row[3] || 'General',
+                    currency: row[4] || 'IDR',
+                    amount: Math.abs(amount) // Ensure positive storage, type defines sign
+                };
+            };
+
+            if (incomeRows) incomeRows.forEach(row => { const d = parseRow(row, 'income'); if(d) masterData.push(d); });
+            if (expenseRows) expenseRows.forEach(row => { const d = parseRow(row, 'expense'); if(d) masterData.push(d); });
+            
+            // Populate Filters
+            const categories = [...new Set(masterData.map(item => item.category))].sort();
+            const accounts = [...new Set(masterData.map(item => item.account))].sort();
+            
+            categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+            categories.forEach(c => categoryFilter.innerHTML += `<option value="${c}">${c}</option>`);
+
+            accountFilter.innerHTML = '<option value="all">All Accounts</option>';
+            accounts.forEach(a => accountFilter.innerHTML += `<option value="${a}">${a}</option>`);
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderAll(data) {
+            renderDashboard(data);
+            renderTable(data);
+            renderDaily(data);
+            renderCalendar(data);
+            updateSortIndicators();
+        }
+
+        function renderDashboard(data) {
+            // 1. Calculate Account Balances
+            let accounts = {};
+            let totalIncomeIDR = 0, totalExpenseIDR = 0;
+            let totalIncomeUSD = 0, totalExpenseUSD = 0;
+
+            data.forEach(item => {
+                const isIncome = item.type === 'income';
+                const key = `${item.account}-${item.currency}`; // Key example: "BCA-IDR" or "PayPal-USD"
+                
+                if (!accounts[key]) accounts[key] = { name: item.account, currency: item.currency, balance: 0 };
+                
+                if (isIncome) {
+                    accounts[key].balance += item.amount;
+                    if(item.currency === 'IDR') totalIncomeIDR += item.amount;
+                    if(item.currency === 'USD') totalIncomeUSD += item.amount;
+                } else {
+                    accounts[key].balance -= item.amount;
+                    if(item.currency === 'IDR') totalExpenseIDR += item.amount;
+                    if(item.currency === 'USD') totalExpenseUSD += item.amount;
+                }
+            });
+
+            // Render Account Cards
+            const accountContainer = document.getElementById('account-balances-container');
+            accountContainer.innerHTML = '';
+            Object.values(accounts).sort((a,b) => a.name.localeCompare(b.name)).forEach(acc => {
+                if(acc.balance === 0) return; // Hide empty accounts
+                const color = acc.balance >= 0 ? 'text-blue-400' : 'text-red-400';
+                accountContainer.innerHTML += `
+                    <div class="bg-slate-800 p-3 rounded border border-slate-600 flex justify-between items-center">
+                        <span class="font-medium text-slate-300">${acc.name}</span>
+                        <span class="font-bold ${color}">${formatCurrency(acc.balance, acc.currency)}</span>
+                    </div>
+                `;
+            });
+
+            // Render Summary Cards (Combined Estimation)
+            const summaryContainer = document.getElementById('summary-cards-container');
+            const netIDR = totalIncomeIDR - totalExpenseIDR;
+            const netUSD = totalIncomeUSD - totalExpenseUSD;
+            
+            // We display pure totals per currency
+            summaryContainer.innerHTML = `
+                <div class="bg-slate-800 p-3 rounded border border-green-900/50">
+                    <div class="text-xs text-green-400 uppercase">Total Income</div>
+                    <div class="font-bold text-slate-100">${formatCurrency(totalIncomeIDR, 'IDR')}</div>
+                    <div class="font-bold text-slate-100 text-sm">${formatCurrency(totalIncomeUSD, 'USD')}</div>
+                </div>
+                <div class="bg-slate-800 p-3 rounded border border-red-900/50">
+                    <div class="text-xs text-red-400 uppercase">Total Expenses</div>
+                    <div class="font-bold text-slate-100">${formatCurrency(totalExpenseIDR, 'IDR')}</div>
+                    <div class="font-bold text-slate-100 text-sm">${formatCurrency(totalExpenseUSD, 'USD')}</div>
+                </div>
+            `;
+
+            updatePieChart(data);
+        }
+
+        function updatePieChart(data) {
+            const selectedCurrency = chartCurrencyToggle.value; // IDR or USD
+            
+            const expenses = data.filter(d => d.type === 'expense' && d.currency === selectedCurrency);
+            const catTotals = {};
+            expenses.forEach(d => {
+                catTotals[d.category] = (catTotals[d.category] || 0) + d.amount;
+            });
+
+            const labels = Object.keys(catTotals);
+            const values = Object.values(catTotals);
+            const ctx = document.getElementById('expense-pie-chart').getContext('2d');
+
+            if (expenseChart) expenseChart.destroy();
+
+            expenseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ['#f87171', '#fb923c', '#facc15', '#4ade80', '#38bdf8', '#818cf8', '#c084fc', '#f472b6'],
+                        borderColor: '#1e293b',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Update details list
+            const detailContainer = document.getElementById('expense-category-details');
+            detailContainer.innerHTML = '';
+            const sortedParams = labels.map((l, i) => ({l, v: values[i]})).sort((a,b) => b.v - a.v);
+            
+            if(sortedParams.length === 0) detailContainer.innerHTML = '<p class="text-center text-slate-500 text-sm">No expenses in ' + selectedCurrency + '</p>';
+
+            sortedParams.forEach(item => {
+                detailContainer.innerHTML += `
+                    <div class="flex justify-between items-center text-sm py-1 border-b border-slate-700/50">
+                        <span class="text-slate-300">${item.l}</span>
+                        <span class="font-medium text-slate-100">${formatCurrency(item.v, selectedCurrency)}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500">No transactions found</td></tr>';
+                return;
+            }
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-700/50 transition";
+                const amountColor = item.type === 'income' ? 'text-green-400' : 'text-red-400';
+                const sign = item.type === 'income' ? '+' : '-';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400">${item.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-200 font-medium">${item.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400"><span class="bg-slate-700 px-2 py-1 rounded text-xs">${item.account}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400">${item.category}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${amountColor}">${sign} ${formatCurrency(item.amount, item.currency)}</td>
+                    <td class="px-2 py-4 whitespace-nowrap text-center">
+                        <button class="delete-btn text-slate-500 hover:text-red-400" data-item='${JSON.stringify(item)}'>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function renderDaily(data) {
+            const daily = {};
+            data.filter(d => d.type === 'expense').forEach(d => {
+                if(!daily[d.date]) daily[d.date] = { idr: 0, usd: 0 };
+                if(d.currency === 'IDR') daily[d.date].idr += d.amount;
+                if(d.currency === 'USD') daily[d.date].usd += d.amount;
+            });
+
+            dailySummaryBody.innerHTML = '';
+            Object.keys(daily).sort().reverse().forEach(date => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-sm text-slate-200">${date}</td>
+                    <td class="px-6 py-4 text-sm text-right text-red-400">${daily[date].idr > 0 ? formatCurrency(daily[date].idr, 'IDR') : '-'}</td>
+                    <td class="px-6 py-4 text-sm text-right text-red-400">${daily[date].usd > 0 ? formatCurrency(daily[date].usd, 'USD') : '-'}</td>
+                `;
+                dailySummaryBody.appendChild(tr);
+            });
+        }
+
+        function renderCalendar(data) {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            document.getElementById('calendar-header').textContent = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Empty slots
+            for(let i=0; i<firstDay; i++) grid.appendChild(document.createElement('div'));
+
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const dayTrans = data.filter(item => item.date === dateStr);
+                
+                const el = document.createElement('div');
+                el.className = "calendar-day border border-slate-700 p-1 rounded hover:bg-slate-700/50 cursor-pointer flex flex-col";
+                el.innerHTML = `<span class="text-slate-500 text-xs mb-1">${d}</span>`;
+                
+                if(dayTrans.length > 0) {
+                    const hasIncome = dayTrans.some(t => t.type === 'income');
+                    const hasExpense = dayTrans.some(t => t.type === 'expense');
+                    
+                    if(hasIncome) el.innerHTML += `<div class="h-1.5 w-1.5 rounded-full bg-green-500 mb-1"></div>`;
+                    if(hasExpense) el.innerHTML += `<div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>`;
+                    
+                    el.addEventListener('click', () => {
+                        document.getElementById('calendar-detail-title').textContent = dateStr;
+                        const content = document.getElementById('calendar-detail-content');
+                        content.innerHTML = '';
+                        dayTrans.forEach(t => {
+                            content.innerHTML += `
+                                <div class="flex justify-between border-b border-slate-600 pb-1 mb-1">
+                                    <span>${t.description}</span>
+                                    <span class="${t.type==='income'?'text-green-400':'text-red-400'}">${formatCurrency(t.amount, t.currency)}</span>
+                                </div>
+                            `;
+                        });
+                        document.getElementById('calendar-detail-modal').classList.remove('hidden');
+                    });
+                }
+                grid.appendChild(el);
+            }
+        }
+
+        // --- HANDLERS ---
+        function applyFilters() {
+            const start = document.getElementById('filter-start-date').value;
+            const end = document.getElementById('filter-end-date').value;
+            const cat = categoryFilter.value;
+            const acc = accountFilter.value;
+            const search = document.getElementById('filter-search').value.toLowerCase();
+
+            let filtered = masterData.filter(item => {
+                if (start && item.date < start) return false;
+                if (end && item.date > end) return false;
+                if (cat !== 'all' && item.category !== cat) return false;
+                if (acc !== 'all' && item.account !== acc) return false;
+                if (search && !item.description.toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            // Sort
+            filtered.sort((a,b) => {
+                const valA = transSortState.key === 'date' ? new Date(a.date) : a[transSortState.key];
+                const valB = transSortState.key === 'date' ? new Date(b.date) : b[transSortState.key];
+                return transSortState.order === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+            });
+
+            renderAll(filtered);
+        }
+
+        addEntryForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-entry-button');
+            const originalText = btn.textContent;
+            btn.innerHTML = '<div class="loader mx-auto"></div>';
+            btn.disabled = true;
+
+            const type = document.querySelector('input[name="entry-type"]:checked').value;
+            let cat = categorySelect.value;
+            if(cat === 'Other') cat = otherCategoryInput.value;
+
+            const payload = {
+                action: 'add',
+                sheetName: type === 'income' ? INCOME_SHEET_NAME : EXPENSE_SHEET_NAME,
+                date: document.getElementById('entry-date').value,
+                description: document.getElementById('entry-description').value,
+                category: cat,
+                account: document.getElementById('entry-account').value,
+                currency: document.getElementById('entry-currency').value,
+                amount: parseFloat(document.getElementById('entry-amount').value)
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showToast("Transaction Saved!", "success");
+                    addEntryForm.reset();
+                    document.getElementById('entry-date').valueAsDate = new Date();
+                    setTimeout(fetchData, 1000);
+                } else throw new Error(data.message);
+            })
+            .catch(err => showToast(err.message))
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        });
+
+        tableBody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.delete-btn');
+            if(btn) {
+                itemToDelete = JSON.parse(btn.dataset.item);
+                document.getElementById('delete-modal-item').innerHTML = `
+                    <p class="font-bold text-slate-100">${itemToDelete.description}</p>
+                    <p class="text-slate-400">${itemToDelete.date} • ${itemToDelete.account}</p>
+                    <p class="${itemToDelete.type==='income'?'text-green-400':'text-red-400'}">${formatCurrency(itemToDelete.amount, itemToDelete.currency)}</p>
+                `;
+                document.getElementById('delete-modal').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+            if(!itemToDelete) return;
+            const btn = document.getElementById('confirm-delete-btn');
+            btn.innerHTML = '...';
+            
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'delete',
+                    sheetName: itemToDelete.type === 'income' ? INCOME_SHEET_NAME : EXPENSE_SHEET_NAME,
+                    originalData: itemToDelete
+                })
+            }).then(() => {
+                document.getElementById('delete-modal').classList.add('hidden');
+                fetchData();
+            }).finally(() => {
+                btn.innerHTML = 'Delete';
+            });
+        });
+
+        // UI Utils
+        function formatCurrency(val, curr) {
+            return new Intl.NumberFormat(curr === 'IDR' ? 'id-ID' : 'en-US', {
+                style: 'currency', currency: curr, maximumFractionDigits: 0
+            }).format(val);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.sort-indicator').forEach(el => el.textContent = '');
+            const active = document.querySelector(`[data-sort="${transSortState.key}"] .sort-indicator`);
+            if(active) active.textContent = transSortState.order === 'asc' ? ' ▲' : ' ▼';
+        }
+
+        // Listeners for filters and tabs
+        filterInputs.forEach(i => i.addEventListener('input', applyFilters));
+        categorySelect.addEventListener('change', () => otherCategoryInput.classList.toggle('hidden', categorySelect.value !== 'Other'));
+        chartCurrencyToggle.addEventListener('change', () => updatePieChart(masterData));
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'text-white'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-slate-400'));
+                
+                const id = e.target.id;
+                document.getElementById(id.replace('tab-', 'view-')).classList.remove('hidden');
+                e.target.classList.add('tab-active', 'text-white');
+                e.target.classList.remove('text-slate-400');
+            });
+        });
+
+        document.getElementById('cancel-delete-btn').addEventListener('click', () => document.getElementById('delete-modal').classList.add('hidden'));
+        document.getElementById('close-calendar-detail-btn').addEventListener('click', () => document.getElementById('calendar-detail-modal').classList.add('hidden'));
+        document.getElementById('prev-month-btn').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth()-1); renderCalendar(masterData); });
+        document.getElementById('next-month-btn').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth()+1); renderCalendar(masterData); });
+        
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.dataset.sort;
+                if(transSortState.key === key) transSortState.order = transSortState.order === 'asc' ? 'desc' : 'asc';
+                else { transSortState.key = key; transSortState.order = 'desc'; }
+                applyFilters();
+            });
+        });
+
+        document.getElementById('export-dashboard-btn').addEventListener('click', async () => {
+            const dash = document.getElementById('view-dashboard');
+            const canvas = await html2canvas(dash, { backgroundColor: '#1e293b', scale: 2 });
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = `finance_dashboard_${new Date().toISOString().slice(0,10)}.png`;
+            a.click();
+        });
+
+        // Run
+        checkAuth();
+
+    </script>
+</body>
+</html>
