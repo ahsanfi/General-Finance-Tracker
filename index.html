@@ -253,26 +253,37 @@
     <div id="toast" class="hidden fixed bottom-5 right-5 bg-slate-700 text-white px-4 py-2 rounded shadow border border-slate-500"></div>
 
     <script>
-        // CONFIG
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- CONFIG ---
         const PIN = "1907"; 
         const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwohCuFH5bVNYBjxsD6cXZCAhfHxGt7t28BHOvois74MrKDfRJsQ-TYIsT9a1hjDMeAFA/exec";
         const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
 
-        // CATEGORIES CONFIGURATION
+        // CATEGORIES
         const EXPENSE_CATS = ["Food & Drink", "Transportation", "Groceries", "Shopping", "Bills & Utilities", "Entertainment", "Healthcare", "Transfer", "Other"];
         const INCOME_CATS = ["Main Salary", "Bonus Salary", "Other Salary", "Initial Balance", "Other"];
 
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'};
         let calendarDate = new Date();
-        let exchangeRate = 16000; // Fallback default
+        let exchangeRate = 16000; 
 
-        // AUTH & INIT
+        // --- DOM REFERENCES ---
+        const typeRadios = document.getElementsByName('entry-type');
+        const entryCatSelect = document.getElementById('entry-cat');
+        const targetGroup = document.getElementById('transfer-target-group');
+        const categoryGroup = document.getElementById('category-group');
+        const lblSource = document.getElementById('lbl-source-acc');
+
+        // --- AUTH & INIT ---
         document.getElementById('entry-date').valueAsDate = new Date();
-        // Set Default Categories to Expense on Load
-        updateCategoryOptions('expense');
-        
-        if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); }
+        updateCategoryOptions('expense'); // Default Init
+
+        if(sessionStorage.getItem('auth')==='true') { 
+            document.getElementById('pin-modal').classList.add('hidden'); 
+            document.getElementById('main-content').classList.remove('hidden'); 
+            fetchData(); 
+        }
         
         document.getElementById('pin-form').addEventListener('submit',e=>{
             e.preventDefault();
@@ -283,9 +294,10 @@
                 fetchData();
             } else document.getElementById('pin-error').textContent="Wrong PIN";
         });
+        
         document.getElementById('logout-btn').addEventListener('click', ()=>{ sessionStorage.removeItem('auth'); location.reload(); });
 
-        // TABS
+        // --- TABS ---
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', e => {
             document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(t=>{t.classList.remove('tab-active','text-white'); t.classList.add('text-slate-400');});
@@ -293,13 +305,7 @@
             e.target.classList.add('tab-active','text-white'); e.target.classList.remove('text-slate-400');
         }));
 
-        // FORM LOGIC
-        const typeRadios = document.getElementsByName('entry-type');
-        const targetGroup = document.getElementById('transfer-target-group');
-        const categoryGroup = document.getElementById('category-group');
-        const lblSource = document.getElementById('lbl-source-acc');
-        const entryCatSelect = document.getElementById('entry-cat');
-
+        // --- LOGIC: CATEGORY SWITCHER ---
         function updateCategoryOptions(type) {
             entryCatSelect.innerHTML = '';
             let options = type === 'income' ? INCOME_CATS : EXPENSE_CATS;
@@ -309,40 +315,39 @@
                 opt.textContent = cat;
                 entryCatSelect.appendChild(opt);
             });
-             // Hide custom input initially
-             document.getElementById('entry-cat-other').classList.add('hidden');
+            document.getElementById('entry-cat-other').classList.add('hidden');
         }
 
         typeRadios.forEach(r => r.addEventListener('change', () => {
             const val = document.querySelector('input[name="entry-type"]:checked').value;
             
-            // Update UI based on type
             if(val === 'transfer') {
                 targetGroup.classList.remove('hidden');
                 categoryGroup.classList.add('hidden');
                 lblSource.textContent = "FROM ACCOUNT (SOURCE)";
-                document.getElementById('submit-btn').textContent = "Process Transfer";
-                document.getElementById('submit-btn').className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mt-4";
+                const btn = document.getElementById('submit-btn');
+                btn.textContent = "Process Transfer";
+                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mt-4";
             } else {
                 targetGroup.classList.add('hidden');
                 categoryGroup.classList.remove('hidden');
                 lblSource.textContent = "ACCOUNT DETAILS";
-                document.getElementById('submit-btn').textContent = "Save Transaction";
+                const btn = document.getElementById('submit-btn');
+                btn.textContent = "Save Transaction";
                 
-                // Update Categories based on Income vs Expense
-                updateCategoryOptions(val);
+                updateCategoryOptions(val); // Update Dropdown
 
                 if(val === 'income') {
-                   document.getElementById('submit-btn').className = "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition mt-4";
+                   btn.className = "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition mt-4";
                 } else {
-                   document.getElementById('submit-btn').className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4"; 
+                   btn.className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4"; 
                 }
             }
         }));
 
         document.getElementById('entry-cat').addEventListener('change', e => document.getElementById('entry-cat-other').classList.toggle('hidden', e.target.value!=='Other'));
 
-        // DATA FETCH
+        // --- DATA FETCH ---
         async function fetchData() {
             try {
                 const base = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`;
@@ -376,7 +381,7 @@
                 document.getElementById('filter-acc').innerHTML = '<option value="all">All Accs</option>' + accs.map(a=>`<option>${a}</option>`).join('');
                 
                 renderAll();
-            } catch(e) { showToast(e.message); }
+            } catch(e) { showToast("Error loading data: " + e.message); }
         }
 
         function renderAll() {
@@ -469,17 +474,12 @@
             `).join('');
             if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-500">No data</td></tr>';
 
-            // 4. Daily
             renderDaily(masterData);
-
-            // 5. Calendar
             renderCalendar(masterData);
-
-            // 6. Chart
             updateChart(masterData);
         }
 
-        // DAILY
+        // --- SUB-RENDERS ---
         function renderDaily(data) {
             const daily = {};
             data.filter(d => d.type === 'expense').forEach(d => {
@@ -496,7 +496,6 @@
             `).join('');
         }
 
-        // CALENDAR
         function renderCalendar(data) {
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
@@ -519,7 +518,6 @@
                     const hasInc = items.some(x=>x.type==='income');
                     const hasExp = items.some(x=>x.type==='expense');
                     el.innerHTML += `<div class="flex gap-1 mt-1">${hasInc?'<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>':''}${hasExp?'<div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>':''}</div>`;
-                    
                     el.addEventListener('click', () => {
                         document.getElementById('cal-detail-title').textContent = dateStr;
                         document.getElementById('cal-detail-content').innerHTML = items.map(x=>`
@@ -538,7 +536,7 @@
         document.getElementById('next-month').addEventListener('click', ()=>{ calendarDate.setMonth(calendarDate.getMonth()+1); renderCalendar(masterData); });
         document.getElementById('cal-close').addEventListener('click', ()=>document.getElementById('calendar-detail-modal').classList.add('hidden'));
 
-        // CHART
+        // --- CHART ---
         let myChart;
         function updateChart(data) {
             const curr = document.getElementById('chart-currency-toggle').value;
@@ -562,7 +560,7 @@
             `).join('');
         }
 
-        // SUBMIT FORM
+        // --- SUBMIT ---
         document.getElementById('add-entry-form').addEventListener('submit', e => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
@@ -617,10 +615,11 @@
                     showToast(d.message);
                     document.getElementById('add-entry-form').reset();
                     document.getElementById('entry-date').valueAsDate = new Date();
-                    // Reset Categories to default Expense
+                    
+                    // Reset UI to Expense
                     document.querySelector('input[name="entry-type"][value="expense"]').checked = true;
-                    updateCategoryOptions('expense');
-                    document.getElementById('submit-btn').className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition mt-4";
+                    // Trigger manual change event to reset categories
+                    document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
                     
                     setTimeout(fetchData, 1500);
                 } else throw new Error(d.message);
@@ -629,7 +628,7 @@
             .finally(() => { btn.innerHTML = originalText; btn.disabled=false; });
         });
 
-        // DELETE
+        // --- DELETE ---
         document.getElementById('data-body').addEventListener('click', e => {
             const btn = e.target.closest('.del-btn');
             if(btn) {
@@ -656,11 +655,11 @@
             });
         });
 
-        // HELPERS
+        // --- HELPERS ---
         function fmt(n,c) { return new Intl.NumberFormat(c==='IDR'?'id-ID':'en-US',{style:'currency',currency:c,maximumFractionDigits:0}).format(n); }
         function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3000); }
         
-        // LISTENERS
+        // --- EVENT LISTENERS ---
         ['filter-start','filter-end','filter-cat','filter-acc','filter-search'].forEach(i => document.getElementById(i).addEventListener('input', renderAll));
         document.getElementById('chart-currency-toggle').addEventListener('change', ()=>updateChart(masterData));
         document.querySelectorAll('.sortable').forEach(s => s.addEventListener('click', e => {
@@ -670,7 +669,7 @@
              const c = await html2canvas(document.getElementById('view-dashboard'), {backgroundColor:'#1e293b', scale:2});
              const a = document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='dashboard.png'; a.click();
         });
-
+    });
     </script>
 </body>
 </html>
