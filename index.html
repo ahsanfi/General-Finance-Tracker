@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker Ultimate (US Format)</title>
+    <title>Finance Tracker Ultimate (IDR Summary)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -66,7 +66,7 @@
                             <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                         </div>
                         <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-700">
-                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Real Cash Flow)</h3>
+                            <h3 class="font-semibold text-slate-200 mb-4">Summary (Real Cash Flow - Converted to IDR)</h3>
                             <div id="summary-cards-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center"></div>
                         </div>
                     </div>
@@ -441,38 +441,41 @@
                 </div>
             `).join('');
 
-            // 2. Summary
-            const netIDR = incIDR - expIDR;
-            const netUSD = incUSD - expUSD;
+            // 2. Summary (CONVERTED TO IDR ONLY)
+            // Calculate Total Real Income (IDR + USD Converted)
+            const totalIncReal = incIDR + (incUSD * exchangeRate);
+            
+            // Calculate Total Real Expense (IDR + USD Converted)
+            const totalExpReal = expIDR + (expUSD * exchangeRate);
+            
+            // Net Cash Flow (IDR)
+            const netCashFlowIDR = totalIncReal - totalExpReal;
 
+            // Total Wealth Estimation (Asset)
             let totalAssetIDR = 0;
             Object.values(bals).forEach(b => {
                 if(b.c === 'IDR') totalAssetIDR += b.v;
                 if(b.c === 'USD') totalAssetIDR += (b.v * exchangeRate);
             });
 
-            const totalIncCombined = incIDR + (incUSD * exchangeRate);
-            const totalExpCombined = expIDR + (expUSD * exchangeRate);
+            // Savings Rate Calculation
             let saveRate = 0;
-            if(totalIncCombined > 0) {
-                saveRate = ((totalIncCombined - totalExpCombined) / totalIncCombined) * 100;
+            if(totalIncReal > 0) {
+                saveRate = ((totalIncReal - totalExpReal) / totalIncReal) * 100;
             }
 
             document.getElementById('summary-cards-container').innerHTML = `
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Total Income</div>
-                    <div class="text-green-400 font-bold">${fmt(incIDR,'IDR')}</div>
-                    <div class="text-green-400 text-xs">${fmt(incUSD,'USD')}</div>
+                    <div class="text-green-400 font-bold">${fmt(totalIncReal,'IDR')}</div>
                 </div>
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Total Expense</div>
-                    <div class="text-red-400 font-bold">${fmt(expIDR,'IDR')}</div>
-                    <div class="text-red-400 text-xs">${fmt(expUSD,'USD')}</div>
+                    <div class="text-red-400 font-bold">${fmt(totalExpReal,'IDR')}</div>
                 </div>
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Net Cash Flow</div>
-                    <div class="${netIDR>=0?'text-blue-400':'text-orange-400'} font-bold">${fmt(netIDR,'IDR')}</div>
-                    <div class="${netUSD>=0?'text-blue-400':'text-orange-400'} text-xs">${fmt(netUSD,'USD')}</div>
+                    <div class="${netCashFlowIDR>=0?'text-blue-400':'text-orange-400'} font-bold">${fmt(netCashFlowIDR,'IDR')}</div>
                 </div>
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center relative overflow-hidden">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Est. Net Worth</div>
@@ -599,7 +602,7 @@
             `).join('');
         }
 
-        // --- SUBMIT ---
+        // --- SUB-RENDERS ---
         document.getElementById('add-entry-form').addEventListener('submit', e => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
