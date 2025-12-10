@@ -38,7 +38,7 @@
         <div class="flex justify-between items-start mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-slate-100">Finance Tracker</h1>
-                <p class="text-slate-400 text-sm">Transfer, Calendar & Daily Analytics</p>
+                <p class="text-slate-400 text-sm">Dashboard & Analytics</p>
             </div>
             <div class="flex gap-2">
                 <button id="export-btn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-xs font-medium">Export</button>
@@ -262,6 +262,7 @@
 
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'};
         let calendarDate = new Date();
+        let exchangeRate = 16000; // Fallback default
 
         // AUTH & INIT
         document.getElementById('entry-date').valueAsDate = new Date();
@@ -286,7 +287,7 @@
             e.target.classList.add('tab-active','text-white'); e.target.classList.remove('text-slate-400');
         }));
 
-        // FORM LOGIC (TRANSFER SWITCH)
+        // FORM LOGIC
         const typeRadios = document.getElementsByName('entry-type');
         const targetGroup = document.getElementById('transfer-target-group');
         const categoryGroup = document.getElementById('category-group');
@@ -319,11 +320,13 @@
         async function fetchData() {
             try {
                 const base = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`;
-                const [inc, exp] = await Promise.all([
+                const [inc, exp, rateData] = await Promise.all([
                     fetch(`${base}/Income!A2:F?key=${API_KEY}`).then(r=>r.json()),
-                    fetch(`${base}/Expenses!A2:F?key=${API_KEY}`).then(r=>r.json())
+                    fetch(`${base}/Expenses!A2:F?key=${API_KEY}`).then(r=>r.json()),
+                    fetch(`${base}/Expenses!G1?key=${API_KEY}`).then(r=>r.json())
                 ]);
                 
+                // Parse Data
                 masterData = [];
                 const parse = (rows, type) => {
                     if(!rows) return;
@@ -337,6 +340,11 @@
                 };
                 parse(inc.values, 'income');
                 parse(exp.values, 'expense');
+
+                // Parse Rate (Expenses!G1)
+                if (rateData.values && rateData.values[0] && rateData.values[0][0]) {
+                     exchangeRate = parseFloat(rateData.values[0][0].replace(/,/g, '').replace(/[^\d.]/g, ''));
+                }
                 
                 // Populate Filters
                 const cats = [...new Set(masterData.map(d=>d.cat))].sort();
@@ -367,63 +375,47 @@
                 </div>
             `).join('');
 
-            // 2. Summary
-            // --- GANTI BAGIAN "2. Summary" DI DALAM FUNGSI renderAll() DENGAN INI ---
-            
-            // Konstanta Kurs Estimasi (Bisa Anda ubah sesuai rate saat ini)
-            const EST_RATE = 16200; 
-    
-            // Hitung Net (Bersih)
+            // 2. Summary (Informatif)
             const netIDR = incIDR - expIDR;
             const netUSD = incUSD - expUSD;
-    
-            // Hitung Estimasi Total Aset (Konversi USD ke IDR + Saldo IDR)
-            // Kita ambil saldo dari calculation balances (bals) agar akurat berdasarkan sisa uang di akun
+
+            // Total Wealth Estimation
             let totalAssetIDR = 0;
             Object.values(bals).forEach(b => {
                 if(b.c === 'IDR') totalAssetIDR += b.v;
-                if(b.c === 'USD') totalAssetIDR += (b.v * EST_RATE);
+                if(b.c === 'USD') totalAssetIDR += (b.v * exchangeRate);
             });
-    
-            // Hitung Savings Rate (Persentase Hemat)
-            // Rumus: (Total Income - Total Expense) / Total Income
-            // Kita konversi dulu semua ke IDR untuk hitungan persentase yang adil
-            const totalIncCombined = incIDR + (incUSD * EST_RATE);
-            const totalExpCombined = expIDR + (expUSD * EST_RATE);
+
+            // Savings Rate Logic
+            const totalIncCombined = incIDR + (incUSD * exchangeRate);
+            const totalExpCombined = expIDR + (expUSD * exchangeRate);
             let saveRate = 0;
             if(totalIncCombined > 0) {
                 saveRate = ((totalIncCombined - totalExpCombined) / totalIncCombined) * 100;
             }
-    
-            // Render HTML yang Lebih Informatif
+
             document.getElementById('summary-cards-container').innerHTML = `
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Total Income</div>
                     <div class="text-green-400 font-bold">${fmt(incIDR,'IDR')}</div>
                     <div class="text-green-400 text-xs">${fmt(incUSD,'USD')}</div>
                 </div>
-    
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Total Expense</div>
                     <div class="text-red-400 font-bold">${fmt(expIDR,'IDR')}</div>
                     <div class="text-red-400 text-xs">${fmt(expUSD,'USD')}</div>
                 </div>
-    
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Net Cash Flow</div>
                     <div class="${netIDR>=0?'text-blue-400':'text-orange-400'} font-bold">${fmt(netIDR,'IDR')}</div>
                     <div class="${netUSD>=0?'text-blue-400':'text-orange-400'} text-xs">${fmt(netUSD,'USD')}</div>
                 </div>
-    
                 <div class="bg-slate-800 p-3 rounded border border-slate-600 flex flex-col justify-center relative overflow-hidden">
                     <div class="text-xs text-slate-400 uppercase font-bold mb-1">Est. Net Worth</div>
                     <div class="text-white font-bold text-lg">${new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(totalAssetIDR)}</div>
-                    
                     <div class="mt-1 flex items-center justify-center gap-1">
-                        <span class="text-[10px] text-slate-400">Savings Rate:</span>
-                        <span class="text-xs font-bold ${saveRate>=20 ? 'text-green-400' : (saveRate>0 ? 'text-yellow-400' : 'text-red-400')}">
-                            ${saveRate.toFixed(1)}%
-                        </span>
+                        <span class="text-[10px] text-slate-400">Rate: ${new Intl.NumberFormat('id-ID').format(exchangeRate)} | Save:</span>
+                        <span class="text-xs font-bold ${saveRate>=20 ? 'text-green-400' : (saveRate>0 ? 'text-yellow-400' : 'text-red-400')}">${saveRate.toFixed(1)}%</span>
                     </div>
                 </div>
             `;
