@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finance Tracker V7 (Responsive Fix)</title>
+    <title>Finance Tracker V7 (Mobile Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -11,24 +11,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
         .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         .tab-active { background-color: #2563eb; color: #fff; border-color: transparent; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
         .calendar-day { min-height: 4.5rem; } 
         @media (min-width: 768px) { .calendar-day { min-height: 7rem; } }
-        
-        /* Disable input zoom on iOS */
         input, select, textarea { font-size: 16px !important; }
-        
-        .preset-btn { @apply px-3 py-2 text-xs font-medium rounded-lg border border-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-transparent transition cursor-pointer select-none flex-grow text-center; }
+        .preset-btn { @apply px-2 py-2 text-[10px] sm:text-xs font-medium rounded-lg border border-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-transparent transition cursor-pointer select-none flex-grow text-center; }
         .preset-active { @apply bg-blue-600 text-white border-transparent shadow-md; }
     </style>
 </head>
@@ -36,12 +28,12 @@
 
     <div id="init-loader" class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950 text-white">
         <div class="loader mb-4"></div>
-        <p class="text-sm text-slate-400 animate-pulse">Syncing...</p>
+        <p class="text-sm text-slate-400 animate-pulse">Loading Data...</p>
     </div>
 
     <div id="pin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
         <div class="bg-slate-900 rounded-2xl shadow-2xl p-8 w-full max-w-xs border border-slate-800 text-center relative overflow-hidden">
-            <h2 class="text-2xl font-bold text-white mb-2">Secure Access</h2>
+            <h2 class="text-2xl font-bold text-white mb-2">Access</h2>
             <form id="pin-form">
                 <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" class="w-full text-center text-4xl tracking-[.5em] px-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 transition placeholder-slate-700" maxlength="4" required autocomplete="off" placeholder="••••">
                 <p id="pin-error" class="text-red-400 text-xs mt-3 min-h-[16px] font-medium"></p>
@@ -54,73 +46,80 @@
         
         <div class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 px-4 py-3 sm:py-4 flex justify-between items-center shadow-lg shadow-black/20">
             <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                    <i class="fas fa-chart-pie text-blue-500"></i> FinTracker
+                <h1 class="text-lg sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <i class="fas fa-wallet text-blue-500"></i> FinTracker
                 </h1>
             </div>
             <div class="flex gap-2 sm:gap-3">
-                <button id="export-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-xl flex items-center justify-center transition border border-slate-700"><i class="fas fa-camera"></i></button>
-                <button id="logout-btn" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 w-10 h-10 rounded-xl flex items-center justify-center transition border border-red-500/20"><i class="fas fa-power-off"></i></button>
+                <button id="export-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition border border-slate-700"><i class="fas fa-camera"></i></button>
+                <button id="logout-btn" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition border border-red-500/20"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
 
-        <div class="px-4 pt-4 pb-2 bg-slate-950 sticky top-[64px] z-20 sm:static sm:z-0">
+        <div class="px-4 pt-4 pb-2 bg-slate-950 sticky top-[60px] z-20 sm:static sm:z-0">
             <nav class="flex space-x-2 overflow-x-auto no-scrollbar pb-2 sm:justify-center">
-                <button id="tab-dashboard" class="tab-btn tab-active px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap border border-transparent transition-all">Dashboard</button>
-                <button id="tab-transactions" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">List</button>
-                <button id="tab-add" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Add/Transfer</button>
-                <button id="tab-daily" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Daily</button>
-                <button id="tab-calendar" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Calendar</button>
+                <button id="tab-dashboard" class="tab-btn tab-active px-4 py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap border border-transparent transition-all">Dashboard</button>
+                <button id="tab-transactions" class="tab-btn px-4 py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">List</button>
+                <button id="tab-add" class="tab-btn px-4 py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Add/Transfer</button>
+                <button id="tab-daily" class="tab-btn px-4 py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Daily</button>
+                <button id="tab-calendar" class="tab-btn px-4 py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Calendar</button>
             </nav>
         </div>
 
         <div id="tab-content" class="p-4 flex-grow">
             
             <div id="view-dashboard" class="tab-view space-y-6">
-                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-                    <div id="summary-income" class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col justify-between h-28 sm:h-32 shadow-sm">
-                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-arrow-down text-green-500"></i> Income</div>
-                        <div class="text-green-400 font-bold text-lg sm:text-2xl truncate mt-auto">...</div>
+                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+                    
+                    <div id="summary-income" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between min-h-[100px] sm:min-h-[130px] shadow-sm relative overflow-hidden group">
+                        <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1 mb-2 z-10"><i class="fas fa-arrow-down text-green-500"></i> Income</div>
+                        <div class="text-green-400 font-bold text-sm sm:text-2xl truncate z-10 font-mono tracking-tight">...</div>
+                        <div class="absolute -bottom-4 -right-4 text-6xl text-green-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-arrow-down"></i></div>
                     </div>
-                    <div id="summary-expense" class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col justify-between h-28 sm:h-32 shadow-sm">
-                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-arrow-up text-red-500"></i> Expense</div>
-                        <div class="text-red-400 font-bold text-lg sm:text-2xl truncate mt-auto">...</div>
+
+                    <div id="summary-expense" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between min-h-[100px] sm:min-h-[130px] shadow-sm relative overflow-hidden group">
+                        <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1 mb-2 z-10"><i class="fas fa-arrow-up text-red-500"></i> Expense</div>
+                        <div class="text-red-400 font-bold text-sm sm:text-2xl truncate z-10 font-mono tracking-tight">...</div>
+                        <div class="absolute -bottom-4 -right-4 text-6xl text-red-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-arrow-up"></i></div>
                     </div>
-                    <div id="summary-net" class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col justify-between h-28 sm:h-32 shadow-sm">
-                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-scale-balanced text-slate-400"></i> Net Flow</div>
-                        <div class="text-slate-200 font-bold text-lg sm:text-2xl truncate mt-auto">...</div>
+
+                    <div id="summary-net" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between min-h-[100px] sm:min-h-[130px] shadow-sm relative overflow-hidden group">
+                        <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1 mb-2 z-10"><i class="fas fa-scale-balanced text-slate-400"></i> Net Flow</div>
+                        <div class="text-slate-200 font-bold text-sm sm:text-2xl truncate z-10 font-mono tracking-tight">...</div>
+                        <div class="absolute -bottom-4 -right-4 text-6xl text-slate-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-scale-balanced"></i></div>
                     </div>
-                    <div id="summary-wealth" class="bg-gradient-to-br from-blue-900 to-slate-900 p-4 sm:p-5 rounded-2xl border border-blue-800/50 flex flex-col justify-between h-28 sm:h-32 relative overflow-hidden shadow-md">
-                        <div class="flex justify-between items-start z-10">
-                            <div class="text-xs text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
-                            <div class="text-[10px] text-blue-300 bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-md font-mono">Rate: ...</div>
+
+                    <div id="summary-wealth" class="bg-gradient-to-br from-blue-900 to-slate-900 p-4 rounded-2xl border border-blue-800/50 flex flex-col justify-between min-h-[100px] sm:min-h-[130px] relative overflow-hidden shadow-md">
+                        <div class="flex justify-between items-start mb-2 z-10">
+                            <div class="text-[10px] sm:text-xs text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
+                            <div class="text-[9px] sm:text-[10px] text-blue-100 bg-blue-800/50 px-2 py-0.5 rounded-md backdrop-blur-md font-mono border border-blue-700/50" id="rate-display">Rate: ...</div>
                         </div>
-                        <div class="text-white font-bold text-lg sm:text-2xl truncate z-10 mt-auto">...</div>
+                        <div class="text-white font-bold text-sm sm:text-2xl truncate z-10 font-mono tracking-tight mt-auto">...</div>
                         <div class="absolute -bottom-2 -right-2 text-7xl text-white opacity-5"><i class="fas fa-wallet"></i></div>
                     </div>
                  </div>
 
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     
-                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col h-[400px] lg:h-[450px]">
+                    <div class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col h-[400px] lg:h-[450px]">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-sm font-semibold text-white flex items-center gap-2"><i class="fas fa-chart-pie text-slate-500"></i> Breakdown</h3>
-                            <select id="chart-currency-toggle" class="bg-slate-950 border border-slate-700 text-xs rounded-lg px-2 py-1.5 text-slate-300 focus:border-blue-500 outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
+                            <h3 class="text-xs sm:text-sm font-semibold text-white flex items-center gap-2"><i class="fas fa-chart-pie text-slate-500"></i> Breakdown</h3>
+                            <select id="chart-currency-toggle" class="bg-slate-950 border border-slate-700 text-[10px] sm:text-xs rounded-lg px-2 py-1.5 text-slate-300 focus:border-blue-500 outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
                         </div>
                         <div class="relative flex-grow flex items-center justify-center overflow-hidden">
-                             <div class="w-full h-full max-h-[250px]"><canvas id="expense-pie-chart"></canvas></div>
+                             <div class="w-full h-full max-h-[200px] sm:max-h-[250px]"><canvas id="expense-pie-chart"></canvas></div>
                         </div>
                         <div id="expense-details" class="mt-4 space-y-2 overflow-y-auto h-32 pr-2 custom-scroll border-t border-slate-800 pt-2"></div>
                     </div>
 
-                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col h-[400px] lg:h-[450px]">
-                        <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0"><i class="fas fa-wallet text-slate-500"></i> Wallets <span class="text-[10px] text-slate-500 font-normal ml-auto bg-slate-800 px-2 py-1 rounded">Tap USD to convert</span></h3>
+                    <div class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col h-[400px] lg:h-[450px]">
+                        <h3 class="text-xs sm:text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0"><i class="fas fa-wallet text-slate-500"></i> Wallets <span class="text-[9px] text-slate-500 font-normal ml-auto bg-slate-800 px-2 py-1 rounded">Tap USD to convert</span></h3>
                         <div id="account-balances-container" class="space-y-2 overflow-y-auto flex-grow custom-scroll pr-1"></div>
                     </div>
 
-                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm md:col-span-2 lg:col-span-1 h-[400px] lg:h-[450px] flex flex-col">
+                    <div class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm md:col-span-2 lg:col-span-1 h-[400px] lg:h-[450px] flex flex-col">
                         <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                            <h3 class="text-sm font-semibold text-white flex items-center gap-2"><i class="fas fa-chart-line text-slate-500"></i> 30-Day Trend</h3>
+                            <h3 class="text-xs sm:text-sm font-semibold text-white flex items-center gap-2"><i class="fas fa-chart-line text-slate-500"></i> 30-Day Trend</h3>
                         </div>
                         <div class="relative flex-grow w-full"><canvas id="trend-line-chart"></canvas></div>
                     </div>
@@ -184,9 +183,9 @@
                         <table class="min-w-full divide-y divide-slate-800 text-sm">
                             <thead class="bg-slate-950/30">
                                 <tr>
-                                    <th class="px-6 py-4 text-left font-medium text-slate-400">Date</th>
-                                    <th class="px-6 py-4 text-right font-medium text-slate-400">Total IDR</th>
-                                    <th class="px-6 py-4 text-right font-medium text-slate-400">Total USD</th>
+                                    <th class="px-4 sm:px-6 py-4 text-left font-medium text-slate-400 text-xs sm:text-sm">Date</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right font-medium text-slate-400 text-xs sm:text-sm">Total IDR</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right font-medium text-slate-400 text-xs sm:text-sm">Total USD</th>
                                 </tr>
                             </thead>
                             <tbody id="daily-body" class="divide-y divide-slate-800"></tbody>
@@ -198,9 +197,9 @@
             <div id="view-calendar" class="tab-view hidden">
                 <div class="bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-800 shadow-sm max-w-5xl mx-auto">
                     <div class="flex items-center justify-between mb-6">
-                        <button id="prev-month" class="p-3 bg-slate-800 rounded-xl hover:bg-slate-700 text-slate-300 transition"><i class="fas fa-chevron-left"></i></button>
-                        <h2 id="calendar-header" class="text-xl font-bold text-white tracking-tight"></h2>
-                        <button id="next-month" class="p-3 bg-slate-800 rounded-xl hover:bg-slate-700 text-slate-300 transition"><i class="fas fa-chevron-right"></i></button>
+                        <button id="prev-month" class="p-2 sm:p-3 bg-slate-800 rounded-xl hover:bg-slate-700 text-slate-300 transition"><i class="fas fa-chevron-left"></i></button>
+                        <h2 id="calendar-header" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+                        <button id="next-month" class="p-2 sm:p-3 bg-slate-800 rounded-xl hover:bg-slate-700 text-slate-300 transition"><i class="fas fa-chevron-right"></i></button>
                     </div>
                     <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest">
                         <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
@@ -210,102 +209,101 @@
             </div>
 
             <div id="view-add" class="tab-view hidden">
-                 <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 max-w-2xl mx-auto shadow-xl relative overflow-hidden">
+                 <div class="bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-800 max-w-2xl mx-auto shadow-xl relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
                     <div class="flex justify-between items-center mb-6 relative z-10">
-                        <h2 class="text-xl font-bold text-white flex items-center gap-2" id="form-title"><i class="fas fa-plus-circle text-blue-500"></i> New Entry</h2>
-                        <button id="cancel-edit-btn" class="hidden text-xs bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition">Cancel Edit</button>
+                        <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2" id="form-title"><i class="fas fa-plus-circle text-blue-500"></i> New Entry</h2>
+                        <button id="cancel-edit-btn" class="hidden text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg transition">Cancel</button>
                     </div>
                     
                     <div class="grid grid-cols-3 gap-2 mb-6 p-1 bg-slate-950 rounded-xl border border-slate-800">
                         <label class="cursor-pointer relative">
                             <input type="radio" name="entry-type" value="expense" class="peer hidden" checked>
-                            <div class="py-3 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-red-400 peer-checked:shadow-sm transition z-10 relative">Expense</div>
+                            <div class="py-2.5 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-red-400 peer-checked:shadow-sm transition z-10 relative">EXPENSE</div>
                         </label>
                         <label class="cursor-pointer relative">
                             <input type="radio" name="entry-type" value="income" class="peer hidden">
-                            <div class="py-3 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-green-400 peer-checked:shadow-sm transition z-10 relative">Income</div>
+                            <div class="py-2.5 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-green-400 peer-checked:shadow-sm transition z-10 relative">INCOME</div>
                         </label>
                         <label class="cursor-pointer relative">
                             <input type="radio" name="entry-type" value="transfer" class="peer hidden">
-                            <div class="py-3 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-blue-400 peer-checked:shadow-sm transition z-10 relative">Transfer</div>
+                            <div class="py-2.5 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-blue-400 peer-checked:shadow-sm transition z-10 relative">TRANSFER</div>
                         </label>
                     </div>
 
-                    <form id="add-entry-form" class="space-y-5 relative z-10">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <form id="add-entry-form" class="space-y-4 sm:space-y-5 relative z-10">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Description</label>
-                                <input type="text" id="entry-desc" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600" placeholder="e.g. Lunch" required>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Description</label>
+                                <input type="text" id="entry-desc" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600" placeholder="e.g. Lunch" required>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Date</label>
-                                <input type="date" id="entry-date" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" required>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Date</label>
+                                <input type="date" id="entry-date" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" required>
                             </div>
                             <div id="category-group">
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Category</label>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Category</label>
                                 <div class="relative">
-                                    <select id="entry-cat" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition appearance-none cursor-pointer"></select>
+                                    <select id="entry-cat" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition appearance-none cursor-pointer"></select>
                                     <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500"><i class="fas fa-chevron-down text-xs"></i></div>
                                 </div>
-                                <input type="text" id="entry-cat-other" placeholder="Type custom category..." class="hidden w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:border-blue-500 outline-none">
+                                <input type="text" id="entry-cat-other" placeholder="Type custom category..." class="hidden w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:border-blue-500 outline-none">
                             </div>
                         </div>
 
-                        <div class="p-5 bg-slate-950/50 rounded-xl border border-slate-800">
-                            <label id="lbl-source-acc" class="block text-xs font-bold text-slate-400 uppercase mb-3 tracking-wide">From / Account</label>
+                        <div class="p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+                            <label id="lbl-source-acc" class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-wide">From / Account</label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div class="relative">
-                                    <select id="entry-acc-source" class="account-select w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:border-blue-500 focus:outline-none appearance-none"></select>
+                                    <select id="entry-acc-source" class="account-select w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:border-blue-500 focus:outline-none appearance-none"></select>
                                     <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500"><i class="fas fa-chevron-down text-xs"></i></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <select id="entry-curr-source" class="w-[80px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-3.5 text-slate-200 text-center focus:border-blue-500 focus:outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
-                                    <input type="number" step="any" id="entry-amt-source" placeholder="0" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 font-mono text-right text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600" required>
+                                    <select id="entry-curr-source" class="w-[70px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-3 text-sm text-slate-200 text-center focus:border-blue-500 focus:outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
+                                    <input type="number" step="any" id="entry-amt-source" placeholder="0" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 font-mono text-right text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600" required>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="transfer-target-group" class="hidden p-5 bg-slate-950/50 rounded-xl border border-blue-900/30 relative">
+                        <div id="transfer-target-group" class="hidden p-4 bg-slate-950/50 rounded-xl border border-blue-900/30 relative">
                              <div class="absolute left-1/2 -top-3 transform -translate-x-1/2 bg-slate-800 p-1.5 rounded-full border border-slate-700 text-slate-400 z-10"><i class="fas fa-arrow-down"></i></div>
-                            <label class="block text-xs font-bold text-blue-400 uppercase mb-3 tracking-wide">To Destination</label>
+                            <label class="block text-[10px] font-bold text-blue-400 uppercase mb-3 tracking-wide">To Destination</label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div class="relative">
-                                    <select id="entry-acc-target" class="account-select w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:border-blue-500 focus:outline-none appearance-none"></select>
+                                    <select id="entry-acc-target" class="account-select w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:border-blue-500 focus:outline-none appearance-none"></select>
                                     <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500"><i class="fas fa-chevron-down text-xs"></i></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <select id="entry-curr-target" class="w-[80px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-3.5 text-slate-200 text-center focus:border-blue-500 focus:outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
-                                    <input type="number" step="any" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 font-mono text-right text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600">
+                                    <select id="entry-curr-target" class="w-[70px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-3 text-sm text-slate-200 text-center focus:border-blue-500 focus:outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
+                                    <input type="number" step="any" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 font-mono text-right text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600">
                                 </div>
                             </div>
                         </div>
 
-                        <button type="submit" id="submit-btn" class="w-full bg-slate-800 text-slate-300 font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg">
+                        <button type="submit" id="submit-btn" class="w-full bg-slate-800 text-slate-300 font-bold py-3.5 sm:py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-base sm:text-lg">
                             Save Transaction
                         </button>
                     </form>
-                </div>
+                 </div>
             </div>
         </div>
     </div>
 
     <div id="delete-modal" class="hidden fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-slate-900 rounded-2xl p-6 w-full max-w-sm border border-slate-800 text-center shadow-2xl">
-            <div class="w-14 h-14 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 border border-red-500/20"><i class="fas fa-trash-alt text-2xl"></i></div>
-            <h3 class="font-bold text-white text-xl mb-2">Delete Transaction?</h3>
-            <p class="text-sm text-slate-400 mb-4">This action cannot be undone.</p>
+            <div class="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20"><i class="fas fa-trash-alt text-xl"></i></div>
+            <h3 class="font-bold text-white text-lg mb-2">Delete Transaction?</h3>
             <div id="del-item-preview" class="bg-slate-950 p-4 rounded-xl mb-6 text-sm text-slate-300 border border-slate-800 shadow-inner"></div>
             <div class="grid grid-cols-2 gap-3">
-                <button id="del-cancel" class="px-4 py-3 bg-slate-800 text-white rounded-xl hover:bg-slate-700 font-medium transition">Cancel</button>
-                <button id="del-confirm" class="px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium shadow-lg shadow-red-900/20 transition">Delete</button>
+                <button id="del-cancel" class="px-4 py-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-700 font-medium transition">Cancel</button>
+                <button id="del-confirm" class="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium shadow-lg shadow-red-900/20 transition">Delete</button>
             </div>
         </div>
     </div>
     
     <div id="calendar-detail-modal" class="hidden fixed inset-0 bg-black/90 z-[70] flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
-        <div class="bg-slate-900 rounded-t-2xl sm:rounded-2xl p-5 w-full max-w-md border-t sm:border border-slate-800 h-[85vh] sm:h-[600px] flex flex-col shadow-2xl">
+        <div class="bg-slate-900 rounded-t-2xl sm:rounded-2xl p-5 w-full max-w-md border-t sm:border border-slate-800 h-[80vh] sm:h-[600px] flex flex-col shadow-2xl">
             <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-800">
                 <h3 id="cal-detail-title" class="font-bold text-white text-lg"></h3>
                 <button id="cal-close" class="text-slate-400 p-2 hover:bg-slate-800 rounded-full transition"><i class="fas fa-times text-lg"></i></button>
@@ -318,20 +316,15 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- CONFIG ---
         const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbehUoJwzW89PN55LIhR71TmMpExcblSIKDPmLLgWJ3iQjGLgSj5h9OxLcmBK6luB9BA/exec";
         const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
 
-        // CONFIG STATE
         let SYSTEM_CONFIG = { exp: [], inc: [], wallets: [], pin: null };
-
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'}, calendarDate = new Date(), exchangeRate = 16000; 
         let isEditing = false, editItem = null;
 
         document.getElementById('entry-date').valueAsDate = new Date();
-
-        // --- INIT LOAD ---
         loadSystemConfig();
 
         async function loadSystemConfig() {
@@ -347,8 +340,7 @@
                     checkAuth();
                 } else throw new Error("Failed");
             } catch (e) { 
-                alert("Connection Error. Reloading...");
-                document.getElementById('init-loader').innerHTML = '<p class="text-red-400">Connection Failed</p>';
+                document.getElementById('init-loader').innerHTML = '<p class="text-red-400">Connection Failed. Refresh.</p>';
             }
         }
 
@@ -357,7 +349,6 @@
             else document.getElementById('pin-modal').classList.remove('hidden'); 
         }
 
-        // --- AUTH ---
         document.getElementById('pin-form').addEventListener('submit',e=>{ 
             e.preventDefault(); 
             if(document.getElementById('pin-input').value === SYSTEM_CONFIG.pin){ 
@@ -366,7 +357,6 @@
         });
         document.getElementById('logout-btn').addEventListener('click', ()=>{ sessionStorage.removeItem('auth'); location.reload(); });
 
-        // --- NAVIGATION & UI ---
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', e => switchTab(e.target.id.replace('tab','view'))));
         function switchTab(viewId) {
             document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));
@@ -376,42 +366,18 @@
             if(btn) { btn.classList.add('tab-active','text-white','bg-blue-600','border-transparent'); btn.classList.remove('text-slate-400','border-slate-800'); }
         }
 
-        // --- DATE PRESETS ---
         window.applyDatePreset = (type) => {
             const now = new Date();
             let start, end;
-            
-            if(type === 'thisMonth') {
-                start = new Date(now.getFullYear(), now.getMonth(), 1);
-                end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            } else if (type === 'lastMonth') {
-                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                end = new Date(now.getFullYear(), now.getMonth(), 0);
-            } else if (type === 'last30') {
-                end = new Date();
-                start = new Date();
-                start.setDate(now.getDate() - 30);
-            } else if (type === 'thisYear') {
-                start = new Date(now.getFullYear(), 0, 1);
-                end = new Date(now.getFullYear(), 11, 31);
-            } else {
-                document.getElementById('filter-start').value = '';
-                document.getElementById('filter-end').value = '';
-                renderAll();
-                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
-                return;
-            }
-
-            const fmtDate = (d) => d.toISOString().split('T')[0];
-            document.getElementById('filter-start').value = fmtDate(start);
-            document.getElementById('filter-end').value = fmtDate(end);
-            renderAll();
-            
-            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
-            if(event) event.target.classList.add('preset-active');
+            if(type === 'thisMonth') { start = new Date(now.getFullYear(), now.getMonth(), 1); end = new Date(now.getFullYear(), now.getMonth() + 1, 0); } 
+            else if (type === 'lastMonth') { start = new Date(now.getFullYear(), now.getMonth() - 1, 1); end = new Date(now.getFullYear(), now.getMonth(), 0); } 
+            else if (type === 'last30') { end = new Date(); start = new Date(); start.setDate(now.getDate() - 30); } 
+            else if (type === 'thisYear') { start = new Date(now.getFullYear(), 0, 1); end = new Date(now.getFullYear(), 11, 31); } 
+            else { document.getElementById('filter-start').value = ''; document.getElementById('filter-end').value = ''; renderAll(); document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); return; }
+            document.getElementById('filter-start').value = start.toISOString().split('T')[0]; document.getElementById('filter-end').value = end.toISOString().split('T')[0]; renderAll();
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active')); if(event) event.target.classList.add('preset-active');
         };
 
-        // --- LOGIC: CATEGORIES ---
         function updateCategoryOptions(type) {
             const sel = document.getElementById('entry-cat'); sel.innerHTML = '';
             let options = type === 'income' ? SYSTEM_CONFIG.inc : SYSTEM_CONFIG.exp;
@@ -429,18 +395,17 @@
             if(val === 'transfer') {
                 tg.classList.remove('hidden'); cg.classList.add('hidden'); ls.textContent = "FROM / SOURCE";
                 btn.innerHTML = `<span>${isEditing ? "Update Transfer" : "Process Transfer"}</span> <i class="fas fa-exchange-alt"></i>`;
-                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg";
+                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 sm:py-4 rounded-xl shadow-lg shadow-blue-900/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-base sm:text-lg";
             } else {
                 tg.classList.add('hidden'); cg.classList.remove('hidden'); ls.textContent = "FROM / ACCOUNT";
                 btn.innerHTML = `<span>${isEditing ? "Update Transaction" : "Save Transaction"}</span> <i class="fas fa-check"></i>`;
                 updateCategoryOptions(val);
-                if(val === 'income') btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg" : "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-900/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg";
-                else btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg" : "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-red-900/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg";
+                if(val === 'income') btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 sm:py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-base sm:text-lg" : "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 sm:py-4 rounded-xl shadow-lg shadow-green-900/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-base sm:text-lg";
+                else btn.className = isEditing ? "w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 sm:py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-base sm:text-lg" : "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 sm:py-4 rounded-xl shadow-lg shadow-red-900/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-base sm:text-lg";
             }
         }
         document.getElementById('entry-cat').addEventListener('change', e => document.getElementById('entry-cat-other').classList.toggle('hidden', e.target.value!=='Other'));
 
-        // --- API & DATA ---
         async function fetchData() {
             try {
                 const base = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`;
@@ -486,7 +451,7 @@
             document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map((b, idx) => {
                 const isUSD = b.c === 'USD';
                 const id = `bal-${idx}`;
-                return `<div class="flex justify-between items-center p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-slate-600 transition"><span class="text-sm text-slate-300 font-medium">${b.n}</span><span id="${id}" class="font-bold font-mono text-sm sm:text-base ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:bg-slate-800 px-2 py-1 rounded' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">${fmt(b.v, b.c)}</span></div>`;
+                return `<div class="flex justify-between items-center p-3.5 bg-slate-950 rounded-xl border border-slate-800 hover:border-slate-600 transition"><span class="text-sm text-slate-300 font-medium">${b.n}</span><span id="${id}" class="font-bold font-mono text-sm sm:text-base ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:bg-slate-800 px-2 py-1 rounded' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">${fmt(b.v, b.c)}</span></div>`;
             }).join('');
 
             const totalIncReal = incIDR + (incUSD * exchangeRate);
@@ -494,12 +459,15 @@
             const netCashFlowIDR = totalIncReal - totalExpReal;
             let totalAssetIDR = 0; Object.values(bals).forEach(b => { if(b.c==='IDR') totalAssetIDR+=b.v; if(b.c==='USD') totalAssetIDR+=(b.v*exchangeRate); });
             
-            document.querySelector('#summary-income div:last-child').textContent = fmt(totalIncReal,'IDR');
-            document.querySelector('#summary-expense div:last-child').textContent = fmt(totalExpReal,'IDR');
-            document.querySelector('#summary-net div:last-child').textContent = fmt(netCashFlowIDR,'IDR');
-            const netEl = document.querySelector('#summary-net div:last-child');
-            netEl.className = `font-bold text-lg sm:text-2xl truncate mt-auto ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
-            document.querySelector('#summary-wealth div:last-child').innerHTML = `<div class="text-white font-bold text-lg sm:text-2xl truncate z-10 mt-auto">${new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR)}</div>`;
+            document.querySelector('#summary-income div:nth-child(2)').textContent = fmt(totalIncReal,'IDR');
+            document.querySelector('#summary-expense div:nth-child(2)').textContent = fmt(totalExpReal,'IDR');
+            document.querySelector('#summary-net div:nth-child(2)').textContent = fmt(netCashFlowIDR,'IDR');
+            const netEl = document.querySelector('#summary-net div:nth-child(2)');
+            netEl.className = `text-sm sm:text-2xl font-bold truncate z-10 font-mono tracking-tight ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
+            
+            document.querySelector('#rate-display').textContent = `Rate: ${new Intl.NumberFormat('en-US').format(exchangeRate)}`;
+            document.querySelector('#summary-wealth div:last-child').innerHTML = `<i class="fas fa-wallet"></i>`; // Icon reset
+            document.querySelector('#summary-wealth div:nth-child(2)').textContent = new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR);
 
             const s=document.getElementById('filter-search').value.toLowerCase(), start=document.getElementById('filter-start').value, end=document.getElementById('filter-end').value, fCat=document.getElementById('filter-cat').value, fAcc=document.getElementById('filter-acc').value;
             let filtered = masterData.filter(d => {
@@ -555,7 +523,7 @@
 
         function renderDaily(data) {
             const dly={}; data.filter(d=>d.type==='expense'&&d.cat!=='Transfer').forEach(d=>{ if(!dly[d.date]) dly[d.date]={idr:0,usd:0}; if(d.curr==='IDR') dly[d.date].idr+=d.amt; else dly[d.date].usd+=d.amt; });
-            document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr class="hover:bg-slate-800/50 border-b border-slate-800 last:border-0"><td class="px-6 py-4 text-sm text-slate-300 font-medium font-mono">${dt}</td><td class="px-6 py-4 text-sm text-right text-red-400 font-mono">${dly[dt].idr>0?fmt(dly[dt].idr,'IDR'):'-'}</td><td class="px-6 py-4 text-sm text-right text-red-400 font-mono">${dly[dt].usd>0?fmt(dly[dt].usd,'USD'):'-'}</td></tr>`).join('');
+            document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr class="hover:bg-slate-800/50 border-b border-slate-800 last:border-0"><td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-slate-300 font-medium font-mono">${dt}</td><td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-right text-red-400 font-mono">${dly[dt].idr>0?fmt(dly[dt].idr,'IDR'):'-'}</td><td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-right text-red-400 font-mono">${dly[dt].usd>0?fmt(dly[dt].usd,'USD'):'-'}</td></tr>`).join('');
         }
 
         function renderCalendar(data) {
