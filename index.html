@@ -21,6 +21,8 @@
         @media (min-width: 640px) { .calendar-day { min-height: 6rem; } }
         .sortable { cursor: pointer; user-select: none; }
         input, select { font-size: 16px !important; }
+        /* Animasi flip sederhana untuk toggle mata uang */
+        .cursor-pointer { cursor: pointer; }
     </style>
 </head>
 <body class="bg-slate-950 min-h-screen text-slate-300 pb-10">
@@ -78,7 +80,7 @@
                     <div id="summary-wealth" class="bg-gradient-to-br from-blue-900 to-slate-800 p-4 rounded-xl border border-blue-800 flex flex-col justify-between h-24 relative overflow-hidden">
                         <div class="flex justify-between items-start z-10">
                             <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
-                            <div id="rate-badge" class="text-[9px] text-blue-300 bg-black/20 px-1.5 py-0.5 rounded backdrop-blur-sm">Rate: ...</div>
+                            <div class="text-[9px] text-blue-300 bg-black/20 px-1.5 py-0.5 rounded backdrop-blur-sm">Rate: ...</div>
                         </div>
                         <div class="text-white font-bold text-lg truncate z-10">...</div>
                         <div class="absolute -bottom-2 -right-2 text-6xl text-white opacity-5"><i class="fas fa-wallet"></i></div>
@@ -95,7 +97,7 @@
                         <div id="expense-details" class="mt-4 space-y-2 max-h-48 overflow-y-auto pr-2 custom-scroll"></div>
                     </div>
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                        <h3 class="text-sm font-semibold text-slate-200 mb-4">Wallet Balances</h3>
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4">Wallet Balances <span class="text-xs text-slate-500 font-normal ml-2">(Click USD to convert)</span></h3>
                         <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                     </div>
                  </div>
@@ -272,6 +274,7 @@
         document.getElementById('entry-date').valueAsDate = new Date();
         updateCategoryOptions('expense'); 
 
+        // --- AUTH ---
         if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); }
         document.getElementById('pin-form').addEventListener('submit',e=>{ e.preventDefault(); if(document.getElementById('pin-input').value===PIN){ sessionStorage.setItem('auth','true'); document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); } else document.getElementById('pin-error').textContent="Incorrect PIN"; });
         document.getElementById('logout-btn').addEventListener('click', ()=>{ sessionStorage.removeItem('auth'); location.reload(); });
@@ -352,12 +355,19 @@
                 }
             });
             
-            document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map(b => 
-                `<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700 hover:border-slate-500 transition">
+            // --- NEW: INTERACTIVE WALLET BALANCES ---
+            document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map((b, idx) => {
+                const isUSD = b.c === 'USD';
+                const id = `bal-${idx}`;
+                return `
+                <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700 hover:border-slate-500 transition">
                     <span class="text-sm text-slate-300 font-medium">${b.n}</span>
-                    <span class="font-bold font-mono ${b.v>=0?'text-blue-400':'text-red-400'}">${fmt(b.v,b.c)}</span>
-                </div>`
-            ).join('');
+                    <span id="${id}" class="font-bold font-mono ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:underline' : ''}" 
+                          onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">
+                        ${fmt(b.v, b.c)}
+                    </span>
+                </div>`;
+            }).join('');
 
             const totalIncReal = incIDR + (incUSD * exchangeRate);
             const totalExpReal = expIDR + (expUSD * exchangeRate);
@@ -369,15 +379,7 @@
             document.querySelector('#summary-net div:last-child').textContent = fmt(netCashFlowIDR,'IDR');
             const netEl = document.querySelector('#summary-net div:last-child');
             netEl.className = `font-bold text-lg truncate ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
-            // UPDATED NET WORTH CARD with RATE BADGE
-            document.querySelector('#summary-wealth').innerHTML = `
-                <div class="flex justify-between items-start z-10">
-                    <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
-                    <div class="text-[9px] text-blue-300 bg-black/20 px-1.5 py-0.5 rounded backdrop-blur-sm">1 USD = ${new Intl.NumberFormat('en-US').format(exchangeRate)}</div>
-                </div>
-                <div class="text-white font-bold text-lg truncate z-10">${new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR)}</div>
-                <div class="absolute -bottom-2 -right-2 text-6xl text-white opacity-5"><i class="fas fa-wallet"></i></div>
-            `;
+            document.querySelector('#summary-wealth div:last-child').innerHTML = `<div class="flex justify-between items-start z-10"><div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Net Worth</div><div class="text-[9px] text-blue-300 bg-black/20 px-1.5 py-0.5 rounded backdrop-blur-sm">1 USD = ${new Intl.NumberFormat('en-US').format(exchangeRate)}</div></div><div class="text-white font-bold text-lg truncate z-10">${new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR)}</div><div class="absolute -bottom-2 -right-2 text-6xl text-white opacity-5"><i class="fas fa-wallet"></i></div>`;
 
             const s=document.getElementById('filter-search').value.toLowerCase(), start=document.getElementById('filter-start').value, end=document.getElementById('filter-end').value, fCat=document.getElementById('filter-cat').value, fAcc=document.getElementById('filter-acc').value;
             let filtered = masterData.filter(d => {
@@ -425,6 +427,22 @@
             renderDaily(masterData); renderCalendar(masterData); updateChart(masterData);
         }
 
+        // --- TOGGLE CURRENCY FUNCTION ---
+        window.toggleCurrency = (id, usdVal) => {
+            const el = document.getElementById(id);
+            if(el.textContent.includes('$')) {
+                // Convert to IDR
+                const idrVal = usdVal * exchangeRate;
+                el.textContent = fmt(idrVal, 'IDR');
+                el.classList.add('text-yellow-400'); // Visual indicator
+            } else {
+                // Revert to USD
+                el.textContent = fmt(usdVal, 'USD');
+                el.classList.remove('text-yellow-400');
+            }
+        };
+
+        // ... [Rest of Helper Functions] ...
         function renderDaily(data) {
             const dly={}; data.filter(d=>d.type==='expense'&&d.cat!=='Transfer').forEach(d=>{ if(!dly[d.date]) dly[d.date]={idr:0,usd:0}; if(d.curr==='IDR') dly[d.date].idr+=d.amt; else dly[d.date].usd+=d.amt; });
             document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr class="hover:bg-slate-700/50 border-b border-slate-700"><td class="px-4 py-3 text-sm text-slate-300 font-medium">${dt}</td><td class="px-4 py-3 text-sm text-right text-red-400 font-mono">${dly[dt].idr>0?fmt(dly[dt].idr,'IDR'):'-'}</td><td class="px-4 py-3 text-sm text-right text-red-400 font-mono">${dly[dt].usd>0?fmt(dly[dt].usd,'USD'):'-'}</td></tr>`).join('');
@@ -501,6 +519,7 @@
         }
         document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
 
+        // Global Listeners for Edit/Delete
         document.addEventListener('click', e => {
             const btnEdit = e.target.closest('.edit-btn'), btnDel = e.target.closest('.del-btn');
             
