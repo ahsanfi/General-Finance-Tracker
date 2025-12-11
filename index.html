@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finance Tracker V7 (Responsive)</title>
+    <title>Finance Tracker V7 (Responsive Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
@@ -24,37 +25,32 @@
         .calendar-day { min-height: 4.5rem; } 
         @media (min-width: 768px) { .calendar-day { min-height: 7rem; } }
         
-        /* Hide number input arrows */
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        
-        /* Prevent zoom on iOS inputs */
+        /* Disable input zoom on iOS */
         input, select, textarea { font-size: 16px !important; }
         
-        .preset-btn { @apply px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full border border-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-transparent transition cursor-pointer select-none; }
+        .preset-btn { @apply px-3 py-2 text-xs font-medium rounded-lg border border-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-transparent transition cursor-pointer select-none flex-grow text-center; }
         .preset-active { @apply bg-blue-600 text-white border-transparent shadow-md; }
     </style>
 </head>
-<body class="bg-slate-950 min-h-screen text-slate-300 pb-12 sm:pb-10 selection:bg-blue-500/30">
+<body class="bg-slate-950 min-h-screen text-slate-300 pb-20 sm:pb-10 selection:bg-blue-500/30">
 
     <div id="init-loader" class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950 text-white">
         <div class="loader mb-4"></div>
-        <p class="text-sm text-slate-400 animate-pulse">Syncing with Cloud...</p>
+        <p class="text-sm text-slate-400 animate-pulse">Syncing...</p>
     </div>
 
     <div id="pin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
         <div class="bg-slate-900 rounded-2xl shadow-2xl p-8 w-full max-w-xs border border-slate-800 text-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
             <h2 class="text-2xl font-bold text-white mb-2">Secure Access</h2>
-            <p class="text-xs text-slate-500 mb-6">Enter your 4-digit PIN</p>
             <form id="pin-form">
-                <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" class="w-full text-center text-4xl tracking-[.5em] px-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition placeholder-slate-700" maxlength="4" required autocomplete="off" placeholder="••••">
+                <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" class="w-full text-center text-4xl tracking-[.5em] px-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 transition placeholder-slate-700" maxlength="4" required autocomplete="off" placeholder="••••">
                 <p id="pin-error" class="text-red-400 text-xs mt-3 min-h-[16px] font-medium"></p>
-                <button type="submit" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition">Unlock</button>
+                <button type="submit" class="w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition">Unlock</button>
             </form>
         </div>
     </div>
 
-    <div id="main-content" class="hidden w-full max-w-7xl mx-auto flex flex-col min-h-screen">
+    <div id="main-content" class="hidden w-full max-w-[1600px] mx-auto flex flex-col min-h-screen">
         
         <div class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 px-4 py-3 sm:py-4 flex justify-between items-center shadow-lg shadow-black/20">
             <div>
@@ -63,83 +59,85 @@
                 </h1>
             </div>
             <div class="flex gap-2 sm:gap-3">
-                <button id="export-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition border border-slate-700" title="Screenshot"><i class="fas fa-camera"></i></button>
-                <button id="logout-btn" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition border border-red-500/20" title="Logout"><i class="fas fa-power-off"></i></button>
+                <button id="export-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-xl flex items-center justify-center transition border border-slate-700"><i class="fas fa-camera"></i></button>
+                <button id="logout-btn" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 w-10 h-10 rounded-xl flex items-center justify-center transition border border-red-500/20"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
 
-        <div class="px-4 pt-4 pb-2 bg-slate-950 sticky top-[60px] z-20 sm:static sm:z-0">
+        <div class="px-4 pt-4 pb-2 bg-slate-950 sticky top-[64px] z-20 sm:static sm:z-0">
             <nav class="flex space-x-2 overflow-x-auto no-scrollbar pb-2 sm:justify-center">
-                <button id="tab-dashboard" class="tab-btn tab-active px-5 py-2 text-sm font-medium rounded-full whitespace-nowrap border border-transparent transition-all">Dashboard</button>
-                <button id="tab-transactions" class="tab-btn px-5 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">List</button>
-                <button id="tab-add" class="tab-btn px-5 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Add/Transfer</button>
-                <button id="tab-daily" class="tab-btn px-5 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Daily</button>
-                <button id="tab-calendar" class="tab-btn px-5 py-2 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Calendar</button>
+                <button id="tab-dashboard" class="tab-btn tab-active px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap border border-transparent transition-all">Dashboard</button>
+                <button id="tab-transactions" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">List</button>
+                <button id="tab-add" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Add/Transfer</button>
+                <button id="tab-daily" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Daily</button>
+                <button id="tab-calendar" class="tab-btn px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap text-slate-400 border border-slate-800 hover:bg-slate-900 transition-all">Calendar</button>
             </nav>
         </div>
 
         <div id="tab-content" class="p-4 flex-grow">
             
             <div id="view-dashboard" class="tab-view space-y-6">
-                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                    <div id="summary-income" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between h-24 sm:h-28 shadow-sm">
-                        <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-arrow-down text-green-500"></i> Income</div>
-                        <div class="text-green-400 font-bold text-lg sm:text-xl truncate">...</div>
+                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+                    <div id="summary-income" class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col justify-between h-28 sm:h-32 shadow-sm">
+                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-arrow-down text-green-500"></i> Income</div>
+                        <div class="text-green-400 font-bold text-lg sm:text-2xl truncate mt-auto">...</div>
                     </div>
-                    <div id="summary-expense" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between h-24 sm:h-28 shadow-sm">
-                        <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-arrow-up text-red-500"></i> Expense</div>
-                        <div class="text-red-400 font-bold text-lg sm:text-xl truncate">...</div>
+                    <div id="summary-expense" class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col justify-between h-28 sm:h-32 shadow-sm">
+                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-arrow-up text-red-500"></i> Expense</div>
+                        <div class="text-red-400 font-bold text-lg sm:text-2xl truncate mt-auto">...</div>
                     </div>
-                    <div id="summary-net" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between h-24 sm:h-28 shadow-sm">
-                        <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-scale-balanced text-slate-400"></i> Net Flow</div>
-                        <div class="text-slate-200 font-bold text-lg sm:text-xl truncate">...</div>
+                    <div id="summary-net" class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col justify-between h-28 sm:h-32 shadow-sm">
+                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1"><i class="fas fa-scale-balanced text-slate-400"></i> Net Flow</div>
+                        <div class="text-slate-200 font-bold text-lg sm:text-2xl truncate mt-auto">...</div>
                     </div>
-                    <div id="summary-wealth" class="bg-gradient-to-br from-blue-900 to-slate-900 p-4 rounded-2xl border border-blue-800/50 flex flex-col justify-between h-24 sm:h-28 relative overflow-hidden shadow-md">
+                    <div id="summary-wealth" class="bg-gradient-to-br from-blue-900 to-slate-900 p-4 sm:p-5 rounded-2xl border border-blue-800/50 flex flex-col justify-between h-28 sm:h-32 relative overflow-hidden shadow-md">
                         <div class="flex justify-between items-start z-10">
-                            <div class="text-[10px] sm:text-xs text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
-                            <div class="text-[9px] text-blue-300 bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-md font-mono">Rate: ...</div>
+                            <div class="text-xs text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
+                            <div class="text-[10px] text-blue-300 bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-md font-mono">Rate: ...</div>
                         </div>
-                        <div class="text-white font-bold text-lg sm:text-xl truncate z-10">...</div>
+                        <div class="text-white font-bold text-lg sm:text-2xl truncate z-10 mt-auto">...</div>
                         <div class="absolute -bottom-2 -right-2 text-7xl text-white opacity-5"><i class="fas fa-wallet"></i></div>
                     </div>
                  </div>
 
                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     
-                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col">
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col h-[400px] lg:h-[450px]">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-semibold text-white flex items-center gap-2"><i class="fas fa-chart-pie text-slate-500"></i> Breakdown</h3>
-                            <select id="chart-currency-toggle" class="bg-slate-950 border border-slate-700 text-xs rounded-lg px-2 py-1 text-slate-300 focus:border-blue-500 outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
+                            <select id="chart-currency-toggle" class="bg-slate-950 border border-slate-700 text-xs rounded-lg px-2 py-1.5 text-slate-300 focus:border-blue-500 outline-none"><option value="IDR">IDR</option><option value="USD">USD</option></select>
                         </div>
-                        <div class="relative h-56 w-full flex justify-center shrink-0"><canvas id="expense-pie-chart"></canvas></div>
-                        <div id="expense-details" class="mt-4 space-y-2.5 overflow-y-auto max-h-48 pr-2 custom-scroll flex-grow"></div>
+                        <div class="relative flex-grow flex items-center justify-center overflow-hidden">
+                             <div class="w-full h-full max-h-[250px]"><canvas id="expense-pie-chart"></canvas></div>
+                        </div>
+                        <div id="expense-details" class="mt-4 space-y-2 overflow-y-auto h-32 pr-2 custom-scroll border-t border-slate-800 pt-2"></div>
                     </div>
 
-                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col">
-                        <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2"><i class="fas fa-wallet text-slate-500"></i> Wallets <span class="text-[10px] text-slate-500 font-normal ml-auto bg-slate-800 px-2 py-1 rounded">Tap USD to convert</span></h3>
-                        <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 overflow-y-auto max-h-[400px] custom-scroll content-start"></div>
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col h-[400px] lg:h-[450px]">
+                        <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0"><i class="fas fa-wallet text-slate-500"></i> Wallets <span class="text-[10px] text-slate-500 font-normal ml-auto bg-slate-800 px-2 py-1 rounded">Tap USD to convert</span></h3>
+                        <div id="account-balances-container" class="space-y-2 overflow-y-auto flex-grow custom-scroll pr-1"></div>
                     </div>
 
-                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm md:col-span-2 lg:col-span-1">
-                        <div class="flex justify-between items-center mb-4">
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm md:col-span-2 lg:col-span-1 h-[400px] lg:h-[450px] flex flex-col">
+                        <div class="flex justify-between items-center mb-2 flex-shrink-0">
                             <h3 class="text-sm font-semibold text-white flex items-center gap-2"><i class="fas fa-chart-line text-slate-500"></i> 30-Day Trend</h3>
                         </div>
-                        <div class="relative h-64 lg:h-full min-h-[250px] w-full"><canvas id="trend-line-chart"></canvas></div>
+                        <div class="relative flex-grow w-full"><canvas id="trend-line-chart"></canvas></div>
                     </div>
                  </div>
             </div>
 
             <div id="view-transactions" class="tab-view hidden space-y-4">
-                <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm">
-                    <div class="flex flex-wrap gap-2 mb-5">
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm">
+                    <div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 mb-5">
                         <button class="preset-btn" onclick="applyDatePreset('thisMonth')">This Month</button>
                         <button class="preset-btn" onclick="applyDatePreset('lastMonth')">Last Month</button>
-                        <button class="preset-btn" onclick="applyDatePreset('last30')">Last 30 Days</button>
+                        <button class="preset-btn" onclick="applyDatePreset('last30')">30 Days</button>
                         <button class="preset-btn" onclick="applyDatePreset('thisYear')">This Year</button>
-                        <button class="preset-btn border-red-900/50 text-red-400 hover:bg-red-900/50" onclick="applyDatePreset('clear')">Clear</button>
+                        <button class="preset-btn border-red-900/50 text-red-400 hover:bg-red-900/50 col-span-2 sm:col-span-1" onclick="applyDatePreset('clear')">Clear</button>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                         <div class="space-y-1">
                             <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">From</label>
                             <input type="date" id="filter-start" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs w-full text-slate-200 focus:border-blue-500 outline-none transition">
@@ -153,24 +151,24 @@
                             <select id="filter-cat" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs w-full text-slate-200 focus:border-blue-500 outline-none transition appearance-none"></select>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Account</label>
+                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Wallet</label>
                             <select id="filter-acc" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs w-full text-slate-200 focus:border-blue-500 outline-none transition appearance-none"></select>
                         </div>
                     </div>
                     <input type="text" id="filter-search" placeholder="Search description..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm w-full text-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
                 </div>
                 
-                <div id="mobile-trans-list" class="space-y-3 md:hidden"></div>
+                <div id="mobile-trans-list" class="space-y-3 lg:hidden"></div>
 
-                <div class="hidden md:block overflow-hidden rounded-2xl border border-slate-800 shadow-sm">
+                <div class="hidden lg:block overflow-hidden rounded-2xl border border-slate-800 shadow-sm">
                     <table class="min-w-full divide-y divide-slate-800 bg-slate-900">
                         <thead class="bg-slate-950">
                             <tr>
-                                <th class="px-5 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider sortable hover:text-white transition" data-sort="date">Date <i class="fas fa-sort ml-1"></i></th>
+                                <th class="px-5 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider sortable cursor-pointer hover:text-white" data-sort="date">Date <i class="fas fa-sort ml-1"></i></th>
                                 <th class="px-5 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Description</th>
                                 <th class="px-5 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Wallet</th>
                                 <th class="px-5 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Category</th>
-                                <th class="px-5 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider sortable hover:text-white transition" data-sort="amt">Amount <i class="fas fa-sort ml-1"></i></th>
+                                <th class="px-5 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider sortable cursor-pointer hover:text-white" data-sort="amt">Amount <i class="fas fa-sort ml-1"></i></th>
                                 <th class="px-3 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
@@ -205,7 +203,7 @@
                         <button id="next-month" class="p-3 bg-slate-800 rounded-xl hover:bg-slate-700 text-slate-300 transition"><i class="fas fa-chevron-right"></i></button>
                     </div>
                     <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest">
-                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                        <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
                     </div>
                     <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
                 </div>
@@ -223,15 +221,15 @@
                     <div class="grid grid-cols-3 gap-2 mb-6 p-1 bg-slate-950 rounded-xl border border-slate-800">
                         <label class="cursor-pointer relative">
                             <input type="radio" name="entry-type" value="expense" class="peer hidden" checked>
-                            <div class="py-2.5 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-red-400 peer-checked:shadow-sm transition z-10 relative">Expense</div>
+                            <div class="py-3 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-red-400 peer-checked:shadow-sm transition z-10 relative">Expense</div>
                         </label>
                         <label class="cursor-pointer relative">
                             <input type="radio" name="entry-type" value="income" class="peer hidden">
-                            <div class="py-2.5 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-green-400 peer-checked:shadow-sm transition z-10 relative">Income</div>
+                            <div class="py-3 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-green-400 peer-checked:shadow-sm transition z-10 relative">Income</div>
                         </label>
                         <label class="cursor-pointer relative">
                             <input type="radio" name="entry-type" value="transfer" class="peer hidden">
-                            <div class="py-2.5 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-blue-400 peer-checked:shadow-sm transition z-10 relative">Transfer</div>
+                            <div class="py-3 text-center text-xs font-bold rounded-lg text-slate-400 peer-checked:bg-slate-800 peer-checked:text-blue-400 peer-checked:shadow-sm transition z-10 relative">Transfer</div>
                         </label>
                     </div>
 
@@ -239,7 +237,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Description</label>
-                                <input type="text" id="entry-desc" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600" placeholder="e.g. Lunch at McD" required>
+                                <input type="text" id="entry-desc" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600" placeholder="e.g. Lunch" required>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Date</label>
@@ -282,7 +280,6 @@
                                     <input type="number" step="any" id="entry-amt-target" placeholder="Auto" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-200 font-mono text-right text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition placeholder-slate-600">
                                 </div>
                             </div>
-                            <p class="text-[10px] text-slate-500 mt-2 text-right italic">*Leave amount blank to auto-match source</p>
                         </div>
 
                         <button type="submit" id="submit-btn" class="w-full bg-slate-800 text-slate-300 font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg">
@@ -489,7 +486,7 @@
             document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map((b, idx) => {
                 const isUSD = b.c === 'USD';
                 const id = `bal-${idx}`;
-                return `<div class="flex justify-between items-center p-3.5 bg-slate-950 rounded-xl border border-slate-800 hover:border-slate-600 transition"><span class="text-sm text-slate-300 font-medium">${b.n}</span><span id="${id}" class="font-bold font-mono text-sm sm:text-base ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:bg-slate-800 px-2 py-1 rounded' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">${fmt(b.v, b.c)}</span></div>`;
+                return `<div class="flex justify-between items-center p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-slate-600 transition"><span class="text-sm text-slate-300 font-medium">${b.n}</span><span id="${id}" class="font-bold font-mono text-sm sm:text-base ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:bg-slate-800 px-2 py-1 rounded' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">${fmt(b.v, b.c)}</span></div>`;
             }).join('');
 
             const totalIncReal = incIDR + (incUSD * exchangeRate);
@@ -501,8 +498,8 @@
             document.querySelector('#summary-expense div:last-child').textContent = fmt(totalExpReal,'IDR');
             document.querySelector('#summary-net div:last-child').textContent = fmt(netCashFlowIDR,'IDR');
             const netEl = document.querySelector('#summary-net div:last-child');
-            netEl.className = `font-bold text-lg sm:text-xl truncate ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
-            document.querySelector('#summary-wealth div:last-child').innerHTML = `<div class="text-white font-bold text-lg sm:text-xl truncate z-10">${new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR)}</div>`;
+            netEl.className = `font-bold text-lg sm:text-2xl truncate mt-auto ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
+            document.querySelector('#summary-wealth div:last-child').innerHTML = `<div class="text-white font-bold text-lg sm:text-2xl truncate z-10 mt-auto">${new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR)}</div>`;
 
             const s=document.getElementById('filter-search').value.toLowerCase(), start=document.getElementById('filter-start').value, end=document.getElementById('filter-end').value, fCat=document.getElementById('filter-cat').value, fAcc=document.getElementById('filter-acc').value;
             let filtered = masterData.filter(d => {
