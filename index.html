@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finance Tracker V5 (Stable)</title>
+    <title>Finance Tracker Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -20,7 +20,7 @@
         .calendar-day { min-height: 4rem; } 
         @media (min-width: 640px) { .calendar-day { min-height: 6rem; } }
         .sortable { cursor: pointer; user-select: none; }
-        input, select { font-size: 16px !important; } /* Prevent iOS Zoom */
+        input, select { font-size: 16px !important; }
     </style>
 </head>
 <body class="bg-slate-950 min-h-screen text-slate-300 pb-10">
@@ -76,7 +76,10 @@
                         <div class="text-slate-200 font-bold text-lg truncate">...</div>
                     </div>
                     <div id="summary-wealth" class="bg-gradient-to-br from-blue-900 to-slate-800 p-4 rounded-xl border border-blue-800 flex flex-col justify-between h-24 relative overflow-hidden">
-                        <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider z-10">Net Worth</div>
+                        <div class="flex justify-between items-start z-10">
+                            <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
+                            <div id="rate-badge" class="text-[9px] text-blue-300 bg-black/20 px-1.5 py-0.5 rounded backdrop-blur-sm">Rate: ...</div>
+                        </div>
                         <div class="text-white font-bold text-lg truncate z-10">...</div>
                         <div class="absolute -bottom-2 -right-2 text-6xl text-white opacity-5"><i class="fas fa-wallet"></i></div>
                     </div>
@@ -108,7 +111,7 @@
                         <select id="filter-cat" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200"></select>
                         <select id="filter-acc" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200"></select>
                     </div>
-                    <input type="text" id="filter-search" placeholder="Search..." class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
+                    <input type="text" id="filter-search" placeholder="Search description..." class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
                 </div>
                 
                 <div id="mobile-trans-list" class="space-y-3 lg:hidden"></div>
@@ -255,7 +258,6 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- CONFIG ---
         const PIN = "1907"; 
         const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw_t4_6oYlT-SeQBMzJP7caUrBEFJjD8MsffGP5ilkIlc2Z7eLdWboXs-RN20j54d38AA/exec";
@@ -268,16 +270,12 @@
         let isEditing = false, editItem = null;
 
         document.getElementById('entry-date').valueAsDate = new Date();
-        
-        // --- INITIALIZE CATEGORIES ---
         updateCategoryOptions('expense'); 
 
-        // --- AUTH ---
         if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); }
         document.getElementById('pin-form').addEventListener('submit',e=>{ e.preventDefault(); if(document.getElementById('pin-input').value===PIN){ sessionStorage.setItem('auth','true'); document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); } else document.getElementById('pin-error').textContent="Incorrect PIN"; });
         document.getElementById('logout-btn').addEventListener('click', ()=>{ sessionStorage.removeItem('auth'); location.reload(); });
 
-        // --- NAVIGATION ---
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', e => switchTab(e.target.id.replace('tab','view'))));
         function switchTab(viewId) {
             document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));
@@ -287,7 +285,6 @@
             if(btn) { btn.classList.add('tab-active','text-white','bg-blue-600','border-transparent'); btn.classList.remove('text-slate-400','border-slate-700'); }
         }
 
-        // --- LOGIC ---
         function updateCategoryOptions(type) {
             const sel = document.getElementById('entry-cat'); sel.innerHTML = '';
             (type === 'income' ? INCOME_CATS : EXPENSE_CATS).forEach(cat => { const o = document.createElement('option'); o.value = cat; o.textContent = cat; sel.appendChild(o); });
@@ -313,7 +310,6 @@
         }
         document.getElementById('entry-cat').addEventListener('change', e => document.getElementById('entry-cat-other').classList.toggle('hidden', e.target.value!=='Other'));
 
-        // --- API ---
         async function fetchData() {
             try {
                 const base = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`;
@@ -342,7 +338,6 @@
             } catch(e) { showToast("Error loading data: " + e.message, 'error'); }
         }
 
-        // --- RENDER ---
         function renderAll() {
             const bals = {}; let incIDR=0, expIDR=0, incUSD=0, expUSD=0;
             masterData.forEach(d => {
@@ -369,15 +364,21 @@
             const netCashFlowIDR = totalIncReal - totalExpReal;
             let totalAssetIDR = 0; Object.values(bals).forEach(b => { if(b.c==='IDR') totalAssetIDR+=b.v; if(b.c==='USD') totalAssetIDR+=(b.v*exchangeRate); });
             
-            // Update Summary Cards (Mobile & Desktop)
             document.querySelector('#summary-income div:last-child').textContent = fmt(totalIncReal,'IDR');
             document.querySelector('#summary-expense div:last-child').textContent = fmt(totalExpReal,'IDR');
             document.querySelector('#summary-net div:last-child').textContent = fmt(netCashFlowIDR,'IDR');
             const netEl = document.querySelector('#summary-net div:last-child');
             netEl.className = `font-bold text-lg truncate ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
-            document.querySelector('#summary-wealth div:nth-child(2)').textContent = new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR);
+            // UPDATED NET WORTH CARD with RATE BADGE
+            document.querySelector('#summary-wealth').innerHTML = `
+                <div class="flex justify-between items-start z-10">
+                    <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider">Net Worth</div>
+                    <div class="text-[9px] text-blue-300 bg-black/20 px-1.5 py-0.5 rounded backdrop-blur-sm">1 USD = ${new Intl.NumberFormat('en-US').format(exchangeRate)}</div>
+                </div>
+                <div class="text-white font-bold text-lg truncate z-10">${new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR)}</div>
+                <div class="absolute -bottom-2 -right-2 text-6xl text-white opacity-5"><i class="fas fa-wallet"></i></div>
+            `;
 
-            // Transactions List
             const s=document.getElementById('filter-search').value.toLowerCase(), start=document.getElementById('filter-start').value, end=document.getElementById('filter-end').value, fCat=document.getElementById('filter-cat').value, fAcc=document.getElementById('filter-acc').value;
             let filtered = masterData.filter(d => {
                 if(start && d.date < start) return false; if(end && d.date > end) return false;
@@ -385,7 +386,6 @@
                 if(s && !d.desc.toLowerCase().includes(s)) return false; return true;
             }).sort((a,b) => sortState.o==='asc' ? (a[sortState.k]>b[sortState.k]?1:-1) : (a[sortState.k]<b[sortState.k]?1:-1));
 
-            // Mobile List View
             document.getElementById('mobile-trans-list').innerHTML = filtered.map(d => `
                 <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center active:bg-slate-700 transition">
                     <div class="flex flex-col max-w-[60%]">
@@ -405,7 +405,6 @@
             `).join('');
             if(filtered.length===0) document.getElementById('mobile-trans-list').innerHTML = '<div class="text-center text-slate-500 py-4 text-xs">No transactions found</div>';
 
-            // Desktop Table View
             document.getElementById('data-body').innerHTML = filtered.map(d => `
                 <tr class="hover:bg-slate-700/50 transition border-b border-slate-700 last:border-0">
                     <td class="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">${d.date}</td>
@@ -426,7 +425,6 @@
             renderDaily(masterData); renderCalendar(masterData); updateChart(masterData);
         }
 
-        // ... [Rest of Helper Functions & Logic same as before] ...
         function renderDaily(data) {
             const dly={}; data.filter(d=>d.type==='expense'&&d.cat!=='Transfer').forEach(d=>{ if(!dly[d.date]) dly[d.date]={idr:0,usd:0}; if(d.curr==='IDR') dly[d.date].idr+=d.amt; else dly[d.date].usd+=d.amt; });
             document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr class="hover:bg-slate-700/50 border-b border-slate-700"><td class="px-4 py-3 text-sm text-slate-300 font-medium">${dt}</td><td class="px-4 py-3 text-sm text-right text-red-400 font-mono">${dly[dt].idr>0?fmt(dly[dt].idr,'IDR'):'-'}</td><td class="px-4 py-3 text-sm text-right text-red-400 font-mono">${dly[dt].usd>0?fmt(dly[dt].usd,'USD'):'-'}</td></tr>`).join('');
@@ -503,7 +501,6 @@
         }
         document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
 
-        // Global Listeners for Edit/Delete
         document.addEventListener('click', e => {
             const btnEdit = e.target.closest('.edit-btn'), btnDel = e.target.closest('.del-btn');
             
