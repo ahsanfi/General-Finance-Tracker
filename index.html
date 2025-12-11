@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finance Tracker V6 (Dynamic System)</title>
+    <title>Finance Tracker V7 (Trends & Presets)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -14,20 +14,23 @@
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        .loader { border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .tab-active { background-color: #3b82f6; color: #fff; border-bottom-color: transparent; }
         .calendar-day { min-height: 4rem; } 
         @media (min-width: 640px) { .calendar-day { min-height: 6rem; } }
         .sortable { cursor: pointer; user-select: none; }
         input, select { font-size: 16px !important; }
+        /* Badge Presets */
+        .preset-btn { @apply px-3 py-1 text-xs font-medium rounded-full border border-slate-600 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-transparent transition cursor-pointer; }
+        .preset-active { @apply bg-blue-600 text-white border-transparent; }
     </style>
 </head>
 <body class="bg-slate-950 min-h-screen text-slate-300 pb-10">
 
     <div id="init-loader" class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950 text-white">
         <div class="loader mb-4"></div>
-        <p class="text-sm text-slate-400">Loading System Config...</p>
+        <p class="text-sm text-slate-400">Syncing with System...</p>
     </div>
 
     <div id="pin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm">
@@ -91,6 +94,7 @@
                  </div>
 
                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-semibold text-slate-200">Expense Breakdown</h3>
@@ -99,15 +103,31 @@
                         <div class="relative h-56 w-full flex justify-center"><canvas id="expense-pie-chart"></canvas></div>
                         <div id="expense-details" class="mt-4 space-y-2 max-h-48 overflow-y-auto pr-2 custom-scroll"></div>
                     </div>
-                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col">
                         <h3 class="text-sm font-semibold text-slate-200 mb-4">Wallet Balances <span class="text-xs text-slate-500 font-normal ml-2">(Click USD to convert)</span></h3>
-                        <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                        <div id="account-balances-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto max-h-[300px] custom-scroll"></div>
+                    </div>
+
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-semibold text-slate-200">Expense Trend (Last 30 Days)</h3>
+                        </div>
+                        <div class="relative h-64 w-full"><canvas id="trend-line-chart"></canvas></div>
                     </div>
                  </div>
             </div>
 
             <div id="view-transactions" class="tab-view hidden space-y-4">
                 <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button class="preset-btn" onclick="applyDatePreset('thisMonth')">This Month</button>
+                        <button class="preset-btn" onclick="applyDatePreset('lastMonth')">Last Month</button>
+                        <button class="preset-btn" onclick="applyDatePreset('last30')">Last 30 Days</button>
+                        <button class="preset-btn" onclick="applyDatePreset('thisYear')">This Year</button>
+                        <button class="preset-btn" onclick="applyDatePreset('clear')">Clear</button>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <input type="date" id="filter-start" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
                         <input type="date" id="filter-end" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-xs w-full text-slate-200">
@@ -257,13 +277,12 @@
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIG ---
         const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
+        // URL UPDATED HERE
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbehUoJwzW89PN55LIhR71TmMpExcblSIKDPmLLgWJ3iQjGLgSj5h9OxLcmBK6luB9BA/exec";
         const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
 
         // CONFIG STATE (Fetched from Sheet)
-        let SYSTEM_CONFIG = {
-            exp: [], inc: [], wallets: [], pin: null
-        };
+        let SYSTEM_CONFIG = { exp: [], inc: [], wallets: [], pin: null };
 
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'}, calendarDate = new Date(), exchangeRate = 16000; 
         let isEditing = false, editItem = null;
@@ -275,59 +294,30 @@
 
         async function loadSystemConfig() {
             try {
-                // Fetch System Config from Backend Action
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'getSystemConfig' })
-                });
+                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getSystemConfig' }) });
                 const result = await response.json();
-                
                 if (result.status === 'success') {
-                    SYSTEM_CONFIG = result; // Store config globally
-                    console.log("Config Loaded:", SYSTEM_CONFIG);
-                    
-                    // Populate Wallet Dropdowns
+                    SYSTEM_CONFIG = result;
                     const walletOptions = SYSTEM_CONFIG.wallets.map(w => `<option value="${w}">${w}</option>`).join('');
                     document.querySelectorAll('.account-select').forEach(sel => sel.innerHTML = walletOptions);
-                    
-                    // Initial Category Load (Expense Default)
                     updateCategoryOptions('expense');
-
-                    // Remove Loader
                     document.getElementById('init-loader').classList.add('hidden');
-                    
-                    // Check Auth State
                     checkAuth();
-                } else {
-                    throw new Error("Failed to load system config");
-                }
-            } catch (e) {
-                alert("Critical Error: Cannot load configuration from Sheet. Please check connection.");
-            }
+                } else throw new Error("Failed");
+            } catch (e) { alert("Error: Check network or backend deployment."); }
         }
 
         function checkAuth() {
-            if(sessionStorage.getItem('auth')==='true') { 
-                document.getElementById('pin-modal').classList.add('hidden'); 
-                document.getElementById('main-content').classList.remove('hidden'); 
-                fetchData(); 
-            } else {
-                document.getElementById('pin-modal').classList.remove('hidden'); 
-            }
+            if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); } 
+            else document.getElementById('pin-modal').classList.remove('hidden'); 
         }
 
         // --- AUTH ---
         document.getElementById('pin-form').addEventListener('submit',e=>{ 
             e.preventDefault(); 
-            // COMPARE WITH FETCHED PIN
             if(document.getElementById('pin-input').value === SYSTEM_CONFIG.pin){ 
-                sessionStorage.setItem('auth','true'); 
-                document.getElementById('pin-modal').classList.add('hidden'); 
-                document.getElementById('main-content').classList.remove('hidden'); 
-                fetchData(); 
-            } else {
-                document.getElementById('pin-error').textContent="Incorrect PIN";
-            }
+                sessionStorage.setItem('auth','true'); document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); 
+            } else document.getElementById('pin-error').textContent="Incorrect PIN";
         });
         document.getElementById('logout-btn').addEventListener('click', ()=>{ sessionStorage.removeItem('auth'); location.reload(); });
 
@@ -341,24 +331,48 @@
             if(btn) { btn.classList.add('tab-active','text-white','bg-blue-600','border-transparent'); btn.classList.remove('text-slate-400','border-slate-700'); }
         }
 
+        // --- NEW: DATE PRESETS ---
+        window.applyDatePreset = (type) => {
+            const now = new Date();
+            let start, end;
+            
+            if(type === 'thisMonth') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            } else if (type === 'lastMonth') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0);
+            } else if (type === 'last30') {
+                end = new Date();
+                start = new Date();
+                start.setDate(now.getDate() - 30);
+            } else if (type === 'thisYear') {
+                start = new Date(now.getFullYear(), 0, 1);
+                end = new Date(now.getFullYear(), 11, 31);
+            } else {
+                document.getElementById('filter-start').value = '';
+                document.getElementById('filter-end').value = '';
+                renderAll();
+                return;
+            }
+
+            // Format to YYYY-MM-DD for input
+            const fmtDate = (d) => d.toISOString().split('T')[0];
+            document.getElementById('filter-start').value = fmtDate(start);
+            document.getElementById('filter-end').value = fmtDate(end);
+            renderAll();
+            
+            // Highlight buttons
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-active'));
+            event.target.classList.add('preset-active');
+        };
+
         // --- LOGIC: CATEGORIES ---
         function updateCategoryOptions(type) {
-            const sel = document.getElementById('entry-cat'); 
-            sel.innerHTML = '';
-            
-            // Use categories from SYSTEM_CONFIG
+            const sel = document.getElementById('entry-cat'); sel.innerHTML = '';
             let options = type === 'income' ? SYSTEM_CONFIG.inc : SYSTEM_CONFIG.exp;
-            
-            // Fallback if empty
             if (!options || options.length === 0) options = ["General"];
-
-            options.forEach(cat => { 
-                const o = document.createElement('option'); 
-                o.value = cat; 
-                o.textContent = cat; 
-                sel.appendChild(o); 
-            });
-            // Add custom option logic if needed
+            options.forEach(cat => { const o = document.createElement('option'); o.value = cat; o.textContent = cat; sel.appendChild(o); });
             const otherOpt = document.createElement('option'); otherOpt.value = 'Other'; otherOpt.textContent = 'Other...'; sel.appendChild(otherOpt);
             document.getElementById('entry-cat-other').classList.add('hidden');
         }
@@ -404,7 +418,6 @@
                 parse(inc.values, 'income'); parse(exp.values, 'expense');
                 if (rateData.values && rateData.values[0]) exchangeRate = parseFloat(rateData.values[0][0].replace(/,/g, '').replace(/[^\d.]/g, ''));
                 
-                // Populate Filters
                 const cats = [...new Set(masterData.map(d=>d.cat))].sort(), accs = [...new Set(masterData.map(d=>d.acc))].sort();
                 document.getElementById('filter-cat').innerHTML = '<option value="all">All Categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
                 document.getElementById('filter-acc').innerHTML = '<option value="all">All Accounts</option>' + accs.map(a=>`<option>${a}</option>`).join('');
@@ -429,14 +442,7 @@
             document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map((b, idx) => {
                 const isUSD = b.c === 'USD';
                 const id = `bal-${idx}`;
-                return `
-                <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700 hover:border-slate-500 transition">
-                    <span class="text-sm text-slate-300 font-medium">${b.n}</span>
-                    <span id="${id}" class="font-bold font-mono ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:underline' : ''}" 
-                          onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">
-                        ${fmt(b.v, b.c)}
-                    </span>
-                </div>`;
+                return `<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700 hover:border-slate-500 transition"><span class="text-sm text-slate-300 font-medium">${b.n}</span><span id="${id}" class="font-bold font-mono ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:underline' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">${fmt(b.v, b.c)}</span></div>`;
             }).join('');
 
             const totalIncReal = incIDR + (incUSD * exchangeRate);
@@ -460,53 +466,23 @@
 
             document.getElementById('mobile-trans-list').innerHTML = filtered.map(d => `
                 <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center active:bg-slate-700 transition">
-                    <div class="flex flex-col max-w-[60%]">
-                        <span class="text-sm font-bold text-slate-100 truncate">${d.desc}</span>
-                        <div class="flex items-center gap-2 text-xs text-slate-400">
-                            <span>${d.date.slice(5)}</span> • <span class="bg-slate-700 px-1 rounded">${d.acc}</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-col items-end">
-                        <span class="font-bold text-sm ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</span>
-                        <div class="flex gap-3 mt-1">
-                            <button class="text-slate-500 hover:text-blue-400 edit-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-pen"></i></button>
-                            <button class="text-slate-500 hover:text-red-400 del-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
+                    <div class="flex flex-col max-w-[60%]"><span class="text-sm font-bold text-slate-100 truncate">${d.desc}</span><div class="flex items-center gap-2 text-xs text-slate-400"><span>${d.date.slice(5)}</span> • <span class="bg-slate-700 px-1 rounded">${d.acc}</span></div></div>
+                    <div class="flex flex-col items-end"><span class="font-bold text-sm ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</span><div class="flex gap-3 mt-1"><button class="text-slate-500 hover:text-blue-400 edit-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-pen"></i></button><button class="text-slate-500 hover:text-red-400 del-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button></div></div>
                 </div>
             `).join('');
             if(filtered.length===0) document.getElementById('mobile-trans-list').innerHTML = '<div class="text-center text-slate-500 py-4 text-xs">No transactions found</div>';
 
             document.getElementById('data-body').innerHTML = filtered.map(d => `
-                <tr class="hover:bg-slate-700/50 transition border-b border-slate-700 last:border-0">
-                    <td class="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">${d.date}</td>
-                    <td class="px-4 py-3 text-sm text-slate-200 font-medium">${d.desc}</td>
-                    <td class="px-4 py-3 text-sm text-slate-400"><span class="bg-slate-700 px-2 py-0.5 rounded text-xs">${d.acc}</span></td>
-                    <td class="px-4 py-3 text-sm text-slate-400">${d.cat}</td>
-                    <td class="px-4 py-3 text-sm text-right font-mono ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</td>
-                    <td class="px-2 py-3 text-center">
-                        <div class="flex justify-center gap-2">
-                            <button class="p-1 text-slate-500 hover:text-blue-400 edit-btn transition" data-item='${JSON.stringify(d)}'><i class="fas fa-pencil-alt"></i></button>
-                            <button class="p-1 text-slate-500 hover:text-red-400 del-btn transition" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button>
-                        </div>
-                    </td>
-                </tr>
+                <tr class="hover:bg-slate-700/50 transition border-b border-slate-700 last:border-0"><td class="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">${d.date}</td><td class="px-4 py-3 text-sm text-slate-200 font-medium">${d.desc}</td><td class="px-4 py-3 text-sm text-slate-400"><span class="bg-slate-700 px-2 py-0.5 rounded text-xs">${d.acc}</span></td><td class="px-4 py-3 text-sm text-slate-400">${d.cat}</td><td class="px-4 py-3 text-sm text-right font-mono ${d.type==='income'?'text-green-400':'text-red-400'}">${d.type==='income'?'+':'-'} ${fmt(d.amt,d.curr)}</td><td class="px-2 py-3 text-center"><div class="flex justify-center gap-2"><button class="p-1 text-slate-500 hover:text-blue-400 edit-btn transition" data-item='${JSON.stringify(d)}'><i class="fas fa-pencil-alt"></i></button><button class="p-1 text-slate-500 hover:text-red-400 del-btn transition" data-item='${JSON.stringify(d)}'><i class="fas fa-trash"></i></button></div></td></tr>
             `).join('');
             if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500 text-sm">No data found</td></tr>';
 
-            renderDaily(masterData); renderCalendar(masterData); updateChart(masterData);
+            renderDaily(masterData); renderCalendar(masterData); updateChart(masterData); updateTrendChart(masterData);
         }
 
         window.toggleCurrency = (id, usdVal) => {
             const el = document.getElementById(id);
-            if(el.textContent.includes('$')) {
-                const idrVal = usdVal * exchangeRate;
-                el.textContent = fmt(idrVal, 'IDR');
-                el.classList.add('text-yellow-400');
-            } else {
-                el.textContent = fmt(usdVal, 'USD');
-                el.classList.remove('text-yellow-400');
-            }
+            if(el.textContent.includes('$')) { const idrVal = usdVal * exchangeRate; el.textContent = fmt(idrVal, 'IDR'); el.classList.add('text-yellow-400'); } else { el.textContent = fmt(usdVal, 'USD'); el.classList.remove('text-yellow-400'); }
         };
 
         function renderDaily(data) {
@@ -525,11 +501,7 @@
                     el.innerHTML += `<div class="flex gap-1 mt-auto pb-1">${items.some(x=>x.type==='income')?'<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>':''}${items.some(x=>x.type==='expense')?'<div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>':''}</div>`; 
                     el.onclick = () => { 
                         document.getElementById('cal-detail-title').textContent = `${dateStr}`; 
-                        document.getElementById('cal-detail-content').innerHTML = items.map(x=>`
-                            <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
-                                <div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-xs text-slate-500">${x.cat}</div></div>
-                                <div class="${x.type==='income'?'text-green-400':'text-red-400'} font-mono text-sm">${fmt(x.amt,x.curr)}</div>
-                            </div>`).join(''); 
+                        document.getElementById('cal-detail-content').innerHTML = items.map(x=>`<div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700"><div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-xs text-slate-500">${x.cat}</div></div><div class="${x.type==='income'?'text-green-400':'text-red-400'} font-mono text-sm">${fmt(x.amt,x.curr)}</div></div>`).join(''); 
                         document.getElementById('calendar-detail-modal').classList.remove('hidden'); 
                     }; 
                 }
@@ -546,6 +518,64 @@
             const ctx=document.getElementById('expense-pie-chart').getContext('2d'); if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {type:'doughnut',data:{labels:Object.keys(totals),datasets:[{data:Object.values(totals),backgroundColor:['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#a855f7','#ec4899','#6366f1'],borderWidth:0}]},options:{plugins:{legend:{display:false}},cutout:'70%'}});
             document.getElementById('expense-details').innerHTML = Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="flex justify-between text-xs py-2 border-b border-slate-700 last:border-0"><span class="text-slate-300">${k}</span><span class="font-mono text-slate-100">${fmt(v,curr)}</span></div>`).join('');
+        }
+
+        // --- NEW: TREND CHART (LINE) ---
+        let trendChart;
+        function updateTrendChart(data) {
+            const ctx = document.getElementById('trend-line-chart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+
+            // Filter Last 30 Days Expenses (No Transfer)
+            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const rawData = data.filter(d => d.type === 'expense' && d.cat !== 'Transfer' && new Date(d.date) >= thirtyDaysAgo);
+            
+            // Group by Date & Convert to IDR
+            const dailyTotals = {};
+            rawData.forEach(d => {
+                const date = d.date; // YYYY-MM-DD
+                const amountIDR = d.curr === 'USD' ? d.amt * exchangeRate : d.amt;
+                dailyTotals[date] = (dailyTotals[date] || 0) + amountIDR;
+            });
+
+            // Sort Dates
+            const sortedDates = Object.keys(dailyTotals).sort();
+            const values = sortedDates.map(date => dailyTotals[date]);
+            
+            // Format Dates for Label (e.g., "Oct 12")
+            const labels = sortedDates.map(d => {
+                const dateObj = new Date(d);
+                return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Expenses (IDR)',
+                        data: values,
+                        borderColor: '#3b82f6', // Blue-500
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4, // Smooth curve
+                        pointRadius: 3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false, drawBorder: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                        y: { 
+                            grid: { color: '#334155', drawBorder: false }, 
+                            ticks: { color: '#94a3b8', font: { size: 10 }, callback: function(value) { return value >= 1000000 ? (value/1000000).toFixed(1) + 'M' : (value/1000).toFixed(0) + 'k'; } } 
+                        }
+                    }
+                }
+            });
         }
 
         document.getElementById('add-entry-form').addEventListener('submit', e => {
@@ -638,5 +668,3 @@
     </script>
 </body>
 </html>
-
-}
