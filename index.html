@@ -315,9 +315,8 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const SPREADSHEET_ID = "1YRKJgR_VNFCJt3Vgtmkfdf28YZiE44BMNcFg-UGU7hY"; 
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbehUoJwzW89PN55LIhR71TmMpExcblSIKDPmLLgWJ3iQjGLgSj5h9OxLcmBK6luB9BA/exec";
-        const API_KEY = "AIzaSyCNMaR1CCsaGQbcSDzjsTeTCtdc42l35tc";
+        // PERHATIAN: Pastikan Anda sudah Deploy New Deployment di Google Apps Script
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNSG7bWD6J1fwpnD6q7F5Vl3qQnOgOXxFEh8DJOlSmBYWDgNBreY2bbJ1YYIFLNm7Dvw/exec";
 
         let SYSTEM_CONFIG = { exp: [], inc: [], wallets: [], pin: null };
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'}, calendarDate = new Date(), exchangeRate = 16000; 
@@ -407,24 +406,39 @@
 
         async function fetchData() {
             try {
-                const base = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values`;
-                const [inc, exp, rateData] = await Promise.all([
-                    fetch(`${base}/Income!A2:F?key=${API_KEY}`).then(r=>r.json()),
-                    fetch(`${base}/Expenses!A2:F?key=${API_KEY}`).then(r=>r.json()),
-                    fetch(`${base}/Expenses!G1?key=${API_KEY}`).then(r=>r.json())
-                ]);
+                // Request ke Web App sendiri, bukan ke Google Sheets API langsung
+                const response = await fetch(WEB_APP_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'getData' }) 
+                });
+                const result = await response.json();
                 
+                if(result.status !== 'success') throw new Error(result.message || "Failed to load");
+
                 masterData = [];
+                exchangeRate = result.rate || 16000;
+
                 const parse = (rows, type) => {
-                    if(!rows) return;
-                    rows.forEach(r => {
-                        if(!r[0]) return;
-                        let amt = parseFloat(String(r[5] || '0').replace(/,/g, ''));
-                        masterData.push({ type, date: r[0], desc: r[1], cat: r[2], acc: r[3], curr: r[4], amt: Math.abs(amt) });
-                    });
+                    if(!rows || rows.length < 2) return;
+                    // Start index 1 karena index 0 adalah Header
+                    for(let i = 1; i < rows.length; i++) {
+                        const r = rows[i];
+                        if(!r[0]) continue;
+                        
+                        // Handle Date: GAS return Date object -> JSON string ISO 8601
+                        let dateStr = r[0];
+                        if(typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
+                        
+                        // Handle Amount: number or string with comma
+                        let amt = r[5];
+                        if(typeof amt === 'string') amt = parseFloat(amt.replace(/,/g, ''));
+                        
+                        masterData.push({ type, date: dateStr, desc: r[1], cat: r[2], acc: r[3], curr: r[4], amt: Math.abs(amt || 0) });
+                    }
                 };
-                parse(inc.values, 'income'); parse(exp.values, 'expense');
-                if (rateData.values && rateData.values[0]) exchangeRate = parseFloat(rateData.values[0][0].replace(/,/g, '').replace(/[^\d.]/g, ''));
+
+                parse(result.income, 'income');
+                parse(result.expenses, 'expense');
                 
                 const cats = [...new Set(masterData.map(d=>d.cat))].sort(), accs = [...new Set(masterData.map(d=>d.acc))].sort();
                 document.getElementById('filter-cat').innerHTML = '<option value="all">All Categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
@@ -447,7 +461,7 @@
                 }
             });
             
-            // --- UPDATED RENDER LOGIC FOR WALLETS (GRID VIEW) ---
+            // --- WALLETS RENDER LOGIC (GRID 2 COLS) ---
             document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map((b, idx) => {
                 const isUSD = b.c === 'USD';
                 const id = `bal-${idx}`;
