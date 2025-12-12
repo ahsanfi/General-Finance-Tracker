@@ -113,7 +113,7 @@
 
                     <div class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col h-[400px] lg:h-[450px]">
                         <h3 class="text-xs sm:text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0"><i class="fas fa-wallet text-slate-500"></i> Wallets <span class="text-[9px] text-slate-500 font-normal ml-auto bg-slate-800 px-2 py-1 rounded">Tap USD to convert</span></h3>
-                        <div id="account-balances-container" class="space-y-2 overflow-y-auto flex-grow custom-scroll pr-1"></div>
+                        <div id="account-balances-container" class="grid grid-cols-2 gap-3 overflow-y-auto flex-grow custom-scroll pr-1 content-start"></div>
                     </div>
 
                     <div class="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm md:col-span-2 lg:col-span-1 h-[400px] lg:h-[450px] flex flex-col">
@@ -447,11 +447,21 @@
                 }
             });
             
+            // --- UPDATED RENDER LOGIC FOR WALLETS (GRID VIEW) ---
             document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map((b, idx) => {
                 const isUSD = b.c === 'USD';
                 const id = `bal-${idx}`;
-                return `<div class="flex justify-between items-center p-3.5 bg-slate-950 rounded-xl border border-slate-800 hover:border-slate-600 transition"><span class="text-sm text-slate-300 font-medium">${b.n}</span><span id="${id}" class="font-bold font-mono text-sm sm:text-base ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer hover:bg-slate-800 px-2 py-1 rounded' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">${fmt(b.v, b.c)}</span></div>`;
+                return `
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 hover:border-slate-600 transition flex flex-col justify-center min-h-[70px] relative group">
+                        <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider truncate mb-1" title="${b.n}">${b.n}</span>
+                        <span id="${id}" class="font-bold font-mono text-sm truncate ${b.v>=0?'text-blue-400':'text-red-400'} ${isUSD ? 'cursor-pointer' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">
+                            ${fmt(b.v, b.c)}
+                        </span>
+                        ${isUSD ? '<div class="absolute top-2 right-2 text-[8px] text-slate-600 opacity-50"><i class="fas fa-exchange-alt"></i></div>' : ''}
+                    </div>
+                `;
             }).join('');
+            // ---------------------------------------------------
 
             const totalIncReal = incIDR + (incUSD * exchangeRate);
             const totalExpReal = expIDR + (expUSD * exchangeRate);
@@ -464,11 +474,7 @@
             const netEl = document.querySelector('#summary-net div:nth-child(2)');
             netEl.className = `text-sm sm:text-2xl font-bold truncate z-10 font-mono tracking-tight ${netCashFlowIDR>=0?'text-blue-400':'text-red-400'}`;
             
-            // --- FIX IS HERE ---
-            // 1. Set Rate in Top Right Badge
             document.getElementById('rate-display').textContent = `1 USD = ${fmt(exchangeRate, 'IDR').replace('IDR', '').trim()}`;
-            
-            // 2. Set Wealth in Main Display (Bottom Left)
             document.getElementById('wealth-display').textContent = new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR);
 
             const s=document.getElementById('filter-search').value.toLowerCase(), start=document.getElementById('filter-start').value, end=document.getElementById('filter-end').value, fCat=document.getElementById('filter-cat').value, fAcc=document.getElementById('filter-acc').value;
