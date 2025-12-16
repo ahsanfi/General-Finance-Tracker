@@ -316,9 +316,10 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // PERHATIAN: Pastikan Anda sudah Deploy New Deployment di Google Apps Script
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNSG7bWD6J1fwpnD6q7F5Vl3qQnOgOXxFEh8DJOlSmBYWDgNBreY2bbJ1YYIFLNm7Dvw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzt2el5OeYDohIdAKM3x_GEdth5XroKsOkSALeJi3UfM6u8_C8oUiC26epdw2lMoNEVJw/exec";
 
-        let SYSTEM_CONFIG = { exp: [], inc: [], wallets: [], pin: null };
+        // UPDATE 1: Pisahkan walletsIDR dan walletsUSD di config
+        let SYSTEM_CONFIG = { exp: [], inc: [], walletsIDR: [], walletsUSD: [], pin: null };
         let masterData = [], itemToDelete = null, sortState = {k:'date',o:'desc'}, calendarDate = new Date(), exchangeRate = 16000; 
         let isEditing = false, editItem = null;
 
@@ -331,8 +332,11 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     SYSTEM_CONFIG = result;
-                    const walletOptions = SYSTEM_CONFIG.wallets.map(w => `<option value="${w}">${w}</option>`).join('');
-                    document.querySelectorAll('.account-select').forEach(sel => sel.innerHTML = walletOptions);
+                    
+                    // UPDATE 2: Inisialisasi dropdown wallet berdasarkan default currency (IDR)
+                    updateWalletOptions('IDR', 'entry-acc-source');
+                    updateWalletOptions('IDR', 'entry-acc-target');
+                    
                     updateCategoryOptions('expense');
                     document.getElementById('init-loader').classList.add('hidden');
                     checkAuth();
@@ -341,6 +345,26 @@
                 document.getElementById('init-loader').innerHTML = '<p class="text-red-400">Connection Failed. Refresh.</p>';
             }
         }
+
+        // UPDATE 3: Fungsi baru untuk mengubah opsi wallet berdasarkan currency
+        function updateWalletOptions(currency, selectId) {
+            const sel = document.getElementById(selectId);
+            const list = currency === 'USD' ? SYSTEM_CONFIG.walletsUSD : SYSTEM_CONFIG.walletsIDR;
+            
+            // Fallback jika list kosong
+            const safeList = (list && list.length > 0) ? list : ["General"];
+            
+            sel.innerHTML = safeList.map(w => `<option value="${w}">${w}</option>`).join('');
+        }
+
+        // UPDATE 4: Event Listener ketika Currency berubah
+        document.getElementById('entry-curr-source').addEventListener('change', (e) => {
+            updateWalletOptions(e.target.value, 'entry-acc-source');
+        });
+        
+        document.getElementById('entry-curr-target').addEventListener('change', (e) => {
+            updateWalletOptions(e.target.value, 'entry-acc-target');
+        });
 
         function checkAuth() {
             if(sessionStorage.getItem('auth')==='true') { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('hidden'); fetchData(); } 
@@ -406,7 +430,6 @@
 
         async function fetchData() {
             try {
-                // Request ke Web App sendiri, bukan ke Google Sheets API langsung
                 const response = await fetch(WEB_APP_URL, { 
                     method: 'POST', 
                     body: JSON.stringify({ action: 'getData' }) 
@@ -420,16 +443,13 @@
 
                 const parse = (rows, type) => {
                     if(!rows || rows.length < 2) return;
-                    // Start index 1 karena index 0 adalah Header
                     for(let i = 1; i < rows.length; i++) {
                         const r = rows[i];
                         if(!r[0]) continue;
                         
-                        // Handle Date: GAS return Date object -> JSON string ISO 8601
                         let dateStr = r[0];
                         if(typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
                         
-                        // Handle Amount: number or string with comma
                         let amt = r[5];
                         if(typeof amt === 'string') amt = parseFloat(amt.replace(/,/g, ''));
                         
@@ -461,7 +481,6 @@
                 }
             });
             
-            // --- WALLETS RENDER LOGIC (GRID 2 COLS) ---
             document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n)).map((b, idx) => {
                 const isUSD = b.c === 'USD';
                 const id = `bal-${idx}`;
@@ -475,7 +494,6 @@
                     </div>
                 `;
             }).join('');
-            // ---------------------------------------------------
 
             const totalIncReal = incIDR + (incUSD * exchangeRate);
             const totalExpReal = expIDR + (expUSD * exchangeRate);
@@ -628,6 +646,9 @@
         function resetForm() {
             document.getElementById('add-entry-form').reset(); document.getElementById('entry-date').valueAsDate = new Date();
             isEditing=false; editItem=null; document.getElementById('form-title').innerHTML='<i class="fas fa-plus-circle text-blue-500"></i> New Entry'; document.getElementById('cancel-edit-btn').classList.add('hidden');
+            // UPDATE 5: Reset dropdown ke IDR saat form reset
+            updateWalletOptions('IDR', 'entry-acc-source');
+            updateWalletOptions('IDR', 'entry-acc-target');
             document.querySelector('input[name="entry-type"][value="expense"]').checked = true; document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
         }
         document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
@@ -647,9 +668,20 @@
                 isEditing=true; editItem=item; 
                 document.getElementById('form-title').innerHTML='<i class="fas fa-edit text-orange-500"></i> Edit Entry'; document.getElementById('cancel-edit-btn').classList.remove('hidden'); switchTab('view-add');
                 document.querySelector(`input[name="entry-type"][value="${item.type}"]`).checked = true; updateUIForType(item.type);
-                document.getElementById('entry-desc').value = item.desc; document.getElementById('entry-date').value = item.date; 
-                const catSelect = document.getElementById('entry-cat'); if([...catSelect.options].map(o=>o.value).includes(item.cat)) catSelect.value = item.cat; else { catSelect.value = 'Other'; document.getElementById('entry-cat-other').classList.remove('hidden'); document.getElementById('entry-cat-other').value = item.cat; }
-                document.getElementById('entry-acc-source').value = item.acc; document.getElementById('entry-curr-source').value = item.curr; document.getElementById('entry-amt-source').value = item.amt;
+                
+                document.getElementById('entry-desc').value = item.desc; 
+                document.getElementById('entry-date').value = item.date; 
+                
+                const catSelect = document.getElementById('entry-cat'); 
+                if([...catSelect.options].map(o=>o.value).includes(item.cat)) catSelect.value = item.cat; 
+                else { catSelect.value = 'Other'; document.getElementById('entry-cat-other').classList.remove('hidden'); document.getElementById('entry-cat-other').value = item.cat; }
+                
+                // UPDATE 6: Logika edit untuk load wallet yang sesuai currency
+                document.getElementById('entry-curr-source').value = item.curr;
+                updateWalletOptions(item.curr, 'entry-acc-source'); // Load opsi dulu
+                document.getElementById('entry-acc-source').value = item.acc; // Baru set value
+                
+                document.getElementById('entry-amt-source').value = item.amt;
             }
         });
 
