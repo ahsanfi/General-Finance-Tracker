@@ -1561,9 +1561,6 @@ Do not wrap in markdown tags like \`\`\`json.`;
 
                     const parsed = JSON.parse(text);
 
-                    // Switch to expense implicitly
-                    document.querySelector('input[name="entry-type"][value="expense"]').checked = true;
-                    document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
 
                     if (parsed.amount) document.getElementById('entry-amt-source').value = parsed.amount;
                     if (parsed.description) document.getElementById('entry-desc').value = parsed.description;
