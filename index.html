@@ -1496,7 +1496,7 @@ Return ONLY a valid JSON object matching this exact structure:
 {"amount": 100000, "description": "Store Name", "date": "2024-05-05", "category": "Food"}
 Do not wrap in markdown tags like \`\`\`json.`;
 
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1510,6 +1510,7 @@ Do not wrap in markdown tags like \`\`\`json.`;
                         })
                     });
 
+                    if (res.status === 429) throw new Error("Google AI Rate Limit Exceeded. Please wait a minute before trying again.");
                     if (!res.ok) throw new Error(`API Error: ${res.status}`);
                     const data = await res.json();
 
@@ -1548,6 +1549,34 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     uploadInput.value = '';
                 }
             });
+            // URL Parameter Parsing for iOS Shortcuts / External Integrations
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('amount') || urlParams.has('desc')) {
+                setTimeout(() => {
+                    updateTabUI('view-add');
+                    
+                    if (urlParams.has('amount')) document.getElementById('entry-amt-source').value = urlParams.get('amount');
+                    if (urlParams.has('desc')) document.getElementById('entry-desc').value = urlParams.get('desc');
+                    if (urlParams.has('date')) document.getElementById('entry-date').value = urlParams.get('date');
+                    
+                    if (urlParams.has('cat')) {
+                        const cat = urlParams.get('cat');
+                        const catSelect = document.getElementById('entry-cat');
+                        if ([...catSelect.options].map(o => o.value).includes(cat)) {
+                            catSelect.value = cat;
+                            document.getElementById('entry-cat-other').classList.add('hidden');
+                        } else {
+                            catSelect.value = 'Other';
+                            document.getElementById('entry-cat-other').classList.remove('hidden');
+                            document.getElementById('entry-cat-other').style.display = 'block';
+                            document.getElementById('entry-cat-other').value = cat;
+                        }
+                    }
+                    
+                    showToast("Receipt data imported!", "success");
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 800);
+            }
         });
     </script>
 </body>
