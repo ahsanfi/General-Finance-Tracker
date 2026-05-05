@@ -836,29 +836,10 @@
             </div>
             <div class="space-y-4 relative z-10">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">AI
-                        Provider</label>
-                    <select id="ai-provider-select"
-                        class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-medium mb-4 appearance-none">
-                        <option value="gemini">Google Gemini (Default)</option>
-                        <option value="groq">Groq Llama 4 Scout Vision (Free, Fast)</option>
-                    </select>
-                </div>
-
-                <div id="gemini-key-container">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Gemini API
-                        Key</label>
-                    <input type="password" id="gemini-api-key" placeholder="AIzaSy..."
-                        class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                    <p class="text-[10px] text-slate-500 mt-2">Required for Gemini AI Receipt Scanning.</p>
-                </div>
-
-                <div id="groq-key-container" class="hidden">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API
-                        Key</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API Key</label>
                     <input type="password" id="groq-api-key" placeholder="gsk_..."
                         class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                    <p class="text-[10px] text-slate-500 mt-2">Get a free key from <a
+                    <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4 Scout Vision</strong>. Get a free key from <a
                             href="https://console.groq.com/keys" target="_blank"
                             class="text-blue-400 underline">console.groq.com</a></p>
                 </div>
@@ -1483,33 +1464,12 @@
             });
 
             // Settings & AI Receipt Scanner
-            const aiProviderSelect = document.getElementById('ai-provider-select');
-            const geminiContainer = document.getElementById('gemini-key-container');
-            const groqContainer = document.getElementById('groq-key-container');
-
-            aiProviderSelect.addEventListener('change', (e) => {
-                if (e.target.value === 'groq') {
-                    geminiContainer.classList.add('hidden');
-                    groqContainer.classList.remove('hidden');
-                } else {
-                    groqContainer.classList.add('hidden');
-                    geminiContainer.classList.remove('hidden');
-                }
-            });
-
             document.getElementById('settings-btn').addEventListener('click', () => {
-                const provider = localStorage.getItem('aiProvider') || 'gemini';
-                aiProviderSelect.value = provider;
-                aiProviderSelect.dispatchEvent(new Event('change'));
-
-                document.getElementById('gemini-api-key').value = localStorage.getItem('geminiApiKey') || '';
                 document.getElementById('groq-api-key').value = localStorage.getItem('groqApiKey') || '';
                 document.getElementById('settings-modal').classList.remove('hidden');
             });
             document.getElementById('settings-close').addEventListener('click', () => document.getElementById('settings-modal').classList.add('hidden'));
             document.getElementById('save-settings-btn').addEventListener('click', () => {
-                localStorage.setItem('aiProvider', aiProviderSelect.value);
-                localStorage.setItem('geminiApiKey', document.getElementById('gemini-api-key').value.trim());
                 localStorage.setItem('groqApiKey', document.getElementById('groq-api-key').value.trim());
                 document.getElementById('settings-modal').classList.add('hidden');
                 showToast("Settings saved", "success");
@@ -1519,11 +1479,8 @@
             const uploadInput = document.getElementById('receipt-upload');
             scanBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const provider = localStorage.getItem('aiProvider') || 'gemini';
-                const key = provider === 'groq' ? localStorage.getItem('groqApiKey') : localStorage.getItem('geminiApiKey');
-
-                if (!key) {
-                    showToast(`Please save your ${provider === 'groq' ? 'Groq' : 'Gemini'} API Key first`, "error");
+                if (!localStorage.getItem('groqApiKey')) {
+                    showToast("Please save your Groq API Key in Settings first", "error");
                     document.getElementById('settings-btn').click();
                     return;
                 }
@@ -1561,8 +1518,7 @@
                         reader.readAsDataURL(file);
                     });
 
-                    const provider = localStorage.getItem('aiProvider') || 'gemini';
-                    const apiKey = provider === 'groq' ? localStorage.getItem('groqApiKey') : localStorage.getItem('geminiApiKey');
+                    const apiKey = localStorage.getItem('groqApiKey');
                     const prompt = `You are a receipt data extractor. Analyze this receipt and extract:
 1. Total Amount (number only, no currency symbols)
 2. Description (store name or short summary)
@@ -1572,58 +1528,34 @@ Return ONLY a valid JSON object matching this exact structure:
 {"amount": 100000, "description": "Store Name", "date": "2024-05-05", "category": "Food"}
 Do not wrap in markdown tags like \`\`\`json.`;
 
-                    let text = "";
+                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                            messages: [{
+                                role: "user",
+                                content: [
+                                    { type: "text", text: prompt },
+                                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Img}` } }
+                                ]
+                            }],
+                            temperature: 0.1,
+                            max_tokens: 1024
+                        })
+                    });
 
-                    if (provider === 'groq') {
-                        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${apiKey}`
-                            },
-                            body: JSON.stringify({
-                                model: "meta-llama/llama-4-scout-17b-16e-instruct",
-                                messages: [{
-                                    role: "user",
-                                    content: [
-                                        { type: "text", text: prompt },
-                                        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Img}` } }
-                                    ]
-                                }],
-                                temperature: 0.1,
-                                max_tokens: 1024
-                            })
-                        });
-
-                        if (res.status === 429) throw new Error("Groq Rate Limit Exceeded.");
-                        if (!res.ok) {
-                            const errData = await res.json().catch(() => null);
-                            const errMsg = errData && errData.error ? errData.error.message : await res.text();
-                            throw new Error(`Groq API Error: ${res.status} - ${errMsg}`);
-                        }
-                        const data = await res.json();
-                        text = data.choices[0].message.content.trim();
-
-                    } else {
-                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{
-                                    parts: [
-                                        { text: prompt },
-                                        { inlineData: { mimeType: 'image/jpeg', data: base64Img } }
-                                    ]
-                                }],
-                                generationConfig: { temperature: 0.1 }
-                            })
-                        });
-
-                        if (res.status === 429) throw new Error("Google AI Rate Limit Exceeded. Please wait a minute before trying again.");
-                        if (!res.ok) throw new Error(`API Error: ${res.status}`);
-                        const data = await res.json();
-                        text = data.candidates[0].content.parts[0].text.trim();
+                    if (res.status === 429) throw new Error("Groq Rate Limit Exceeded. Please try again shortly.");
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => null);
+                        const errMsg = errData && errData.error ? errData.error.message : await res.text();
+                        throw new Error(`Groq API Error: ${res.status} - ${errMsg}`);
                     }
+                    const data = await res.json();
+                    let text = data.choices[0].message.content.trim();
 
                     if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '').trim();
 
