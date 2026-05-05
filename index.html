@@ -150,21 +150,21 @@
                     <div id="summary-income" class="glass-card p-5 rounded-3xl flex flex-col justify-between min-h-[110px] sm:min-h-[140px] relative overflow-hidden group">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                         <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-2 mb-2 z-10"><div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400"><i class="fas fa-arrow-down text-[10px]"></i></div> Income</div>
-                        <div class="text-emerald-400 font-bold text-lg md:text-2xl truncate z-10 font-mono tracking-tight text-shadow-sm stat-value">...</div>
+                        <div class="text-emerald-400 font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter text-shadow-sm stat-value">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-emerald-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-arrow-down"></i></div>
                     </div>
 
                     <div id="summary-expense" class="glass-card p-5 rounded-3xl flex flex-col justify-between min-h-[110px] sm:min-h-[140px] relative overflow-hidden group">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                         <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-2 mb-2 z-10"><div class="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400"><i class="fas fa-arrow-up text-[10px]"></i></div> Expense</div>
-                        <div class="text-rose-400 font-bold text-lg md:text-2xl truncate z-10 font-mono tracking-tight stat-value">...</div>
+                        <div class="text-rose-400 font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter stat-value">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-rose-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-arrow-up"></i></div>
                     </div>
 
                     <div id="summary-net" class="glass-card p-5 rounded-3xl flex flex-col justify-between min-h-[110px] sm:min-h-[140px] relative overflow-hidden group">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-slate-500/10 rounded-full blur-2xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                         <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-2 mb-2 z-10"><div class="w-6 h-6 rounded-full bg-slate-500/20 flex items-center justify-center text-slate-300"><i class="fas fa-scale-balanced text-[10px]"></i></div> Net Flow</div>
-                        <div class="text-slate-200 font-bold text-lg md:text-2xl truncate z-10 font-mono tracking-tight stat-value">...</div>
+                        <div class="text-slate-200 font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter stat-value">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-slate-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-scale-balanced"></i></div>
                     </div>
 
@@ -174,7 +174,7 @@
                             <div class="text-[10px] sm:text-xs text-white/80 uppercase font-bold tracking-wider flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white"><i class="fas fa-wallet text-[10px]"></i></div> Net Worth</div>
                             <div class="text-[9px] sm:text-[10px] text-white bg-black/20 px-2 py-1 rounded-lg backdrop-blur-md font-mono border border-white/10" id="rate-display">Rate: ...</div>
                         </div>
-                        <div id="wealth-display" class="text-white font-bold text-lg sm:text-xl lg:text-2xl truncate z-10 font-mono tracking-tight mt-auto">...</div>
+                        <div id="wealth-display" class="text-white font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter mt-auto">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-white/10 z-0 group-hover:scale-110 transition"><i class="fas fa-wallet"></i></div>
                     </div>
                  </div>
@@ -329,7 +329,7 @@
                             <button id="scan-receipt-btn" class="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-2 rounded-xl transition font-medium flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                                 <i class="fas fa-camera"></i> <span class="hidden sm:inline">Scan AI</span>
                             </button>
-                            <input type="file" id="receipt-upload" accept="image/*" capture="environment" class="hidden">
+                            <input type="file" id="receipt-upload" accept="image/*" class="hidden">
                             <button id="cancel-edit-btn" class="hidden text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-4 py-2 rounded-xl transition font-medium">Cancel Edit</button>
                         </div>
                     </div>
@@ -709,7 +709,7 @@
             document.querySelector('#summary-expense .stat-value').textContent = fmt(totalExpReal,'IDR');
             const netEl = document.querySelector('#summary-net .stat-value');
             netEl.textContent = fmt(netCashFlowIDR,'IDR');
-            netEl.className = `stat-value text-lg md:text-2xl font-bold truncate z-10 font-mono tracking-tight ${netCashFlowIDR>=0?'text-slate-200':'text-rose-400'}`;
+            netEl.className = `stat-value text-[13px] sm:text-base md:text-2xl font-bold truncate z-10 font-mono tracking-tighter ${netCashFlowIDR>=0?'text-slate-200':'text-rose-400'}`;
             
             document.getElementById('rate-display').textContent = `1 USD = ${fmt(exchangeRate, 'IDR').replace('IDR', '').trim()}`;
             document.getElementById('wealth-display').textContent = new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR);
