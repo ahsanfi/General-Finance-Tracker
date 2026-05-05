@@ -134,7 +134,9 @@
             </nav>
 
             <div class="flex gap-2">
-                <button id="export-btn" class="bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10"><i class="fas fa-camera"></i></button>
+                <button id="settings-btn" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-blue-500/20" title="Settings"><i class="fas fa-cog"></i></button>
+                <button id="export-csv-btn" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-emerald-500/20" title="Download CSV"><i class="fas fa-file-csv"></i></button>
+                <button id="export-btn" class="bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10" title="Screenshot"><i class="fas fa-camera"></i></button>
                 <button id="logout-btn" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-rose-500/20"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
@@ -148,21 +150,21 @@
                     <div id="summary-income" class="glass-card p-5 rounded-3xl flex flex-col justify-between min-h-[110px] sm:min-h-[140px] relative overflow-hidden group">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                         <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-2 mb-2 z-10"><div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400"><i class="fas fa-arrow-down text-[10px]"></i></div> Income</div>
-                        <div class="text-emerald-400 font-bold text-lg sm:text-3xl truncate z-10 font-mono tracking-tight text-shadow-sm">...</div>
+                        <div class="text-emerald-400 font-bold text-lg md:text-2xl truncate z-10 font-mono tracking-tight text-shadow-sm stat-value">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-emerald-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-arrow-down"></i></div>
                     </div>
 
                     <div id="summary-expense" class="glass-card p-5 rounded-3xl flex flex-col justify-between min-h-[110px] sm:min-h-[140px] relative overflow-hidden group">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                         <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-2 mb-2 z-10"><div class="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400"><i class="fas fa-arrow-up text-[10px]"></i></div> Expense</div>
-                        <div class="text-rose-400 font-bold text-lg sm:text-3xl truncate z-10 font-mono tracking-tight">...</div>
+                        <div class="text-rose-400 font-bold text-lg md:text-2xl truncate z-10 font-mono tracking-tight stat-value">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-rose-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-arrow-up"></i></div>
                     </div>
 
                     <div id="summary-net" class="glass-card p-5 rounded-3xl flex flex-col justify-between min-h-[110px] sm:min-h-[140px] relative overflow-hidden group">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-slate-500/10 rounded-full blur-2xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                         <div class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-2 mb-2 z-10"><div class="w-6 h-6 rounded-full bg-slate-500/20 flex items-center justify-center text-slate-300"><i class="fas fa-scale-balanced text-[10px]"></i></div> Net Flow</div>
-                        <div class="text-slate-200 font-bold text-lg sm:text-3xl truncate z-10 font-mono tracking-tight">...</div>
+                        <div class="text-slate-200 font-bold text-lg md:text-2xl truncate z-10 font-mono tracking-tight stat-value">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-slate-500/5 z-0 group-hover:scale-110 transition"><i class="fas fa-scale-balanced"></i></div>
                     </div>
 
@@ -172,12 +174,12 @@
                             <div class="text-[10px] sm:text-xs text-white/80 uppercase font-bold tracking-wider flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white"><i class="fas fa-wallet text-[10px]"></i></div> Net Worth</div>
                             <div class="text-[9px] sm:text-[10px] text-white bg-black/20 px-2 py-1 rounded-lg backdrop-blur-md font-mono border border-white/10" id="rate-display">Rate: ...</div>
                         </div>
-                        <div id="wealth-display" class="text-white font-bold text-lg sm:text-3xl truncate z-10 font-mono tracking-tight mt-auto">...</div>
+                        <div id="wealth-display" class="text-white font-bold text-lg sm:text-xl lg:text-2xl truncate z-10 font-mono tracking-tight mt-auto">...</div>
                         <div class="absolute -bottom-6 -right-4 text-7xl text-white/10 z-0 group-hover:scale-110 transition"><i class="fas fa-wallet"></i></div>
                     </div>
                  </div>
 
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
                     <!-- Pie Chart -->
                     <div class="glass-card p-5 rounded-3xl flex flex-col h-[400px] lg:h-[450px]">
                         <div class="flex justify-between items-center mb-4">
@@ -190,21 +192,32 @@
                         <div id="expense-details" class="mt-4 space-y-2 overflow-y-auto h-32 pr-2 custom-scroll border-t border-white/5 pt-3"></div>
                     </div>
 
-                    <!-- Wallets -->
-                    <div class="glass-card p-5 rounded-3xl flex flex-col h-auto min-h-[400px]">
-                        <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0">
-                            <i class="fas fa-credit-card text-theme-primaryLight"></i> Wallets 
-                            <span class="text-[9px] text-theme-primaryLight font-medium ml-auto bg-theme-primary/10 px-2 py-1 rounded-lg border border-theme-primary/20">Tap USD to convert</span>
-                        </h3>
-                        <div id="account-balances-container" class="grid grid-cols-2 gap-3 pr-1 content-start overflow-y-auto custom-scroll"></div>
-                    </div>
-
                     <!-- Trend Chart -->
-                    <div class="glass-card p-5 rounded-3xl md:col-span-2 lg:col-span-1 h-[400px] lg:h-[450px] flex flex-col">
+                    <div class="glass-card p-5 rounded-3xl h-[400px] lg:h-[450px] flex flex-col">
                         <div class="flex justify-between items-center mb-4 flex-shrink-0">
                             <h3 class="text-sm font-semibold text-white flex items-center gap-2"><i class="fas fa-chart-line text-theme-primaryLight"></i> 30-Day Trend</h3>
                         </div>
                         <div class="relative flex-grow w-full"><canvas id="trend-line-chart"></canvas></div>
+                    </div>
+                 </div>
+
+                 <!-- Wallets -->
+                 <div class="glass-card p-5 rounded-3xl flex flex-col h-auto mt-4 sm:mt-6">
+                     <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0">
+                         <i class="fas fa-credit-card text-theme-primaryLight"></i> Wallets 
+                         <span class="text-[9px] text-theme-primaryLight font-medium ml-auto bg-theme-primary/10 px-2 py-1 rounded-lg border border-theme-primary/20">Tap USD to convert</span>
+                     </h3>
+                     <div id="account-balances-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"></div>
+                 </div>
+
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
+                    <div class="glass-card p-5 rounded-3xl lg:col-span-2 flex flex-col h-auto min-h-[300px]">
+                        <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0"><i class="fas fa-history text-theme-primaryLight"></i> Recent Activity</h3>
+                        <div id="dash-recent-list" class="space-y-3 flex-grow overflow-y-auto custom-scroll pr-1"></div>
+                    </div>
+                    <div class="glass-card p-5 rounded-3xl flex flex-col h-auto min-h-[300px]">
+                        <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0"><i class="fas fa-fire text-orange-400"></i> Top Categories (This Month)</h3>
+                        <div id="dash-top-cat-list" class="space-y-4 flex-grow overflow-y-auto custom-scroll pr-1"></div>
                     </div>
                  </div>
             </div>
@@ -312,7 +325,13 @@
                             </div> 
                             New Entry
                         </h2>
-                        <button id="cancel-edit-btn" class="hidden text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-4 py-2 rounded-xl transition font-medium">Cancel Edit</button>
+                        <div class="flex gap-2 items-center">
+                            <button id="scan-receipt-btn" class="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-2 rounded-xl transition font-medium flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                                <i class="fas fa-camera"></i> <span class="hidden sm:inline">Scan AI</span>
+                            </button>
+                            <input type="file" id="receipt-upload" accept="image/*" capture="environment" class="hidden">
+                            <button id="cancel-edit-btn" class="hidden text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-4 py-2 rounded-xl transition font-medium">Cancel Edit</button>
+                        </div>
                     </div>
                     
                     <!-- Modern Segmented Control -->
@@ -391,7 +410,7 @@
         </div>
     </div>
 
-    <!-- Mobile Nav Bar (Bottom) - Already defined above, moved it inside body but outside main-content, actually it should be sibling to main-content -->
+    <!-- Mobile Nav Bar (Bottom) -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 glass pb-safe z-40 border-t border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] hidden" id="mobile-nav">
         <div class="flex justify-around items-center px-2 pt-2 pb-3">
             <button class="mob-nav-btn mob-nav-active flex flex-col items-center w-1/5 relative group" data-target="view-dashboard">
@@ -446,6 +465,24 @@
             <div id="cal-detail-content" class="flex-grow overflow-y-auto space-y-3 custom-scroll pb-4"></div>
         </div>
     </div>
+
+    <div id="settings-modal" class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass-card rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative overflow-hidden border border-white/10">
+            <div class="flex justify-between items-center mb-6 relative z-10">
+                <h3 class="font-bold text-white text-xl flex items-center gap-2"><i class="fas fa-cog text-blue-400"></i> Settings</h3>
+                <button id="settings-close" class="text-slate-400 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="space-y-4 relative z-10">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Gemini API Key</label>
+                    <input type="password" id="gemini-api-key" placeholder="AIzaSy..." class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
+                    <p class="text-[10px] text-slate-500 mt-2">Required for AI Receipt Scanning. Saved locally in your browser.</p>
+                </div>
+                <button id="save-settings-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.3)] transition-all">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
 
     <div id="toast" class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 glass text-white px-6 py-3 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/10 z-[80] flex items-center gap-3 min-w-[200px] justify-center transition-all duration-300 translate-y-[-100px] opacity-0 font-medium"></div>
 
@@ -632,6 +669,9 @@
             } catch(e) { showToast("Error loading data: " + e.message, 'error'); }
         }
 
+        function fmt(n, c) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, maximumFractionDigits: c==='IDR'?0:2 }).format(n); }
+        function showToast(msg, type) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.remove('hidden'); t.classList.remove('translate-y-[-100px]','opacity-0'); setTimeout(()=>t.classList.add('translate-y-[-100px]','opacity-0'), 3000); }
+
         function renderAll() {
             const bals = {}; let incIDR=0, expIDR=0, incUSD=0, expUSD=0;
             masterData.forEach(d => {
@@ -652,7 +692,7 @@
                 return `
                     <div class="bg-black/30 p-4 rounded-2xl border border-white/5 hover:border-white/10 transition flex flex-col justify-center min-h-[80px] relative group shadow-inner">
                         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest truncate mb-1" title="${b.n}">${b.n}</span>
-                        <span id="${id}" class="font-bold font-mono text-base truncate ${b.v>=0?'text-theme-primaryLight':'text-rose-400'} ${isUSD ? 'cursor-pointer' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">
+                        <span id="${id}" class="font-bold font-mono text-sm tracking-tighter truncate ${b.v>=0?'text-theme-primaryLight':'text-rose-400'} ${isUSD ? 'cursor-pointer' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">
                             ${fmt(b.v, b.c)}
                         </span>
                         ${isUSD ? '<div class="absolute top-2 right-2 text-[8px] bg-white/5 p-1 rounded text-slate-500 group-hover:text-theme-primaryLight transition"><i class="fas fa-exchange-alt"></i></div>' : ''}
@@ -665,11 +705,11 @@
             const netCashFlowIDR = totalIncReal - totalExpReal;
             let totalAssetIDR = 0; Object.values(bals).forEach(b => { if(b.c==='IDR') totalAssetIDR+=b.v; if(b.c==='USD') totalAssetIDR+=(b.v*exchangeRate); });
             
-            document.querySelector('#summary-income div:nth-child(3)').textContent = fmt(totalIncReal,'IDR');
-            document.querySelector('#summary-expense div:nth-child(3)').textContent = fmt(totalExpReal,'IDR');
-            document.querySelector('#summary-net div:nth-child(3)').textContent = fmt(netCashFlowIDR,'IDR');
-            const netEl = document.querySelector('#summary-net div:nth-child(3)');
-            netEl.className = `text-lg sm:text-3xl font-bold truncate z-10 font-mono tracking-tight ${netCashFlowIDR>=0?'text-theme-primaryLight':'text-rose-400'}`;
+            document.querySelector('#summary-income .stat-value').textContent = fmt(totalIncReal,'IDR');
+            document.querySelector('#summary-expense .stat-value').textContent = fmt(totalExpReal,'IDR');
+            const netEl = document.querySelector('#summary-net .stat-value');
+            netEl.textContent = fmt(netCashFlowIDR,'IDR');
+            netEl.className = `stat-value text-lg md:text-2xl font-bold truncate z-10 font-mono tracking-tight ${netCashFlowIDR>=0?'text-slate-200':'text-rose-400'}`;
             
             document.getElementById('rate-display').textContent = `1 USD = ${fmt(exchangeRate, 'IDR').replace('IDR', '').trim()}`;
             document.getElementById('wealth-display').textContent = new Intl.NumberFormat('en-US',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(totalAssetIDR);
@@ -718,7 +758,7 @@
             `).join('');
             if(filtered.length===0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-500 text-sm italic">No data found</td></tr>';
 
-            renderDaily(masterData); renderCalendar(masterData); updateChart(masterData); updateTrendChart(masterData);
+            renderDaily(masterData); renderCalendar(masterData); updateChart(masterData); updateTrendChart(masterData); renderDashWidgets(masterData);
         }
 
         window.toggleCurrency = (id, usdVal) => {
@@ -945,6 +985,178 @@
             } finally {
                 document.body.className = bgClass;
                 if(!mobNavWasHidden) mobNav.classList.remove('hidden');
+            }
+        });
+        function renderDashWidgets(data) {
+            // Recent Activity
+            const sortedData = [...data].sort((a,b) => new Date(b.date) - new Date(a.date));
+            const recent = sortedData.slice(0, 5);
+            document.getElementById('dash-recent-list').innerHTML = recent.map(d => `
+                <div class="bg-black/20 p-3 rounded-2xl flex justify-between items-center border border-white/5 hover:border-white/10 transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm ${d.type==='income'?'bg-emerald-500/10 text-emerald-400':'bg-rose-500/10 text-rose-400'}">
+                            <i class="fas ${d.type==='income'?'fa-arrow-down':'fa-arrow-up'}"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-200 truncate max-w-[150px] sm:max-w-[200px]">${d.desc}</div>
+                            <div class="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">${d.date} • ${d.cat}</div>
+                        </div>
+                    </div>
+                    <div class="font-mono text-sm font-bold ${d.type==='income'?'text-emerald-400':'text-rose-400'}">
+                        ${d.type==='income'?'+':'-'} ${fmt(d.amt, d.curr)}
+                    </div>
+                </div>
+            `).join('');
+            if(recent.length === 0) document.getElementById('dash-recent-list').innerHTML = '<div class="text-center text-slate-500 py-4 text-xs italic">No activity yet</div>';
+
+            // Top Categories (This Month)
+            const now = new Date();
+            const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            const thisMonthExps = data.filter(d => d.type === 'expense' && d.cat !== 'Transfer' && d.date.startsWith(thisMonth));
+            
+            let totalThisMonth = 0;
+            const catTotals = {};
+            thisMonthExps.forEach(d => {
+                const amtIDR = d.curr === 'USD' ? d.amt * exchangeRate : d.amt;
+                catTotals[d.cat] = (catTotals[d.cat] || 0) + amtIDR;
+                totalThisMonth += amtIDR;
+            });
+            
+            const topCats = Object.entries(catTotals).sort((a,b) => b[1] - a[1]).slice(0, 4);
+            const chartColors = ['#4F46E5', '#0EA5E9', '#10B981', '#F59E0B', '#F43F5E'];
+            
+            document.getElementById('dash-top-cat-list').innerHTML = topCats.map((c, i) => {
+                const percentage = totalThisMonth > 0 ? (c[1] / totalThisMonth) * 100 : 0;
+                return `
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-end">
+                        <span class="text-xs font-bold text-slate-300">${c[0]}</span>
+                        <span class="font-mono text-xs text-white bg-white/5 px-2 py-0.5 rounded-md border border-white/5">${fmt(c[1], 'IDR')}</span>
+                    </div>
+                    <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                        <div class="h-full rounded-full" style="width: ${percentage}%; background-color: ${chartColors[i % chartColors.length]}; box-shadow: 0 0 10px ${chartColors[i % chartColors.length]}80;"></div>
+                    </div>
+                </div>`;
+            }).join('');
+            if(topCats.length === 0) document.getElementById('dash-top-cat-list').innerHTML = '<div class="text-center text-slate-500 py-4 text-xs italic">No expenses this month</div>';
+        }
+
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            if(masterData.length === 0) { showToast("No data to export", "error"); return; }
+            let csvContent = "data:text/csv;charset=utf-8,Type,Date,Description,Category,Account,Currency,Amount\\n";
+            masterData.forEach(d => {
+                const row = [d.type, d.date, `"${d.desc.replace(/"/g, '""')}"`, `"${d.cat}"`, `"${d.acc}"`, d.curr, d.amt];
+                csvContent += row.join(",") + "\\n";
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `finance_tracker_export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV Exported successfully", "success");
+        });
+
+        // Settings & AI Receipt Scanner
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            document.getElementById('gemini-api-key').value = localStorage.getItem('geminiApiKey') || '';
+            document.getElementById('settings-modal').classList.remove('hidden');
+        });
+        document.getElementById('settings-close').addEventListener('click', () => document.getElementById('settings-modal').classList.add('hidden'));
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            localStorage.setItem('geminiApiKey', document.getElementById('gemini-api-key').value.trim());
+            document.getElementById('settings-modal').classList.add('hidden');
+            showToast("Settings saved", "success");
+        });
+
+        const scanBtn = document.getElementById('scan-receipt-btn');
+        const uploadInput = document.getElementById('receipt-upload');
+        scanBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!localStorage.getItem('geminiApiKey')) {
+                showToast("Please save your Gemini API Key in Settings first", "error");
+                document.getElementById('settings-btn').click();
+                return;
+            }
+            uploadInput.click();
+        });
+
+        uploadInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const origHtml = scanBtn.innerHTML;
+            scanBtn.innerHTML = '<div class="loader w-4 h-4 border-2 border-emerald-500 border-t-transparent mx-auto"></div>';
+            scanBtn.disabled = true;
+
+            try {
+                const base64Img = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(file);
+                });
+
+                const apiKey = localStorage.getItem('geminiApiKey');
+                const prompt = `You are a receipt data extractor. Analyze this receipt and extract:
+1. Total Amount (number only, no currency symbols)
+2. Description (store name or short summary)
+3. Date (YYYY-MM-DD format, if not visible return current date)
+4. Category (choose the most appropriate one: Food, Shopping, Transport, Utilities, Health, Entertainment, Error, Transfer, Charity, Salary, Interest, Deposit)
+Return ONLY a valid JSON object matching this exact structure:
+{"amount": 100000, "description": "Store Name", "date": "2024-05-05", "category": "Food"}
+Do not wrap in markdown tags like \`\`\`json.`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: file.type, data: base64Img } }
+                            ]
+                        }],
+                        generationConfig: { temperature: 0.1 }
+                    })
+                });
+
+                if (!res.ok) throw new Error(`API Error: ${res.status}`);
+                const data = await res.json();
+                
+                let text = data.candidates[0].content.parts[0].text.trim();
+                if (text.startsWith('\`\`\`json')) text = text.replace(/^\`\`\`json/, '').replace(/\`\`\`$/, '').trim();
+                
+                const parsed = JSON.parse(text);
+                
+                // Switch to expense implicitly
+                document.querySelector('input[name="entry-type"][value="expense"]').checked = true;
+                document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
+
+                if(parsed.amount) document.getElementById('entry-amt-source').value = parsed.amount;
+                if(parsed.description) document.getElementById('entry-desc').value = parsed.description;
+                if(parsed.date && parsed.date.length === 10) document.getElementById('entry-date').value = parsed.date;
+                
+                if(parsed.category) {
+                    const catSelect = document.getElementById('entry-cat');
+                    if([...catSelect.options].map(o=>o.value).includes(parsed.category)) {
+                        catSelect.value = parsed.category;
+                        document.getElementById('entry-cat-other').classList.add('hidden');
+                    } else {
+                        catSelect.value = 'Other';
+                        document.getElementById('entry-cat-other').classList.remove('hidden');
+                        document.getElementById('entry-cat-other').style.display='block';
+                        document.getElementById('entry-cat-other').value = parsed.category;
+                    }
+                }
+                showToast("Receipt scanned successfully!", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to scan receipt", "error");
+            } finally {
+                scanBtn.innerHTML = origHtml;
+                scanBtn.disabled = false;
+                uploadInput.value = '';
             }
         });
     });
