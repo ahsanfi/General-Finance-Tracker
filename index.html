@@ -836,25 +836,31 @@
             </div>
             <div class="space-y-4 relative z-10">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">AI Provider</label>
-                    <select id="ai-provider-select" class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-medium mb-4 appearance-none">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">AI
+                        Provider</label>
+                    <select id="ai-provider-select"
+                        class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-medium mb-4 appearance-none">
                         <option value="gemini">Google Gemini (Default)</option>
-                        <option value="groq">Groq LLaMA 3.2 Vision (Free, Fast)</option>
+                        <option value="groq">Groq Llama 4 Scout Vision (Free, Fast)</option>
                     </select>
                 </div>
-                
+
                 <div id="gemini-key-container">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Gemini API Key</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Gemini API
+                        Key</label>
                     <input type="password" id="gemini-api-key" placeholder="AIzaSy..."
                         class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
                     <p class="text-[10px] text-slate-500 mt-2">Required for Gemini AI Receipt Scanning.</p>
                 </div>
 
                 <div id="groq-key-container" class="hidden">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API Key</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API
+                        Key</label>
                     <input type="password" id="groq-api-key" placeholder="gsk_..."
                         class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                    <p class="text-[10px] text-slate-500 mt-2">Get a free key from <a href="https://console.groq.com/keys" target="_blank" class="text-blue-400 underline">console.groq.com</a></p>
+                    <p class="text-[10px] text-slate-500 mt-2">Get a free key from <a
+                            href="https://console.groq.com/keys" target="_blank"
+                            class="text-blue-400 underline">console.groq.com</a></p>
                 </div>
                 <button id="save-settings-btn"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.3)] transition-all">Save
@@ -911,11 +917,11 @@
                 if (urlParams.has('amount') || urlParams.has('desc')) {
                     setTimeout(() => {
                         updateTabUI('view-add');
-                        
+
                         if (urlParams.has('amount')) document.getElementById('entry-amt-source').value = urlParams.get('amount');
                         if (urlParams.has('desc')) document.getElementById('entry-desc').value = urlParams.get('desc');
                         if (urlParams.has('date')) document.getElementById('entry-date').value = urlParams.get('date');
-                        
+
                         if (urlParams.has('cat')) {
                             const cat = urlParams.get('cat');
                             const catSelect = document.getElementById('entry-cat');
@@ -929,7 +935,7 @@
                                 document.getElementById('entry-cat-other').value = cat;
                             }
                         }
-                        
+
                         showToast("Receipt data imported!", "success");
                         window.history.replaceState({}, document.title, window.location.pathname);
                     }, 500);
@@ -1495,7 +1501,7 @@
                 const provider = localStorage.getItem('aiProvider') || 'gemini';
                 aiProviderSelect.value = provider;
                 aiProviderSelect.dispatchEvent(new Event('change'));
-                
+
                 document.getElementById('gemini-api-key').value = localStorage.getItem('geminiApiKey') || '';
                 document.getElementById('groq-api-key').value = localStorage.getItem('groqApiKey') || '';
                 document.getElementById('settings-modal').classList.remove('hidden');
@@ -1515,7 +1521,7 @@
                 e.preventDefault();
                 const provider = localStorage.getItem('aiProvider') || 'gemini';
                 const key = provider === 'groq' ? localStorage.getItem('groqApiKey') : localStorage.getItem('geminiApiKey');
-                
+
                 if (!key) {
                     showToast(`Please save your ${provider === 'groq' ? 'Groq' : 'Gemini'} API Key first`, "error");
                     document.getElementById('settings-btn').click();
@@ -1571,12 +1577,12 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     if (provider === 'groq') {
                         const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                             method: 'POST',
-                            headers: { 
+                            headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${apiKey}`
                             },
                             body: JSON.stringify({
-                                model: "llama-3.2-11b-vision-preview",
+                                model: "meta-llama/llama-4-scout-17b-16e-instruct",
                                 messages: [{
                                     role: "user",
                                     content: [
@@ -1584,15 +1590,20 @@ Do not wrap in markdown tags like \`\`\`json.`;
                                         { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Img}` } }
                                     ]
                                 }],
-                                temperature: 0.1
+                                temperature: 0.1,
+                                max_tokens: 1024
                             })
                         });
-                        
+
                         if (res.status === 429) throw new Error("Groq Rate Limit Exceeded.");
-                        if (!res.ok) throw new Error(`Groq API Error: ${res.status}`);
+                        if (!res.ok) {
+                            const errData = await res.json().catch(() => null);
+                            const errMsg = errData && errData.error ? errData.error.message : await res.text();
+                            throw new Error(`Groq API Error: ${res.status} - ${errMsg}`);
+                        }
                         const data = await res.json();
                         text = data.choices[0].message.content.trim();
-                        
+
                     } else {
                         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
                             method: 'POST',
