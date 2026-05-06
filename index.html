@@ -430,12 +430,17 @@
 
                 <!-- Wallets -->
                 <div class="glass-card p-5 rounded-3xl flex flex-col h-auto mt-4 sm:mt-6">
-                    <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2 flex-shrink-0">
-                        <i class="fas fa-credit-card text-theme-primaryLight"></i> Wallets
-                        <span
-                            class="text-[9px] text-theme-primaryLight font-medium ml-auto bg-theme-primary/10 px-2 py-1 rounded-lg border border-theme-primary/20">Tap
-                            USD to convert</span>
-                    </h3>
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-sm font-semibold text-white flex items-center gap-2 flex-shrink-0">
+                            <i class="fas fa-credit-card text-theme-primaryLight"></i> Wallets
+                            <span
+                                class="text-[9px] text-theme-primaryLight font-medium ml-2 bg-theme-primary/10 px-2 py-1 rounded-lg border border-theme-primary/20 hidden sm:inline-block">Tap
+                                USD to convert</span>
+                        </h3>
+                        <button onclick="openReconcileModal()" class="text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2 font-bold uppercase tracking-wider">
+                            <i class="fas fa-balance-scale"></i> Reconcile
+                        </button>
+                    </div>
                     <div id="account-balances-container"
                         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     </div>
@@ -850,6 +855,21 @@
         </div>
     </div>
 
+
+    <!-- Reconcile Modal -->
+    <div id="reconcile-modal" class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass-card rounded-3xl p-6 sm:p-8 w-full max-w-3xl shadow-2xl relative overflow-hidden border border-white/10 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6 relative z-10 flex-shrink-0">
+                <h3 class="font-bold text-white text-xl flex items-center gap-2"><i class="fas fa-balance-scale text-blue-400"></i> Reconcile Balances</h3>
+                <button onclick="document.getElementById('reconcile-modal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="text-sm text-slate-400 mb-6 bg-white/5 p-4 rounded-xl border border-white/10">Compare your app's calculated balances with real-world inputs. If there's a difference, you can auto-create an adjustment entry labeled <strong>Error</strong> to fix the balance.</div>
+            
+            <div class="overflow-y-auto custom-scroll pr-2 flex-grow space-y-3" id="reconcile-list">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
 
     <div id="toast"
         class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 glass text-white px-6 py-3 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/10 z-[80] flex items-center gap-3 min-w-[200px] justify-center transition-all duration-300 translate-y-[-100px] opacity-0 font-medium">
@@ -1588,6 +1608,112 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     uploadInput.value = '';
                 }
             });
+            // Reconcile Balances Feature
+            window.openReconcileModal = function() {
+                const bals = {};
+                masterData.forEach(d => {
+                    const k = `${d.acc}-${d.curr}`;
+                    if (!bals[k]) bals[k] = { n: d.acc, c: d.curr, v: 0 };
+                    if (d.type === 'income') bals[k].v += d.amt;
+                    else bals[k].v -= d.amt;
+                });
+                
+                const listEl = document.getElementById('reconcile-list');
+                listEl.innerHTML = Object.values(bals).sort((a,b) => a.n.localeCompare(b.n)).map((b, idx) => {
+                    return `
+                    <div class="bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="font-bold text-slate-200">${b.n}</div>
+                            <div class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">App: ${fmt(b.v, b.c)}</div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+                            <div class="relative flex-grow sm:flex-grow-0">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 font-bold text-xs">${b.c}</span>
+                                <input type="number" id="rec-real-${idx}" placeholder="Real Balance" class="input-glow rounded-xl pl-12 pr-4 py-2 w-full sm:w-[160px] text-sm text-white font-mono" oninput="updateReconcileDiff(${idx}, ${b.v}, '${b.c}', '${b.n}')">
+                            </div>
+                            <div id="rec-diff-container-${idx}" class="hidden flex items-center justify-between sm:justify-start gap-3 mt-2 sm:mt-0 bg-black/40 sm:bg-transparent p-2 sm:p-0 rounded-lg">
+                                <span id="rec-diff-${idx}" class="font-bold text-sm font-mono whitespace-nowrap min-w-[80px] text-right"></span>
+                                <button id="rec-btn-${idx}" class="hidden bg-theme-primary/20 hover:bg-theme-primary/40 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wider transition" onclick="createAdjustment(${idx}, '${b.n}', '${b.c}')">Adjust</button>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('reconcile-modal').classList.remove('hidden');
+            };
+
+            window.updateReconcileDiff = function(idx, appVal, curr, accName) {
+                const realInput = document.getElementById(`rec-real-${idx}`).value;
+                const container = document.getElementById(`rec-diff-container-${idx}`);
+                const diffEl = document.getElementById(`rec-diff-${idx}`);
+                const btnEl = document.getElementById(`rec-btn-${idx}`);
+                
+                if (realInput === '') {
+                    container.classList.add('hidden');
+                    return;
+                }
+                
+                const realVal = parseFloat(realInput);
+                const diff = realVal - appVal;
+                
+                container.classList.remove('hidden');
+                
+                if (diff === 0) {
+                    diffEl.innerHTML = '<i class="fas fa-check text-emerald-500 mr-1"></i> Match';
+                    diffEl.className = 'font-bold text-sm font-mono whitespace-nowrap min-w-[80px] text-right text-slate-400';
+                    btnEl.classList.add('hidden');
+                } else {
+                    diffEl.textContent = (diff > 0 ? '+' : '') + fmt(diff, curr);
+                    diffEl.className = `font-bold text-sm font-mono whitespace-nowrap min-w-[80px] text-right ${diff > 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                    
+                    btnEl.classList.remove('hidden');
+                    btnEl.dataset.diff = diff;
+                }
+            };
+
+            window.createAdjustment = function(idx, acc, curr) {
+                const diff = parseFloat(document.getElementById(`rec-btn-${idx}`).dataset.diff);
+                const type = diff > 0 ? 'income' : 'expense';
+                const amt = Math.abs(diff);
+                const date = new Date().toISOString().split('T')[0];
+                
+                const payload = {
+                    action: 'add',
+                    sheetName: type === 'income' ? 'Income' : 'Expenses',
+                    date: date,
+                    description: "Reconciliation Adjustment",
+                    category: "Error",
+                    account: acc,
+                    currency: curr,
+                    amount: amt
+                };
+                
+                const btn = document.getElementById(`rec-btn-${idx}`);
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+                
+                fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }).then(r => r.json()).then(res => {
+                    if (res.status === 'success') {
+                        showToast(`Adjustment created: ${type === 'income' ? '+' : '-'}${fmt(amt, curr)}`, 'success');
+                        fetchData().then(() => {
+                            openReconcileModal();
+                        });
+                    } else {
+                        showToast("Failed to create adjustment", 'error');
+                        btn.innerHTML = origHtml;
+                        btn.disabled = false;
+                    }
+                }).catch(e => {
+                    showToast("Error: " + e.message, 'error');
+                    btn.innerHTML = origHtml;
+                    btn.disabled = false;
+                });
+            };
         });
     </script>
 </body>
