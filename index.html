@@ -293,9 +293,6 @@
                 <button id="config-btn"
                     class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-purple-500/20"
                     title="System Config" onclick="switchTab('view-config')"><i class="fas fa-sliders-h"></i></button>
-                <button id="settings-btn"
-                    class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-blue-500/20"
-                    title="Settings"><i class="fas fa-cog"></i></button>
                 <button id="export-csv-btn"
                     class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-emerald-500/20"
                     title="Download CSV"><i class="fas fa-file-csv"></i></button>
@@ -782,6 +779,15 @@
                                 placeholder="e.g. 1234">
                         </div>
 
+                        <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i
+                                    class="fas fa-robot mr-2 text-slate-500"></i> AI Receipt Scanner</h3>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API Key</label>
+                            <input type="password" id="groq-api-key" placeholder="gsk_..."
+                                class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
+                            <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4 Scout Vision</strong>. Get a free key from <a href="https://console.groq.com/keys" target="_blank" class="text-blue-400 underline">console.groq.com</a></p>
+                        </div>
+
                         <button id="save-config-btn"
                             class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(147,51,234,0.3)] hover:shadow-[0_8px_25px_rgba(147,51,234,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-8">
                             <span>Save Configuration</span> <i class="fas fa-save"></i>
@@ -876,33 +882,6 @@
                         class="fas fa-times text-lg"></i></button>
             </div>
             <div id="cal-detail-content" class="flex-grow overflow-y-auto space-y-3 custom-scroll pb-4"></div>
-        </div>
-    </div>
-
-    <div id="settings-modal"
-        class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
-        <div
-            class="glass-card rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative overflow-hidden border border-white/10">
-            <div class="flex justify-between items-center mb-6 relative z-10">
-                <h3 class="font-bold text-white text-xl flex items-center gap-2"><i
-                        class="fas fa-cog text-blue-400"></i> Settings</h3>
-                <button id="settings-close" class="text-slate-400 hover:text-white transition"><i
-                        class="fas fa-times text-lg"></i></button>
-            </div>
-            <div class="space-y-4 relative z-10">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API
-                        Key</label>
-                    <input type="password" id="groq-api-key" placeholder="gsk_..."
-                        class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                    <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4 Scout
-                            Vision</strong>. Get a free key from <a href="https://console.groq.com/keys" target="_blank"
-                            class="text-blue-400 underline">console.groq.com</a></p>
-                </div>
-                <button id="save-settings-btn"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.3)] transition-all">Save
-                    Settings</button>
-            </div>
         </div>
     </div>
 
@@ -1553,15 +1532,8 @@
             });
 
             // Settings & AI Receipt Scanner
-            document.getElementById('settings-btn').addEventListener('click', () => {
+            document.getElementById('config-btn').addEventListener('click', () => {
                 document.getElementById('groq-api-key').value = localStorage.getItem('groqApiKey') || '';
-                document.getElementById('settings-modal').classList.remove('hidden');
-            });
-            document.getElementById('settings-close').addEventListener('click', () => document.getElementById('settings-modal').classList.add('hidden'));
-            document.getElementById('save-settings-btn').addEventListener('click', () => {
-                localStorage.setItem('groqApiKey', document.getElementById('groq-api-key').value.trim());
-                document.getElementById('settings-modal').classList.add('hidden');
-                showToast("Settings saved", "success");
             });
 
             const scanBtn = document.getElementById('scan-receipt-btn');
@@ -1569,8 +1541,8 @@
             scanBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 if (!localStorage.getItem('groqApiKey')) {
-                    showToast("Please save your Groq API Key in Settings first", "error");
-                    document.getElementById('settings-btn').click();
+                    showToast("Please save your Groq API Key in Config first", "error");
+                    switchTab('view-config');
                     return;
                 }
                 uploadInput.click();
@@ -1843,6 +1815,10 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 const origTxt = btn.innerHTML;
 
                 SYSTEM_CONFIG.pin = document.getElementById('config-pin-input').value;
+
+                // Also save the Groq API key
+                const groqKey = document.getElementById('groq-api-key').value.trim();
+                if (groqKey) localStorage.setItem('groqApiKey', groqKey);
 
                 btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent mx-auto"></div>';
                 btn.disabled = true;
