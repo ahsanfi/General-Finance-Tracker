@@ -32,6 +32,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
         rel="stylesheet">
@@ -225,7 +226,7 @@
         <p class="text-sm text-theme-primaryLight animate-pulse font-medium">Loading FinTracker...</p>
     </div>
 
-    <!-- PIN Modal -->
+    <!-- Google Sign-In Modal -->
     <div id="pin-modal"
         class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-theme-bg/80 backdrop-blur-md transition-all">
         <div
@@ -239,17 +240,19 @@
             </div>
 
             <h2 class="text-2xl font-bold text-white mb-2 relative z-10">Welcome Back</h2>
-            <p class="text-slate-400 text-sm mb-6 relative z-10">Enter your secure PIN to access</p>
+            <p class="text-slate-400 text-sm mb-8 relative z-10">Sign in with your Google account to access your
+                finances</p>
 
-            <form id="pin-form" class="relative z-10">
-                <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*"
-                    class="w-full text-center text-4xl tracking-[.5em] px-4 py-4 bg-black/40 border border-slate-700/50 rounded-2xl text-white focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary transition placeholder-slate-700"
-                    maxlength="4" required autocomplete="off" placeholder="••••">
-                <p id="pin-error" class="text-rose-400 text-xs mt-3 min-h-[16px] font-medium"></p>
-                <button type="submit"
-                    class="w-full mt-6 bg-gradient-to-r from-theme-primary to-theme-primaryHover text-white font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_8px_25px_rgba(79,70,229,0.4)] active:scale-[0.98] transition-all">Unlock
-                    Dashboard</button>
-            </form>
+            <div class="relative z-10 flex flex-col items-center gap-4">
+                <div id="g_id_onload"
+                    data-client_id="312080738109-q7us1rao5m3h801ro8ll394ie6mcl0cb.apps.googleusercontent.com"
+                    data-callback="handleGoogleSignIn" data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_blue"
+                    data-text="sign_in_with" data-size="large" data-logo_alignment="left">
+                </div>
+                <p id="pin-error" class="text-rose-400 text-xs min-h-[16px] font-medium"></p>
+            </div>
         </div>
     </div>
 
@@ -759,10 +762,12 @@
                             </div>
                             <div>
                                 <h2 class="text-2xl font-bold text-white tracking-tight">System Config</h2>
-                                <p class="text-xs font-medium text-slate-400 mt-1">Manage categories, wallets, and PIN</p>
+                                <p class="text-xs font-medium text-slate-400 mt-1">Manage categories, wallets, and PIN
+                                </p>
                             </div>
                         </div>
-                        <button onclick="switchTab('view-dashboard')" class="text-slate-400 hover:text-white transition-colors w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10">
+                        <button onclick="switchTab('view-dashboard')"
+                            class="text-slate-400 hover:text-white transition-colors w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10">
                             <i class="fas fa-times text-lg"></i>
                         </button>
                     </div>
@@ -773,19 +778,29 @@
 
                         <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20">
                             <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i
-                                    class="fas fa-lock mr-2 text-slate-500"></i> Master PIN</h3>
-                            <input type="number" id="config-pin-input"
-                                class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-slate-100 font-mono text-lg font-bold placeholder-slate-600"
-                                placeholder="e.g. 1234">
+                                    class="fas fa-user-shield mr-2 text-slate-500"></i> Allowed Google Accounts</h3>
+                            <p class="text-xs text-slate-500 mb-3">Only these email addresses can sign in.</p>
+                            <div id="config-allowed-emails-list" class="flex flex-wrap gap-2 mb-4"></div>
+                            <div class="flex gap-2">
+                                <input type="email" id="config-new-email"
+                                    class="flex-grow input-glow bg-black/40 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600"
+                                    placeholder="email@gmail.com">
+                                <button onclick="addConfigEmail()"
+                                    class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow-md"><i
+                                        class="fas fa-plus"></i></button>
+                            </div>
                         </div>
 
                         <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20">
                             <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i
                                     class="fas fa-robot mr-2 text-slate-500"></i> AI Receipt Scanner</h3>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API Key</label>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq
+                                API Key</label>
                             <input type="password" id="groq-api-key" placeholder="gsk_..."
                                 class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                            <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4 Scout Vision</strong>. Get a free key from <a href="https://console.groq.com/keys" target="_blank" class="text-blue-400 underline">console.groq.com</a></p>
+                            <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4
+                                    Scout Vision</strong>. Get a free key from <a href="https://console.groq.com/keys"
+                                    target="_blank" class="text-blue-400 underline">console.groq.com</a></p>
                         </div>
 
                         <button id="save-config-btn"
@@ -981,28 +996,40 @@
                 }
             }
 
-            function checkAuth() {
-                if (sessionStorage.getItem('auth') === 'true') {
+            // --- GOOGLE AUTH LOGIC ---
+            window.handleGoogleSignIn = function (response) {
+                const payload = JSON.parse(atob(response.credential.split('.')[1]));
+                const email = payload.email;
+                const allowed = SYSTEM_CONFIG.allowedEmails || [];
+                if (allowed.length === 0 || allowed.map(e => e.toLowerCase()).includes(email.toLowerCase())) {
+                    sessionStorage.setItem('auth', JSON.stringify({ email, name: payload.name, picture: payload.picture }));
                     document.getElementById('pin-modal').classList.add('hidden');
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('mobile-nav').classList.remove('hidden');
                     fetchData();
                     handleUrlParams();
-                } else document.getElementById('pin-modal').classList.remove('hidden');
+                } else {
+                    document.getElementById('pin-error').textContent = `Access denied for ${email}. Contact the app owner.`;
+                }
+            };
+
+            function checkAuth() {
+                if (sessionStorage.getItem('auth')) {
+                    document.getElementById('pin-modal').classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
+                    document.getElementById('mobile-nav').classList.remove('hidden');
+                    fetchData();
+                    handleUrlParams();
+                } else {
+                    document.getElementById('pin-modal').classList.remove('hidden');
+                }
             }
 
-            document.getElementById('pin-form').addEventListener('submit', e => {
-                e.preventDefault();
-                if (document.getElementById('pin-input').value === SYSTEM_CONFIG.pin) {
-                    sessionStorage.setItem('auth', 'true');
-                    document.getElementById('pin-modal').classList.add('hidden');
-                    document.getElementById('main-content').classList.remove('hidden');
-                    document.getElementById('mobile-nav').classList.remove('hidden');
-                    fetchData();
-                    handleUrlParams();
-                } else document.getElementById('pin-error').textContent = "Incorrect PIN";
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                sessionStorage.removeItem('auth');
+                google.accounts.id.revoke(JSON.parse(sessionStorage.getItem('auth') || '{}').email || '', () => { });
+                location.reload();
             });
-            document.getElementById('logout-btn').addEventListener('click', () => { sessionStorage.removeItem('auth'); location.reload(); });
 
             // Tab Navigation Logic
             const deskNavBtns = document.querySelectorAll('.desk-nav-btn');
@@ -1791,12 +1818,37 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 });
 
                 container.innerHTML = html;
-                document.getElementById('config-pin-input').value = SYSTEM_CONFIG.pin || '';
+
+                // Render allowed emails
+                const emailList = SYSTEM_CONFIG.allowedEmails || [];
+                document.getElementById('config-allowed-emails-list').innerHTML = emailList.map((em, idx) => `
+                    <div class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
+                        ${em} <button onclick="removeConfigEmail(${idx})" class="hover:text-white transition"><i class="fas fa-times"></i></button>
+                    </div>
+                `).join('') || '<span class="text-xs text-slate-500 italic">No restriction — anyone can sign in</span>';
             }
 
             window.removeConfigItem = function (key, index) {
                 SYSTEM_CONFIG[key].splice(index, 1);
                 renderConfigUI();
+            };
+
+            window.removeConfigEmail = function (index) {
+                SYSTEM_CONFIG.allowedEmails.splice(index, 1);
+                renderConfigUI();
+            };
+
+            window.addConfigEmail = function () {
+                const input = document.getElementById('config-new-email');
+                const val = input.value.trim().toLowerCase();
+                if (!SYSTEM_CONFIG.allowedEmails) SYSTEM_CONFIG.allowedEmails = [];
+                if (val && !SYSTEM_CONFIG.allowedEmails.includes(val)) {
+                    SYSTEM_CONFIG.allowedEmails.push(val);
+                    input.value = '';
+                    renderConfigUI();
+                } else if (SYSTEM_CONFIG.allowedEmails.includes(val)) {
+                    showToast("Email already in list!", "error");
+                }
             };
 
             window.addConfigItem = function (key) {
@@ -1814,7 +1866,7 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 const btn = document.getElementById('save-config-btn');
                 const origTxt = btn.innerHTML;
 
-                SYSTEM_CONFIG.pin = document.getElementById('config-pin-input').value;
+                SYSTEM_CONFIG.pin = null; // PIN removed, using Google Auth
 
                 // Also save the Groq API key
                 const groqKey = document.getElementById('groq-api-key').value.trim();
