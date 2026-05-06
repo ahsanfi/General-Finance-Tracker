@@ -287,6 +287,9 @@
             </nav>
 
             <div class="flex gap-2">
+                <button id="toggle-visibility-btn"
+                    class="bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10"
+                    title="Toggle Visibility"><i class="fas fa-eye"></i></button>
                 <button id="settings-btn"
                     class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-blue-500/20"
                     title="Settings"><i class="fas fa-cog"></i></button>
@@ -882,6 +885,7 @@
             let SYSTEM_CONFIG = { exp: [], inc: [], walletsIDR: [], walletsUSD: [], pin: null };
             let masterData = [], itemToDelete = null, sortState = { k: 'date', o: 'desc' }, calendarDate = new Date(), exchangeRate = 16000;
             let isEditing = false, editItem = null;
+            window.isBalancesHidden = localStorage.getItem('hideBalances') === 'true';
 
             document.getElementById('entry-date').valueAsDate = new Date();
             loadSystemConfig();
@@ -1090,8 +1094,6 @@
                 } catch (e) { showToast("Error loading data: " + e.message, 'error'); }
             }
 
-            function fmt(n, c) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, maximumFractionDigits: c === 'IDR' ? 0 : 2 }).format(n); }
-            function showToast(msg, type) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.remove('hidden'); t.classList.remove('translate-y-[-100px]', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-[-100px]', 'opacity-0'), 3000); }
 
             function renderAll() {
                 const bals = {}; let incIDR = 0, expIDR = 0, incUSD = 0, expUSD = 0;
@@ -1133,7 +1135,7 @@
                 netEl.className = `stat-value text-[13px] sm:text-base md:text-2xl font-bold truncate z-10 font-mono tracking-tighter ${netCashFlowIDR >= 0 ? 'text-slate-200' : 'text-rose-400'}`;
 
                 document.getElementById('rate-display').textContent = `1 USD = ${fmt(exchangeRate, 'IDR').replace('IDR', '').trim()}`;
-                document.getElementById('wealth-display').textContent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalAssetIDR);
+                document.getElementById('wealth-display').textContent = window.isBalancesHidden ? '***' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalAssetIDR);
 
                 const s = document.getElementById('filter-search').value.toLowerCase(), start = document.getElementById('filter-start').value, end = document.getElementById('filter-end').value, fCat = document.getElementById('filter-cat').value, fAcc = document.getElementById('filter-acc').value;
                 let filtered = masterData.filter(d => {
@@ -1378,7 +1380,10 @@
                 });
             });
 
-            function fmt(n, c) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n); }
+            function fmt(n, c) { 
+                if (window.isBalancesHidden) return '***';
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n); 
+            }
             function showToast(m, type) {
                 const t = document.getElementById('toast');
                 t.className = `fixed top-5 left-1/2 transform -translate-x-1/2 glass text-white px-6 py-4 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] border z-[90] flex items-center gap-3 min-w-[250px] justify-center transition-all duration-300 translate-y-0 opacity-100 ${type === 'error' ? 'border-rose-500/30 bg-rose-950/80' : 'border-emerald-500/30 bg-emerald-950/80'}`;
@@ -1388,6 +1393,15 @@
             }
 
             ['filter-start', 'filter-end', 'filter-cat', 'filter-acc', 'filter-search'].forEach(i => document.getElementById(i).addEventListener('input', renderAll));
+            
+            const visBtn = document.getElementById('toggle-visibility-btn');
+            if (window.isBalancesHidden) visBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            visBtn.addEventListener('click', () => {
+                window.isBalancesHidden = !window.isBalancesHidden;
+                localStorage.setItem('hideBalances', window.isBalancesHidden);
+                visBtn.innerHTML = window.isBalancesHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+                renderAll();
+            });
             document.getElementById('chart-currency-toggle').addEventListener('change', () => updateChart(masterData));
             document.querySelectorAll('.sortable').forEach(s => s.addEventListener('click', e => { sortState.k = e.target.dataset.sort; sortState.o = sortState.o === 'asc' ? 'desc' : 'asc'; renderAll(); }));
             document.getElementById('export-btn').addEventListener('click', async () => {
