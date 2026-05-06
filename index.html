@@ -863,9 +863,9 @@
                 <h3 class="font-bold text-white text-xl flex items-center gap-2"><i class="fas fa-balance-scale text-blue-400"></i> Reconcile Balances</h3>
                 <button onclick="document.getElementById('reconcile-modal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
             </div>
-            <div class="text-sm text-slate-400 mb-6 bg-white/5 p-4 rounded-xl border border-white/10">Compare your app's calculated balances with real-world inputs. If there's a difference, you can auto-create an adjustment entry labeled <strong>Error</strong> to fix the balance.</div>
+            <div class="text-sm text-slate-400 mb-6 bg-white/5 p-4 rounded-xl border border-white/10 flex-shrink-0">Compare your app's calculated balances with real-world inputs. If there's a difference, you can auto-create an adjustment entry labeled <strong>Error</strong> to fix the balance.</div>
             
-            <div class="overflow-y-auto custom-scroll pr-2 flex-grow space-y-3" id="reconcile-list">
+            <div class="overflow-y-auto custom-scroll pr-2 flex-grow space-y-3" id="reconcile-list" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
                 <!-- Dynamically populated -->
             </div>
         </div>
