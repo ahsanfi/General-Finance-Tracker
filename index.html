@@ -290,6 +290,9 @@
                 <button id="toggle-visibility-btn"
                     class="bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10"
                     title="Toggle Visibility"><i class="fas fa-eye"></i></button>
+                <button id="config-btn"
+                    class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-purple-500/20"
+                    title="System Config" onclick="switchTab('view-config')"><i class="fas fa-sliders-h"></i></button>
                 <button id="settings-btn"
                     class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-blue-500/20"
                     title="Settings"><i class="fas fa-cog"></i></button>
@@ -440,7 +443,8 @@
                                 class="text-[9px] text-theme-primaryLight font-medium ml-2 bg-theme-primary/10 px-2 py-1 rounded-lg border border-theme-primary/20 hidden sm:inline-block">Tap
                                 USD to convert</span>
                         </h3>
-                        <button onclick="openReconcileModal()" class="text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2 font-bold uppercase tracking-wider">
+                        <button onclick="openReconcileModal()"
+                            class="text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2 font-bold uppercase tracking-wider">
                             <i class="fas fa-balance-scale"></i> Reconcile
                         </button>
                     </div>
@@ -742,6 +746,44 @@
                     </form>
                 </div>
             </div>
+
+            <!-- View: System Config -->
+            <div id="view-config" class="tab-view hidden space-y-6">
+                <div
+                    class="glass-card p-6 sm:p-8 rounded-3xl mx-auto shadow-2xl relative overflow-hidden border border-purple-500/10">
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3">
+                    </div>
+                    <div class="flex items-center gap-4 mb-8 relative z-10">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400 border border-purple-500/30">
+                            <i class="fas fa-sliders-h text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-white tracking-tight">System Config</h2>
+                            <p class="text-xs font-medium text-slate-400 mt-1">Manage categories, wallets, and PIN</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Config sections will be rendered here dynamically -->
+                        <div id="config-sections-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+                        <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i
+                                    class="fas fa-lock mr-2 text-slate-500"></i> Master PIN</h3>
+                            <input type="number" id="config-pin-input"
+                                class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-slate-100 font-mono text-lg font-bold placeholder-slate-600"
+                                placeholder="e.g. 1234">
+                        </div>
+
+                        <button id="save-config-btn"
+                            class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(147,51,234,0.3)] hover:shadow-[0_8px_25px_rgba(147,51,234,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-8">
+                            <span>Save Configuration</span> <i class="fas fa-save"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -844,11 +886,12 @@
             </div>
             <div class="space-y-4 relative z-10">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API Key</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API
+                        Key</label>
                     <input type="password" id="groq-api-key" placeholder="gsk_..."
                         class="w-full input-glow rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                    <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4 Scout Vision</strong>. Get a free key from <a
-                            href="https://console.groq.com/keys" target="_blank"
+                    <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4 Scout
+                            Vision</strong>. Get a free key from <a href="https://console.groq.com/keys" target="_blank"
                             class="text-blue-400 underline">console.groq.com</a></p>
                 </div>
                 <button id="save-settings-btn"
@@ -860,15 +903,22 @@
 
 
     <!-- Reconcile Modal -->
-    <div id="reconcile-modal" class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="glass-card rounded-3xl p-6 sm:p-8 w-full max-w-3xl shadow-2xl relative overflow-hidden border border-white/10 flex flex-col max-h-[90vh]">
+    <div id="reconcile-modal"
+        class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
+        <div
+            class="glass-card rounded-3xl p-6 sm:p-8 w-full max-w-3xl shadow-2xl relative overflow-hidden border border-white/10 flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-6 relative z-10 flex-shrink-0">
-                <h3 class="font-bold text-white text-xl flex items-center gap-2"><i class="fas fa-balance-scale text-blue-400"></i> Reconcile Balances</h3>
-                <button onclick="document.getElementById('reconcile-modal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
+                <h3 class="font-bold text-white text-xl flex items-center gap-2"><i
+                        class="fas fa-balance-scale text-blue-400"></i> Reconcile Balances</h3>
+                <button onclick="document.getElementById('reconcile-modal').classList.add('hidden')"
+                    class="text-slate-400 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
             </div>
-            <div class="text-sm text-slate-400 mb-6 bg-white/5 p-4 rounded-xl border border-white/10 flex-shrink-0">Compare your app's calculated balances with real-world inputs. If there's a difference, you can auto-create an adjustment entry labeled <strong>Error</strong> to fix the balance.</div>
-            
-            <div class="overflow-y-auto custom-scroll pr-2 flex-grow space-y-3" id="reconcile-list" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+            <div class="text-sm text-slate-400 mb-6 bg-white/5 p-4 rounded-xl border border-white/10 flex-shrink-0">
+                Compare your app's calculated balances with real-world inputs. If there's a difference, you can
+                auto-create an adjustment entry labeled <strong>Error</strong> to fix the balance.</div>
+
+            <div class="overflow-y-auto custom-scroll pr-2 flex-grow space-y-3" id="reconcile-list"
+                style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
                 <!-- Dynamically populated -->
             </div>
         </div>
@@ -880,7 +930,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzt2el5OeYDohIdAKM3x_GEdth5XroKsOkSALeJi3UfM6u8_C8oUiC26epdw2lMoNEVJw/exec";
+            const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzndWHionH8qrdrLAQUGb2UM3DlvHGyBdyBZNAGUi6aV5VvXUWgTxuqnYXK2HDmYLhsZw/exec";
 
             let SYSTEM_CONFIG = { exp: [], inc: [], walletsIDR: [], walletsUSD: [], pin: null };
             let masterData = [], itemToDelete = null, sortState = { k: 'date', o: 'desc' }, calendarDate = new Date(), exchangeRate = 16000;
@@ -1380,9 +1430,9 @@
                 });
             });
 
-            function fmt(n, c) { 
+            function fmt(n, c) {
                 if (window.isBalancesHidden) return '***';
-                return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n); 
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
             }
             function showToast(m, type) {
                 const t = document.getElementById('toast');
@@ -1393,7 +1443,7 @@
             }
 
             ['filter-start', 'filter-end', 'filter-cat', 'filter-acc', 'filter-search'].forEach(i => document.getElementById(i).addEventListener('input', renderAll));
-            
+
             const visBtn = document.getElementById('toggle-visibility-btn');
             if (window.isBalancesHidden) visBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
             visBtn.addEventListener('click', () => {
@@ -1623,7 +1673,7 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 }
             });
             // Reconcile Balances Feature
-            window.openReconcileModal = function() {
+            window.openReconcileModal = function () {
                 const bals = {};
                 masterData.forEach(d => {
                     const k = `${d.acc}-${d.curr}`;
@@ -1631,9 +1681,9 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     if (d.type === 'income') bals[k].v += d.amt;
                     else bals[k].v -= d.amt;
                 });
-                
+
                 const listEl = document.getElementById('reconcile-list');
-                listEl.innerHTML = Object.values(bals).sort((a,b) => a.n.localeCompare(b.n)).map((b, idx) => {
+                listEl.innerHTML = Object.values(bals).sort((a, b) => a.n.localeCompare(b.n)).map((b, idx) => {
                     return `
                     <div class="bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div class="flex-shrink-0">
@@ -1653,26 +1703,26 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     </div>
                     `;
                 }).join('');
-                
+
                 document.getElementById('reconcile-modal').classList.remove('hidden');
             };
 
-            window.updateReconcileDiff = function(idx, appVal, curr, accName) {
+            window.updateReconcileDiff = function (idx, appVal, curr, accName) {
                 const realInput = document.getElementById(`rec-real-${idx}`).value;
                 const container = document.getElementById(`rec-diff-container-${idx}`);
                 const diffEl = document.getElementById(`rec-diff-${idx}`);
                 const btnEl = document.getElementById(`rec-btn-${idx}`);
-                
+
                 if (realInput === '') {
                     container.classList.add('hidden');
                     return;
                 }
-                
+
                 const realVal = parseFloat(realInput);
                 const diff = realVal - appVal;
-                
+
                 container.classList.remove('hidden');
-                
+
                 if (diff === 0) {
                     diffEl.innerHTML = '<i class="fas fa-check text-emerald-500 mr-1"></i> Match';
                     diffEl.className = 'font-bold text-sm font-mono whitespace-nowrap min-w-[80px] text-right text-slate-400';
@@ -1680,18 +1730,18 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 } else {
                     diffEl.textContent = (diff > 0 ? '+' : '') + fmt(diff, curr);
                     diffEl.className = `font-bold text-sm font-mono whitespace-nowrap min-w-[80px] text-right ${diff > 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-                    
+
                     btnEl.classList.remove('hidden');
                     btnEl.dataset.diff = diff;
                 }
             };
 
-            window.createAdjustment = function(idx, acc, curr) {
+            window.createAdjustment = function (idx, acc, curr) {
                 const diff = parseFloat(document.getElementById(`rec-btn-${idx}`).dataset.diff);
                 const type = diff > 0 ? 'income' : 'expense';
                 const amt = Math.abs(diff);
                 const date = new Date().toISOString().split('T')[0];
-                
+
                 const payload = {
                     action: 'add',
                     sheetName: type === 'income' ? 'Income' : 'Expenses',
@@ -1702,12 +1752,12 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     currency: curr,
                     amount: amt
                 };
-                
+
                 const btn = document.getElementById(`rec-btn-${idx}`);
                 const origHtml = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 btn.disabled = true;
-                
+
                 fetch(WEB_APP_URL, {
                     method: 'POST',
                     body: JSON.stringify(payload)
@@ -1728,6 +1778,86 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     btn.disabled = false;
                 });
             };
+
+            // --- SYSTEM CONFIG TAB LOGIC ---
+            document.getElementById('config-btn').addEventListener('click', () => renderConfigUI());
+
+            function renderConfigUI() {
+                const container = document.getElementById('config-sections-container');
+                const sections = [
+                    { title: "Expense Categories", key: "exp", color: "rose", icon: "fa-tags" },
+                    { title: "Income Categories", key: "inc", color: "emerald", icon: "fa-tags" },
+                    { title: "IDR Wallets", key: "walletsIDR", color: "blue", icon: "fa-wallet" },
+                    { title: "USD Wallets", key: "walletsUSD", color: "teal", icon: "fa-dollar-sign" }
+                ];
+
+                let html = '';
+                sections.forEach(s => {
+                    const list = SYSTEM_CONFIG[s.key] || [];
+                    html += `
+                        <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20 flex flex-col">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i class="fas ${s.icon} mr-2 text-${s.color}-400"></i> ${s.title}</h3>
+                            <div class="flex-grow flex flex-wrap gap-2 mb-4">
+                                ${list.map((item, idx) => `
+                                    <div class="bg-${s.color}-500/10 text-${s.color}-400 border border-${s.color}-500/20 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
+                                        ${item} <button onclick="removeConfigItem('${s.key}', ${idx})" class="hover:text-white transition"><i class="fas fa-times"></i></button>
+                                    </div>
+                                `).join('')}
+                                ${list.length === 0 ? `<span class="text-xs text-slate-500 italic">Empty</span>` : ''}
+                            </div>
+                            <div class="flex gap-2 mt-auto">
+                                <input type="text" id="config-new-${s.key}" class="flex-grow input-glow bg-black/40 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600" placeholder="New item...">
+                                <button onclick="addConfigItem('${s.key}')" class="bg-${s.color}-600 hover:bg-${s.color}-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow-md"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+                document.getElementById('config-pin-input').value = SYSTEM_CONFIG.pin || '';
+            }
+
+            window.removeConfigItem = function (key, index) {
+                SYSTEM_CONFIG[key].splice(index, 1);
+                renderConfigUI();
+            };
+
+            window.addConfigItem = function (key) {
+                const input = document.getElementById(`config-new-${key}`);
+                const val = input.value.trim();
+                if (val && !SYSTEM_CONFIG[key].includes(val)) {
+                    SYSTEM_CONFIG[key].push(val);
+                    renderConfigUI();
+                } else if (SYSTEM_CONFIG[key].includes(val)) {
+                    showToast("Item already exists!", "error");
+                }
+            };
+
+            document.getElementById('save-config-btn').addEventListener('click', () => {
+                const btn = document.getElementById('save-config-btn');
+                const origTxt = btn.innerHTML;
+
+                SYSTEM_CONFIG.pin = document.getElementById('config-pin-input').value;
+
+                btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent mx-auto"></div>';
+                btn.disabled = true;
+
+                fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'updateSystemConfig', config: SYSTEM_CONFIG })
+                }).then(r => r.json()).then(d => {
+                    if (d.status === 'success') {
+                        showToast("Configuration Saved!", 'success');
+                        // Update dropdowns immediately just in case
+                        updateWalletOptions(document.getElementById('entry-curr-source').value, 'entry-acc-source');
+                        updateWalletOptions(document.getElementById('entry-curr-target').value, 'entry-acc-target');
+                        updateCategoryOptions(document.querySelector('input[name="entry-type"]:checked').value);
+                    } else throw new Error(d.message);
+                }).catch(e => showToast("Error: " + e.message, 'error')).finally(() => {
+                    btn.innerHTML = origTxt;
+                    btn.disabled = false;
+                });
+            });
         });
     </script>
 </body>
