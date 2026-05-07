@@ -1977,7 +1977,9 @@
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;');
 
-                document.getElementById('mobile-trans-list').innerHTML = filtered.map(d => `
+                const isCompactList = window.matchMedia('(max-width: 1023px)').matches;
+                const mobileFiltered = isCompactList ? filtered.slice(0, 80) : filtered;
+                document.getElementById('mobile-trans-list').innerHTML = mobileFiltered.map(d => `
                 <div class="glass p-4 rounded-2xl flex justify-between items-center active:scale-[0.98] transition-transform">
                     <div class="flex flex-col max-w-[60%] space-y-1.5">
                         <span class="text-sm font-bold text-slate-100 truncate">${d.desc}</span>
@@ -1994,10 +1996,11 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `).join('') + (isCompactList && filtered.length > mobileFiltered.length ? `<div class="text-center text-slate-500 py-3 text-xs font-medium">Showing latest ${mobileFiltered.length} of ${filtered.length} transactions. Use filters to narrow the list.</div>` : '');
                 if (filtered.length === 0) document.getElementById('mobile-trans-list').innerHTML = '<div class="text-center text-slate-500 py-10 text-sm italic glass rounded-2xl">No transactions found</div>';
 
-                document.getElementById('data-body').innerHTML = filtered.map(d => `
+                if (!isCompactList) {
+                    document.getElementById('data-body').innerHTML = filtered.map(d => `
                 <tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0 group">
                     <td class="px-6 py-4 text-sm text-slate-400 whitespace-nowrap font-mono">${d.date}</td>
                     <td class="px-6 py-4 text-sm text-slate-200 font-medium">${d.desc}</td>
@@ -2012,7 +2015,8 @@
                     </td>
                 </tr>
             `).join('');
-                if (filtered.length === 0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-500 text-sm italic">No data found</td></tr>';
+                    if (filtered.length === 0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-500 text-sm italic">No data found</td></tr>';
+                }
 
                 renderDaily(masterData); renderCalendar(masterData); updateChart(masterData); updateTrendChart(masterData); renderDashWidgets(masterData);
             }
