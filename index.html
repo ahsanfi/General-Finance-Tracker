@@ -1982,6 +1982,13 @@
                     if (s && !d.desc.toLowerCase().includes(s)) return false; return true;
                 }).sort((a, b) => sortState.o === 'asc' ? (a[sortState.k] > b[sortState.k] ? 1 : -1) : (a[sortState.k] < b[sortState.k] ? 1 : -1));
 
+                const toDataAttr = (item) => String(JSON.stringify(item))
+                    .replace(/&/g, '&amp;')
+                    .replace(/'/g, '&#39;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+
                 document.getElementById('mobile-trans-list').innerHTML = filtered.map(d => `
                 <div class="glass p-4 rounded-2xl flex justify-between items-center active:scale-[0.98] transition-transform">
                     <div class="flex flex-col max-w-[60%] space-y-1.5">
@@ -1994,8 +2001,8 @@
                     <div class="flex flex-col items-end gap-2">
                         <span class="font-bold font-mono text-sm ${d.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">${d.type === 'income' ? '+' : '-'} ${fmt(d.amt, d.curr)}</span>
                         <div class="flex gap-2">
-                            <button class="bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 w-8 h-8 flex items-center justify-center transition edit-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-pen text-xs"></i></button>
-                            <button class="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-lg p-1.5 w-8 h-8 flex items-center justify-center transition del-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-trash text-xs"></i></button>
+                            <button class="bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 w-8 h-8 flex items-center justify-center transition edit-btn" data-item='${toDataAttr(d)}'><i class="fas fa-pen text-xs"></i></button>
+                            <button class="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-lg p-1.5 w-8 h-8 flex items-center justify-center transition del-btn" data-item='${toDataAttr(d)}'><i class="fas fa-trash text-xs"></i></button>
                         </div>
                     </div>
                 </div>
@@ -2011,8 +2018,8 @@
                     <td class="px-6 py-4 text-sm text-right font-mono font-bold ${d.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">${d.type === 'income' ? '+' : '-'} ${fmt(d.amt, d.curr)}</td>
                     <td class="px-4 py-4 text-center">
                         <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition">
-                            <button class="w-8 h-8 bg-white/5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition edit-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-pen text-xs"></i></button>
-                            <button class="w-8 h-8 bg-rose-500/10 rounded-lg text-rose-400 hover:bg-rose-500/20 transition del-btn" data-item='${JSON.stringify(d)}'><i class="fas fa-trash text-xs"></i></button>
+                            <button class="w-8 h-8 bg-white/5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition edit-btn" data-item='${toDataAttr(d)}'><i class="fas fa-pen text-xs"></i></button>
+                            <button class="w-8 h-8 bg-rose-500/10 rounded-lg text-rose-400 hover:bg-rose-500/20 transition del-btn" data-item='${toDataAttr(d)}'><i class="fas fa-trash text-xs"></i></button>
                         </div>
                     </td>
                 </tr>
