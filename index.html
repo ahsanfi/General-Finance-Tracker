@@ -1954,14 +1954,22 @@
                 const netCashFlowIDR = totalIncReal - totalExpReal;
                 let totalAssetIDR = 0; Object.values(bals).forEach(b => { if (b.c === 'IDR') totalAssetIDR += b.v; if (b.c === 'USD') totalAssetIDR += (b.v * exchangeRate); });
 
-                document.querySelector('#summary-income .stat-value').textContent = fmt(totalIncReal, 'IDR');
-                document.querySelector('#summary-expense .stat-value').textContent = fmt(totalExpReal, 'IDR');
+                const dashboardValueClass = 'stat-value amount-text text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words font-bold z-10 font-mono';
+                const incomeEl = document.querySelector('#summary-income .stat-value');
+                const expenseEl = document.querySelector('#summary-expense .stat-value');
                 const netEl = document.querySelector('#summary-net .stat-value');
+                const wealthEl = document.getElementById('wealth-display');
+
+                incomeEl.textContent = fmt(totalIncReal, 'IDR');
+                incomeEl.className = `${dashboardValueClass} text-emerald-400 text-shadow-sm`;
+                expenseEl.textContent = fmt(totalExpReal, 'IDR');
+                expenseEl.className = `${dashboardValueClass} text-rose-400`;
                 netEl.textContent = fmt(netCashFlowIDR, 'IDR');
-                netEl.className = `stat-value amount-text text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words font-bold z-10 font-mono ${netCashFlowIDR >= 0 ? 'text-slate-200' : 'text-rose-400'}`;
+                netEl.className = `${dashboardValueClass} ${netCashFlowIDR >= 0 ? 'text-slate-200' : 'text-rose-400'}`;
 
                 document.getElementById('rate-display').textContent = `1 USD = ${fmt(exchangeRate, 'IDR').replace('IDR', '').trim()}`;
-                document.getElementById('wealth-display').textContent = window.isBalancesHidden ? '***' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalAssetIDR);
+                wealthEl.textContent = window.isBalancesHidden ? '***' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalAssetIDR);
+                wealthEl.className = `${dashboardValueClass} text-white mt-auto`;
 
                 const s = document.getElementById('filter-search').value.toLowerCase(), start = document.getElementById('filter-start').value, end = document.getElementById('filter-end').value, fCat = document.getElementById('filter-cat').value, fAcc = document.getElementById('filter-acc').value;
                 let filtered = masterData.filter(d => {
