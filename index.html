@@ -38,16 +38,67 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --bg-deep: #030712;
+            --bg-panel: rgba(15, 23, 42, 0.62);
+            --bg-panel-strong: rgba(15, 23, 42, 0.82);
+            --line-soft: rgba(148, 163, 184, 0.14);
+            --line-bright: rgba(255, 255, 255, 0.12);
+            --glow-indigo: rgba(99, 102, 241, 0.35);
+            --glow-cyan: rgba(34, 211, 238, 0.18);
+            --glow-emerald: rgba(16, 185, 129, 0.22);
+            --glow-rose: rgba(244, 63, 94, 0.22);
+        }
+
+        * {
+            scrollbar-color: rgba(99, 102, 241, 0.45) transparent;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            background-color: #050B14;
+            background:
+                radial-gradient(circle at 18% -8%, rgba(99, 102, 241, 0.22), transparent 32rem),
+                radial-gradient(circle at 88% 8%, rgba(34, 211, 238, 0.14), transparent 30rem),
+                radial-gradient(circle at 50% 110%, rgba(168, 85, 247, 0.13), transparent 36rem),
+                linear-gradient(135deg, #030712 0%, #06111f 48%, #020617 100%);
+            background-attachment: fixed;
             color: #cbd5e1;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 64px 64px;
+            mask-image: radial-gradient(circle at center, black, transparent 78%);
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.035) 45%, transparent 70%);
+            opacity: 0.45;
+            animation: auroraSweep 18s ease-in-out infinite alternate;
+        }
+
+        ::selection {
+            background: rgba(99, 102, 241, 0.38);
+            color: #fff;
         }
 
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
         }
 
         ::-webkit-scrollbar-track {
@@ -55,21 +106,24 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #1E293B;
-            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(129, 140, 248, 0.65), rgba(34, 211, 238, 0.38));
+            border-radius: 999px;
+            border: 2px solid rgba(2, 6, 23, 0.75);
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
+            background: linear-gradient(180deg, rgba(165, 180, 252, 0.85), rgba(103, 232, 249, 0.6));
         }
 
         .loader {
-            border: 3px solid #1E293B;
-            border-top: 3px solid #4F46E5;
+            border: 3px solid rgba(148, 163, 184, 0.22);
+            border-top: 3px solid #818CF8;
+            border-right: 3px solid #22D3EE;
             border-radius: 50%;
             width: 24px;
             height: 24px;
-            animation: spin 1s linear infinite;
+            animation: spin 0.85s linear infinite;
+            filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.45));
         }
 
         @keyframes spin {
@@ -82,47 +136,110 @@
             }
         }
 
+        @keyframes auroraSweep {
+            from {
+                transform: translateX(-12%) translateY(-4%) rotate(0deg);
+            }
+
+            to {
+                transform: translateX(10%) translateY(4%) rotate(4deg);
+            }
+        }
+
+        @keyframes floatBlob {
+
+            0%,
+            100% {
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate3d(24px, -18px, 0) scale(1.08);
+            }
+        }
+
         /* Glassmorphism utilities */
         .glass {
-            background: rgba(11, 19, 37, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.46));
+            backdrop-filter: blur(22px) saturate(150%);
+            -webkit-backdrop-filter: blur(22px) saturate(150%);
+            border: 1px solid var(--line-soft);
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06);
         }
 
         .glass-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            isolation: isolate;
+            background:
+                linear-gradient(145deg, rgba(30, 41, 59, 0.52) 0%, rgba(15, 23, 42, 0.74) 52%, rgba(2, 6, 23, 0.64) 100%);
+            backdrop-filter: blur(18px) saturate(145%);
+            -webkit-backdrop-filter: blur(18px) saturate(145%);
+            border: 1px solid var(--line-soft);
+            box-shadow:
+                0 18px 55px rgba(0, 0, 0, 0.28),
+                inset 0 1px 0 rgba(255, 255, 255, 0.07),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: -1;
+            background: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.09), transparent 34%),
+                radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.10), transparent 38%);
+            opacity: 0.75;
         }
 
         .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+            border-color: rgba(129, 140, 248, 0.28);
+            box-shadow:
+                0 24px 70px rgba(0, 0, 0, 0.38),
+                0 0 36px rgba(99, 102, 241, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.10);
         }
 
         /* Mobile Nav Active State */
         .mob-nav-active {
-            color: #818CF8 !important;
+            color: #A5B4FC !important;
         }
 
         .mob-nav-active .nav-icon-bg {
-            background-color: rgba(79, 70, 229, 0.2);
-            transform: scale(1.1);
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.35), rgba(34, 211, 238, 0.12));
+            transform: scale(1.12);
+            box-shadow: 0 0 22px rgba(99, 102, 241, 0.35);
         }
 
         /* Desktop Nav Active State */
         .desk-nav-active {
-            background-color: rgba(79, 70, 229, 0.15) !important;
-            color: #818CF8 !important;
-            border-color: rgba(79, 70, 229, 0.3) !important;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(34, 211, 238, 0.12)) !important;
+            color: #EEF2FF !important;
+            border-color: rgba(129, 140, 248, 0.38) !important;
+            box-shadow: 0 10px 28px rgba(79, 70, 229, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .desk-nav-btn,
+        button {
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+        }
+
+        .desk-nav-btn:hover,
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0) scale(0.98);
         }
 
         .calendar-day {
             min-height: 4.5rem;
-            transition: all 0.2s ease;
+            transition: all 0.22s ease;
+            background: rgba(15, 23, 42, 0.34);
         }
 
         @media (min-width: 768px) {
@@ -132,8 +249,10 @@
         }
 
         .calendar-day:hover {
-            background: rgba(79, 70, 229, 0.1);
-            border-color: rgba(79, 70, 229, 0.3);
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.16), rgba(34, 211, 238, 0.06));
+            border-color: rgba(129, 140, 248, 0.35);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.24);
+            transform: translateY(-2px);
         }
 
         input,
@@ -143,73 +262,677 @@
         }
 
         .preset-btn {
-            @apply px-3 py-2 text-xs font-medium rounded-xl border border-slate-700/50 text-slate-400 bg-slate-800/30 hover:bg-theme-primary/20 hover:text-theme-primaryLight hover:border-theme-primary/30 transition cursor-pointer select-none flex-grow text-center;
+            @apply px-3 py-2 text-xs font-semibold rounded-xl border border-slate-700/50 text-slate-400 bg-slate-900/40 hover:bg-theme-primary/20 hover:text-theme-primaryLight hover:border-theme-primary/40 transition cursor-pointer select-none flex-grow text-center;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
         }
 
         .preset-active {
-            @apply bg-theme-primary text-white border-theme-primary shadow-[0_0_15px_rgba(79, 70, 229, 0.3)];
+            @apply bg-theme-primary text-white border-theme-primary;
+            box-shadow: 0 0 22px rgba(99, 102, 241, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.12);
         }
 
         /* Segmented Control styles are handled dynamically in JS for better pill sliding */
 
         /* Custom Inputs */
         .input-glow {
-            transition: all 0.2s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.22s ease;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(2, 6, 23, 0.46);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+        }
+
+        .input-glow:hover {
+            border-color: rgba(129, 140, 248, 0.26);
+            background: rgba(2, 6, 23, 0.58);
         }
 
         .input-glow:focus {
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-            border-color: #4F46E5;
-            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18), 0 0 26px rgba(99, 102, 241, 0.12);
+            border-color: #818CF8;
+            background: rgba(2, 6, 23, 0.72);
             outline: none;
         }
 
         /* Glowing background blobs */
         .blob-1 {
             position: absolute;
-            top: -100px;
-            left: -100px;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -140px;
+            left: -120px;
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(34, 211, 238, 0.07) 38%, rgba(0, 0, 0, 0) 72%);
             border-radius: 50%;
             pointer-events: none;
             z-index: 0;
+            filter: blur(2px);
+            animation: floatBlob 13s ease-in-out infinite;
         }
 
         .blob-2 {
             position: fixed;
-            bottom: -100px;
-            right: -100px;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+            bottom: -150px;
+            right: -130px;
+            width: 620px;
+            height: 620px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.13) 0%, rgba(168, 85, 247, 0.08) 38%, rgba(0, 0, 0, 0) 72%);
             border-radius: 50%;
             pointer-events: none;
             z-index: 0;
+            filter: blur(3px);
+            animation: floatBlob 16s ease-in-out infinite reverse;
         }
 
         /* View transitions */
         .tab-view {
-            animation: fadeIn 0.3s ease-out forwards;
+            animation: fadeIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(14px) scale(0.995);
+                filter: blur(4px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
+                filter: blur(0);
             }
         }
 
+        table tbody tr {
+            transition: background 0.18s ease, transform 0.18s ease;
+        }
+
+        table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.055);
+        }
+
         .custom-scroll::-webkit-scrollbar {
-            width: 4px;
+            width: 5px;
+        }
+
+        #toast {
+            backdrop-filter: blur(18px) saturate(150%);
+            -webkit-backdrop-filter: blur(18px) saturate(150%);
+        }
+
+        .amount-text,
+        .stat-value,
+        #wealth-display,
+        #rate-display {
+            overflow: visible !important;
+            letter-spacing: -0.01em;
+            font-variant-numeric: tabular-nums;
+            text-rendering: geometricPrecision;
+        }
+
+        body.exporting-screenshot .glass-card {
+            transform: none !important;
+        }
+
+        body.exporting-screenshot .stat-value,
+        body.exporting-screenshot .amount-text,
+        body.exporting-screenshot #wealth-display,
+        body.exporting-screenshot #rate-display {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            word-break: break-word !important;
+            line-height: 1.25 !important;
+            letter-spacing: 0 !important;
+            text-shadow: none !important;
+        }
+
+        @media (min-width: 768px) {
+            body.exporting-screenshot #main-content {
+                display: block !important;
+                width: 1280px !important;
+                max-width: 1280px !important;
+                margin: 0 auto !important;
+                padding: 28px !important;
+            }
+
+            body.exporting-screenshot #tab-content {
+                max-width: 1180px !important;
+                padding: 24px !important;
+            }
+
+            body.exporting-screenshot .amount-text,
+            body.exporting-screenshot .stat-value,
+            body.exporting-screenshot #wealth-display {
+                font-size: 24px !important;
+                line-height: 1.12 !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+            body.exporting-screenshot #main-content {
+                width: 430px !important;
+                max-width: 430px !important;
+                margin: 0 auto !important;
+                padding: 14px !important;
+            }
+
+            body.exporting-screenshot #tab-content {
+                max-width: 430px !important;
+                padding: 12px !important;
+            }
+
+            body.exporting-screenshot .app-header {
+                margin: 0 0 12px 0 !important;
+                border-radius: 20px !important;
+            }
+
+            body.exporting-screenshot #view-dashboard>.grid:first-child,
+            body.exporting-screenshot #dash-extra-widgets {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 10px !important;
+            }
+
+            body.exporting-screenshot #dashboard-charts-grid,
+            body.exporting-screenshot #view-dashboard .lg\:grid-cols-3,
+            body.exporting-screenshot #view-dashboard .xl\:grid-cols-3,
+            body.exporting-screenshot #view-dashboard .xl\:grid-cols-2 {
+                grid-template-columns: minmax(0, 1fr) !important;
+            }
+
+            body.exporting-screenshot .glass-card,
+            body.exporting-screenshot #summary-wealth {
+                border-radius: 20px !important;
+            }
+
+            body.exporting-screenshot .amount-text,
+            body.exporting-screenshot .stat-value,
+            body.exporting-screenshot #wealth-display {
+                font-size: 13px !important;
+                line-height: 1.18 !important;
+            }
+        }
+
+        body.exporting-screenshot #summary-income,
+        body.exporting-screenshot #summary-expense,
+        body.exporting-screenshot #summary-net,
+        body.exporting-screenshot #summary-wealth {
+            min-height: 128px !important;
+            height: auto !important;
+        }
+
+        body.exporting-screenshot #rate-display {
+            max-width: 150px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        .app-header {
+            overflow: hidden;
+        }
+
+        .app-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.10), transparent 38%, rgba(34, 211, 238, 0.08));
+            opacity: 0.8;
+        }
+
+        .brand-mark {
+            position: relative;
+            box-shadow: 0 12px 28px rgba(79, 70, 229, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+        }
+
+        .brand-mark::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: inherit;
+            background: radial-gradient(circle, rgba(129, 140, 248, 0.34), transparent 62%);
+            z-index: -1;
+        }
+
+        .app-title {
+            background: linear-gradient(135deg, #fff 0%, #c7d2fe 48%, #67e8f9 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 28px rgba(129, 140, 248, 0.18);
+        }
+
+        .desktop-nav {
+            background: rgba(2, 6, 23, 0.38) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 28px rgba(0, 0, 0, 0.18);
+        }
+
+        .desk-nav-btn {
+            border: 1px solid transparent;
+        }
+
+        .desk-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: #fff !important;
+        }
+
+        .action-btn {
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 46%);
+            opacity: 0;
+            transition: opacity 0.18s ease;
+        }
+
+        .action-btn:hover::before {
+            opacity: 1;
+        }
+
+        .content-shell {
+            position: relative;
+        }
+
+        #mobile-nav {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.92));
+            backdrop-filter: blur(22px) saturate(150%);
+            -webkit-backdrop-filter: blur(22px) saturate(150%);
+            border-color: rgba(148, 163, 184, 0.12) !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        #screenshot-card-stage {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #screenshot-card-stage.active {
+            left: 0;
+            z-index: 9999;
+        }
+
+        .share-card {
+            width: 1080px;
+            min-height: 1350px;
+            padding: 56px;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 16% 4%, rgba(99, 102, 241, 0.48), transparent 34%),
+                radial-gradient(circle at 88% 18%, rgba(6, 182, 212, 0.34), transparent 32%),
+                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.18), transparent 38%),
+                linear-gradient(145deg, #020617 0%, #08111f 48%, #020617 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .share-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: radial-gradient(circle at center, black, transparent 78%);
+            opacity: .42;
+        }
+
+        .share-card::after {
+            content: none;
+        }
+
+        .share-card-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .share-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 34px;
+        }
+
+        .share-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .share-logo {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            box-shadow: 0 18px 45px rgba(79, 70, 229, .34);
+        }
+
+        .share-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .share-date {
+            font: 800 14px 'JetBrains Mono', monospace;
+            color: #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, .58);
+            border: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        .share-hero {
+            padding: 38px;
+            border-radius: 36px;
+            background:
+                radial-gradient(circle at 92% 18%, rgba(34, 211, 238, .48), transparent 42%),
+                linear-gradient(135deg, rgba(79, 70, 229, .96), rgba(14, 165, 233, .58));
+            border: 1px solid rgba(255, 255, 255, .14);
+            box-shadow: 0 28px 80px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .14);
+            margin-bottom: 22px;
+        }
+
+        .share-label {
+            color: rgba(226, 232, 240, .82);
+            text-transform: uppercase;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: .16em;
+        }
+
+        .share-networth {
+            margin-top: 14px;
+            font: 900 56px 'JetBrains Mono', monospace;
+            letter-spacing: -0.065em;
+            line-height: 1.06;
+            text-shadow: 0 12px 34px rgba(2, 6, 23, .35);
+        }
+
+        .share-rate {
+            margin-top: 18px;
+            display: inline-flex;
+            padding: 10px 14px;
+            border-radius: 16px;
+            background: rgba(2, 6, 23, .34);
+            color: #dbeafe;
+            font: 800 14px 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        .share-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .share-stat,
+        .share-panel {
+            background: linear-gradient(180deg, rgba(30, 41, 59, .72), rgba(15, 23, 42, .64));
+            border: 1px solid rgba(148, 163, 184, .09);
+            border-radius: 28px;
+            box-shadow: 0 18px 48px rgba(0, 0, 0, .22);
+        }
+
+        .share-stat {
+            padding: 22px;
+        }
+
+        .share-stat-value {
+            margin-top: 10px;
+            font: 900 23px 'JetBrains Mono', monospace;
+            letter-spacing: -0.045em;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
+
+        .share-green { color: #34d399; }
+        .share-red { color: #fb7185; }
+        .share-blue { color: #a5b4fc; }
+
+        .share-grid {
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            gap: 18px;
+        }
+
+        .share-panel {
+            padding: 26px;
+            min-height: 330px;
+        }
+
+        .share-panel h3 {
+            font-size: 18px;
+            font-weight: 900;
+            margin-bottom: 18px;
+            color: #fff;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .share-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .share-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px 14px;
+            align-items: center;
+            padding: 15px 16px;
+            border-radius: 18px;
+            background: rgba(2, 6, 23, .34);
+            border: 0;
+        }
+
+        .share-row-main { min-width: 0; }
+
+        .share-row-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 430px;
+            line-height: 1.25;
+        }
+
+        .share-row-sub {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+
+        .share-row-amt {
+            white-space: nowrap;
+            font: 900 15px 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        .share-footer {
+            margin-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .share-card.mobile-card {
+            width: 430px;
+            min-height: 932px;
+            padding: 18px;
+            background:
+                radial-gradient(circle at 15% 0%, rgba(99, 102, 241, .42), transparent 32%),
+                radial-gradient(circle at 100% 18%, rgba(6, 182, 212, .28), transparent 36%),
+                linear-gradient(160deg, #020617 0%, #07111f 55%, #020617 100%);
+        }
+
+        .mobile-card::after {
+            content: none;
+        }
+
+        .mobile-card .share-header {
+            margin-bottom: 16px;
+        }
+
+        .mobile-card .share-brand {
+            gap: 10px;
+        }
+
+        .mobile-card .share-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 13px;
+        }
+
+        .mobile-card .share-title {
+            font-size: 18px;
+        }
+
+        .mobile-card .share-label {
+            font-size: 9px;
+            letter-spacing: .18em;
+        }
+
+        .mobile-card .share-date {
+            font-size: 8px;
+            padding: 7px 9px;
+        }
+
+        .mobile-card .share-hero {
+            padding: 22px 18px;
+            border-radius: 24px;
+            margin-bottom: 12px;
+        }
+
+        .mobile-card .share-networth {
+            font-size: 24px;
+            letter-spacing: -0.08em;
+            white-space: nowrap;
+        }
+
+        .mobile-card .share-rate {
+            margin-top: 10px;
+            font-size: 10px;
+            padding: 8px 10px;
+        }
+
+        .mobile-card .share-stats {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .mobile-card .share-stat {
+            padding: 14px;
+            border-radius: 20px;
+        }
+
+        .mobile-card .share-stat:nth-child(3) {
+            grid-column: 1 / -1;
+        }
+
+        .mobile-card .share-stat-value {
+            font-size: 12px;
+            line-height: 1.25;
+            letter-spacing: -0.065em;
+            white-space: nowrap;
+        }
+
+        .mobile-card .share-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .mobile-card .share-panel {
+            padding: 16px;
+            min-height: auto;
+            border-radius: 22px;
+        }
+
+        .mobile-card .share-panel h3 {
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .mobile-card .share-list {
+            gap: 8px;
+        }
+
+        .mobile-card .share-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 7px;
+            padding: 11px 12px;
+            border-radius: 14px;
+            background: rgba(2, 6, 23, .30);
+        }
+
+        .mobile-card .share-row-title {
+            max-width: 100%;
+            font-size: 11px;
+            line-height: 1.35;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .mobile-card .share-row-sub {
+            font-size: 8px;
+            margin-top: 3px;
+        }
+
+        .mobile-card .share-row-amt {
+            justify-self: start;
+            width: max-content;
+            max-width: 100%;
+            margin-top: 2px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, .72);
+            font-size: 9px;
+            letter-spacing: -0.035em;
+            overflow: visible;
+        }
+
+        .mobile-card .share-footer {
+            font-size: 8px;
+            margin-top: 14px;
         }
     </style>
 </head>
@@ -257,21 +980,75 @@
     </div>
 
     <!-- Main Content -->
+    <div id="screenshot-card-stage" aria-hidden="true">
+        <div id="screenshot-card" class="share-card">
+            <div class="share-card-inner">
+                <div class="share-header">
+                    <div class="share-brand">
+                        <div class="share-logo"><i class="fas fa-wallet text-white text-xl"></i></div>
+                        <div>
+                            <div class="share-title">FinTracker</div>
+                            <div class="share-label">Finance snapshot</div>
+                        </div>
+                    </div>
+                    <div id="share-date" class="share-date">Generated</div>
+                </div>
+
+                <section class="share-hero">
+                    <div class="share-label">Net Worth</div>
+                    <div id="share-networth" class="share-networth">IDR 0</div>
+                    <div id="share-rate" class="share-rate">1 USD = IDR 0</div>
+                </section>
+
+                <section class="share-stats">
+                    <div class="share-stat">
+                        <div class="share-label">Income</div>
+                        <div id="share-income" class="share-stat-value share-green">IDR 0</div>
+                    </div>
+                    <div class="share-stat">
+                        <div class="share-label">Expense</div>
+                        <div id="share-expense" class="share-stat-value share-red">IDR 0</div>
+                    </div>
+                    <div class="share-stat">
+                        <div class="share-label">Net Flow</div>
+                        <div id="share-netflow" class="share-stat-value share-blue">IDR 0</div>
+                    </div>
+                </section>
+
+                <section class="share-grid">
+                    <div class="share-panel">
+                        <h3><i class="fas fa-history text-indigo-300"></i> Recent Activity</h3>
+                        <div id="share-recent" class="share-list"></div>
+                    </div>
+                    <div class="share-panel">
+                        <h3><i class="fas fa-fire text-orange-300"></i> Top Categories</h3>
+                        <div id="share-categories" class="share-list"></div>
+                    </div>
+                </section>
+
+                <div class="share-footer">
+                    <span id="share-wallet-count">0 wallets</span>
+                    <span>Generated by MTracker</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="main-content" class="hidden w-full max-w-[1600px] mx-auto flex flex-col min-h-screen relative z-10">
 
         <!-- Top Header (Desktop & Mobile) -->
         <div
-            class="sticky top-0 z-40 glass border-b border-white/5 px-4 py-3 md:py-4 flex justify-between items-center shadow-lg shadow-black/40 md:mx-4 md:mt-4 md:rounded-2xl md:border">
+            class="app-header sticky top-0 z-40 glass border-b border-white/10 px-4 py-3 md:py-4 flex justify-between items-center shadow-lg shadow-black/40 md:mx-4 md:mt-4 md:rounded-2xl md:border">
             <div class="flex items-center gap-3">
                 <div
-                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-theme-primary to-cyan-500 flex items-center justify-center shadow-md shadow-theme-primary/20">
+                    class="brand-mark w-8 h-8 rounded-lg bg-gradient-to-br from-theme-primary to-cyan-500 flex items-center justify-center shadow-md shadow-theme-primary/20">
                     <i class="fas fa-wallet text-white text-sm"></i>
                 </div>
-                <h1 class="text-lg md:text-xl font-bold text-white tracking-tight">FinTracker</h1>
+                <h1 class="app-title text-lg md:text-xl font-bold text-white tracking-tight">FinTracker</h1>
             </div>
 
             <!-- Desktop Navigation (Hidden on Mobile) -->
-            <nav class="hidden md:flex space-x-1 p-1 bg-black/20 rounded-xl border border-white/5">
+            <nav class="desktop-nav hidden md:flex space-x-1 p-1 bg-black/20 rounded-xl border border-white/5">
                 <button id="desk-tab-dashboard"
                     class="desk-nav-btn desk-nav-active px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all"
                     data-target="view-dashboard">Dashboard</button>
@@ -289,26 +1066,26 @@
                     data-target="view-calendar">Calendar</button>
             </nav>
 
-            <div class="flex gap-2">
+            <div class="quick-actions flex gap-2">
                 <button id="toggle-visibility-btn"
-                    class="bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10"
+                    class="action-btn bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10"
                     title="Toggle Visibility"><i class="fas fa-eye"></i></button>
                 <button id="config-btn"
-                    class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-purple-500/20"
+                    class="action-btn bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-purple-500/20"
                     title="System Config" onclick="switchTab('view-config')"><i class="fas fa-sliders-h"></i></button>
                 <button id="export-csv-btn"
-                    class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-emerald-500/20"
+                    class="action-btn bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-emerald-500/20"
                     title="Download CSV"><i class="fas fa-file-csv"></i></button>
                 <button id="export-btn"
-                    class="bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10"
+                    class="action-btn bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-white/10"
                     title="Screenshot"><i class="fas fa-camera"></i></button>
                 <button id="logout-btn"
-                    class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-rose-500/20"><i
+                    class="action-btn bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition border border-rose-500/20"><i
                         class="fas fa-power-off"></i></button>
             </div>
         </div>
 
-        <div id="tab-content" class="p-4 md:p-6 flex-grow max-w-7xl mx-auto w-full">
+        <div id="tab-content" class="content-shell p-4 md:p-6 flex-grow max-w-7xl mx-auto w-full">
 
             <!-- VIEW: DASHBOARD -->
             <div id="view-dashboard" class="tab-view space-y-6">
@@ -327,7 +1104,7 @@
                             </div> Income
                         </div>
                         <div
-                            class="text-emerald-400 font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter text-shadow-sm stat-value">
+                            class="text-emerald-400 font-bold text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words z-10 font-mono text-shadow-sm stat-value amount-text">
                             ...</div>
                         <div
                             class="absolute -bottom-6 -right-4 text-7xl text-emerald-500/5 z-0 group-hover:scale-110 transition">
@@ -348,7 +1125,7 @@
                             </div> Expense
                         </div>
                         <div
-                            class="text-rose-400 font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter stat-value">
+                            class="text-rose-400 font-bold text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words z-10 font-mono stat-value amount-text">
                             ...</div>
                         <div
                             class="absolute -bottom-6 -right-4 text-7xl text-rose-500/5 z-0 group-hover:scale-110 transition">
@@ -369,7 +1146,7 @@
                             </div> Net Flow
                         </div>
                         <div
-                            class="text-slate-200 font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter stat-value">
+                            class="text-slate-200 font-bold text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words z-10 font-mono stat-value amount-text">
                             ...</div>
                         <div
                             class="absolute -bottom-6 -right-4 text-7xl text-slate-500/5 z-0 group-hover:scale-110 transition">
@@ -394,7 +1171,7 @@
                                 id="rate-display">Rate: ...</div>
                         </div>
                         <div id="wealth-display"
-                            class="text-white font-bold text-[13px] sm:text-base md:text-2xl truncate z-10 font-mono tracking-tighter mt-auto">
+                            class="text-white font-bold text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words z-10 font-mono mt-auto amount-text">
                             ...</div>
                         <div
                             class="absolute -bottom-6 -right-4 text-7xl text-white/10 z-0 group-hover:scale-110 transition">
@@ -1193,7 +1970,7 @@
                 document.querySelector('#summary-expense .stat-value').textContent = fmt(totalExpReal, 'IDR');
                 const netEl = document.querySelector('#summary-net .stat-value');
                 netEl.textContent = fmt(netCashFlowIDR, 'IDR');
-                netEl.className = `stat-value text-[13px] sm:text-base md:text-2xl font-bold truncate z-10 font-mono tracking-tighter ${netCashFlowIDR >= 0 ? 'text-slate-200' : 'text-rose-400'}`;
+                netEl.className = `stat-value amount-text text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words font-bold z-10 font-mono ${netCashFlowIDR >= 0 ? 'text-slate-200' : 'text-rose-400'}`;
 
                 document.getElementById('rate-display').textContent = `1 USD = ${fmt(exchangeRate, 'IDR').replace('IDR', '').trim()}`;
                 document.getElementById('wealth-display').textContent = window.isBalancesHidden ? '***' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalAssetIDR);
@@ -1465,22 +2242,112 @@
             });
             document.getElementById('chart-currency-toggle').addEventListener('change', () => updateChart(masterData));
             document.querySelectorAll('.sortable').forEach(s => s.addEventListener('click', e => { sortState.k = e.target.dataset.sort; sortState.o = sortState.o === 'asc' ? 'desc' : 'asc'; renderAll(); }));
+            function getSnapshotSummary(data) {
+                const bals = {}; let incIDR = 0, expIDR = 0, incUSD = 0, expUSD = 0;
+                data.forEach(d => {
+                    const k = `${d.acc}-${d.curr}`;
+                    if (!bals[k]) bals[k] = { n: d.acc, c: d.curr, v: 0 };
+                    if (d.type === 'income') {
+                        bals[k].v += d.amt;
+                        if (d.cat !== 'Transfer' && d.cat !== 'Initial Balance') d.curr === 'IDR' ? incIDR += d.amt : incUSD += d.amt;
+                    } else {
+                        bals[k].v -= d.amt;
+                        if (d.cat !== 'Transfer') d.curr === 'IDR' ? expIDR += d.amt : expUSD += d.amt;
+                    }
+                });
+                const income = incIDR + (incUSD * exchangeRate);
+                const expense = expIDR + (expUSD * exchangeRate);
+                const netFlow = income - expense;
+                const netWorth = Object.values(bals).reduce((sum, b) => sum + (b.c === 'USD' ? b.v * exchangeRate : b.v), 0);
+                return { bals, income, expense, netFlow, netWorth };
+            }
+
+            function populateScreenshotCard(isMobile) {
+                const card = document.getElementById('screenshot-card');
+                card.classList.toggle('mobile-card', isMobile);
+                const summary = getSnapshotSummary(masterData);
+                const now = new Date();
+                const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const money = (value, currency, compact = false) => {
+                    if (window.isBalancesHidden) return '***';
+                    if (!compact) return fmt(value, currency);
+                    const label = currency === 'IDR' ? 'IDR' : '$';
+                    const abs = Math.abs(value);
+                    const sign = value < 0 ? '-' : '';
+                    if (currency === 'IDR' && abs >= 1000000) return `${sign}${label} ${(abs / 1000000).toFixed(abs >= 10000000 ? 1 : 2)}M`;
+                    if (currency === 'IDR' && abs >= 1000) return `${sign}${label} ${(abs / 1000).toFixed(0)}K`;
+                    if (currency === 'USD') return `${sign}${label}${abs.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                    return `${sign}${label} ${abs.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                };
+                document.getElementById('share-date').textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                document.getElementById('share-networth').textContent = money(summary.netWorth, 'IDR', isMobile);
+                document.getElementById('share-rate').textContent = `1 USD = ${money(exchangeRate, 'IDR', isMobile)}`;
+                document.getElementById('share-income').textContent = money(summary.income, 'IDR', isMobile);
+                document.getElementById('share-expense').textContent = money(summary.expense, 'IDR', isMobile);
+                document.getElementById('share-netflow').textContent = money(summary.netFlow, 'IDR', isMobile);
+                document.getElementById('share-netflow').className = `share-stat-value ${summary.netFlow >= 0 ? 'share-green' : 'share-red'}`;
+                document.getElementById('share-wallet-count').textContent = `${Object.keys(summary.bals).length} wallets tracked`;
+
+                const recent = [...masterData].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, isMobile ? 3 : 5);
+                document.getElementById('share-recent').innerHTML = recent.length ? recent.map(d => `
+                    <div class="share-row">
+                        <div class="share-row-main">
+                            <div class="share-row-title">${d.desc}</div>
+                            <div class="share-row-sub">${d.date} • ${d.cat}</div>
+                        </div>
+                        <div class="share-row-amt ${d.type === 'income' ? 'share-green' : 'share-red'}">${d.type === 'income' ? '+' : '-'} ${money(d.amt, d.curr, isMobile)}</div>
+                    </div>
+                `).join('') : '<div class="share-row"><div class="share-row-title">No recent activity</div></div>';
+
+                const thisMonthExps = masterData.filter(d => d.type === 'expense' && d.cat !== 'Transfer' && d.date.startsWith(thisMonth));
+                const catTotals = {};
+                thisMonthExps.forEach(d => catTotals[d.cat] = (catTotals[d.cat] || 0) + (d.curr === 'USD' ? d.amt * exchangeRate : d.amt));
+                const topCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, isMobile ? 3 : 5);
+                document.getElementById('share-categories').innerHTML = topCats.length ? topCats.map(([cat, val]) => `
+                    <div class="share-row">
+                        <div class="share-row-main">
+                            <div class="share-row-title">${cat}</div>
+                            <div class="share-row-sub">This month</div>
+                        </div>
+                        <div class="share-row-amt">${money(val, 'IDR', isMobile)}</div>
+                    </div>
+                `).join('') : '<div class="share-row"><div class="share-row-title">No expenses this month</div></div>';
+            }
+
             document.getElementById('export-btn').addEventListener('click', async () => {
-                const el = document.getElementById('main-content');
-                const bgClass = document.body.className;
-                document.body.className = "bg-[#050B14] min-h-screen text-slate-300"; // Ensure export has clean bg
-
-                // Temporarily hide mobile nav for export if visible
-                const mobNav = document.getElementById('mobile-nav');
-                const mobNavWasHidden = mobNav.classList.contains('hidden');
-                mobNav.classList.add('hidden');
-
+                if (masterData.length === 0) { showToast('No data to export', 'error'); return; }
+                const isMobileExport = window.matchMedia('(max-width: 767px)').matches;
+                const stage = document.getElementById('screenshot-card-stage');
+                const card = document.getElementById('screenshot-card');
                 try {
-                    const c = await html2canvas(el, { backgroundColor: '#050B14', scale: 2, ignoreElements: (e) => e.id === 'toast' || e.id === 'init-loader' || e.tagName === 'NAV' });
-                    const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'finance_dashboard.png'; a.click();
+                    populateScreenshotCard(isMobileExport);
+                    stage.classList.add('active');
+                    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                    const c = await html2canvas(card, {
+                        backgroundColor: '#050B14',
+                        scale: isMobileExport ? 3 : 2,
+                        useCORS: true,
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: isMobileExport ? 430 : 1080,
+                        windowHeight: card.scrollHeight,
+                        ignoreElements: (e) => e.id === 'toast' || e.id === 'init-loader'
+                    });
+                    const blob = await new Promise(resolve => c.toBlob(resolve, 'image/png', 1));
+                    if (!blob) throw new Error('Could not create screenshot image');
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `finance_snapshot_${new Date().toISOString().slice(0, 10)}.png`;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        if (a.parentNode) a.parentNode.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }, 30000);
                 } finally {
-                    document.body.className = bgClass;
-                    if (!mobNavWasHidden) mobNav.classList.remove('hidden');
+                    stage.classList.remove('active');
                 }
             });
             function renderDashWidgets(data) {
