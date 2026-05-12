@@ -1306,7 +1306,7 @@ Do not wrap in markdown tags like \`\`\`json.`;
                             <span class="text-sm text-slate-300 font-medium">${cat}</span>
                             <div class="flex items-center gap-2">
                                 <span class="font-mono text-sm font-bold text-amber-400">${fmt(val, 'IDR')}</span>
-                                <button class="budget-quick-add text-[10px] bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/30 font-bold transition" data-cat="${cat}" data-amt="${Math.ceil(val / 100000) * 100000}">
+                                <button class="budget-quick-add text-[10px] bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/30 font-bold transition" data-cat="${cat}" data-amt="${Math.round(val)}">
                                     + Budget
                                 </button>
                             </div>
