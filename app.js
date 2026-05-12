@@ -577,6 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('hideBalances', window.isBalancesHidden);
                 visBtn.innerHTML = window.isBalancesHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
                 renderAll();
+                if (budgetLoaded) renderBudgetView(); // also refresh Budget tab
             });
             document.getElementById('chart-currency-toggle').addEventListener('change', () => updateChart(masterData));
             document.querySelectorAll('.sortable').forEach(s => s.addEventListener('click', e => { sortState.k = e.target.dataset.sort; sortState.o = sortState.o === 'asc' ? 'desc' : 'asc'; renderAll(); }));
