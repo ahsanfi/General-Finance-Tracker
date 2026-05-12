@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
             loadSystemConfig();
 
             async function loadSystemConfig() {
+                // Safety: always hide the loader after 8s so it never permanently blocks the UI
+                const loaderEl = document.getElementById('init-loader');
+                const loaderTimeout = setTimeout(() => loaderEl.classList.add('hidden'), 8000);
                 try {
                     const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getSystemConfig' }) });
                     const result = await response.json();
@@ -20,11 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         updateWalletOptions('IDR', 'entry-acc-source');
                         updateWalletOptions('IDR', 'entry-acc-target');
                         updateCategoryOptions('expense');
-                        document.getElementById('init-loader').classList.add('hidden');
+                        clearTimeout(loaderTimeout);
+                        loaderEl.classList.add('hidden');
                         checkAuth();
-                    } else throw new Error("Failed");
+                    } else throw new Error('Failed');
                 } catch (e) {
-                    document.getElementById('init-loader').innerHTML = '<p class="text-rose-400 font-medium">Connection Failed. Refresh.</p>';
+                    clearTimeout(loaderTimeout);
+                    loaderEl.innerHTML = '<p class="text-rose-400 font-medium">Connection Failed. Please refresh.</p>';
                 }
             }
 
@@ -1466,6 +1471,7 @@ Do not wrap in markdown tags like \`\`\`json.`;
             function openPanel() {
                 panel.classList.remove('translate-x-full');
                 backdrop.classList.remove('hidden');
+                document.getElementById('ai-chat-btn').classList.add('scale-0', 'opacity-0', 'pointer-events-none'); // hide FAB
                 const key = getKey();
                 if (!key) {
                     keySetup.classList.remove('hidden');
@@ -1484,6 +1490,7 @@ Do not wrap in markdown tags like \`\`\`json.`;
             function closePanel() {
                 panel.classList.add('translate-x-full');
                 backdrop.classList.add('hidden');
+                document.getElementById('ai-chat-btn').classList.remove('scale-0', 'opacity-0', 'pointer-events-none'); // restore FAB
             }
 
             document.getElementById('ai-chat-btn').addEventListener('click', openPanel);
