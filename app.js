@@ -1370,6 +1370,63 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 btn.disabled = false;
             });
 
+            // --- Copy Budget From Month ---
+            document.getElementById('budget-copy-btn').addEventListener('click', () => {
+                const currentKey = getBudgetMonthKey(budgetViewDate);
+                const otherMonths = Object.keys(allBudgets)
+                    .filter(k => k !== currentKey && Object.keys(allBudgets[k]).length > 0)
+                    .sort().reverse(); // most recent first
+
+                const listEl = document.getElementById('copy-month-list');
+                const emptyEl = document.getElementById('copy-month-empty');
+
+                if (otherMonths.length === 0) {
+                    listEl.innerHTML = '';
+                    emptyEl.classList.remove('hidden');
+                } else {
+                    emptyEl.classList.add('hidden');
+                    listEl.innerHTML = otherMonths.map(month => {
+                        const cats = allBudgets[month];
+                        const catCount = Object.keys(cats).length;
+                        const [y, m] = month.split('-');
+                        const label = new Date(parseInt(y), parseInt(m) - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                        return `
+                        <button class="copy-month-pick w-full flex items-center justify-between p-3 bg-black/20 rounded-2xl border border-white/5 hover:border-theme-primary/40 hover:bg-theme-primary/10 transition group" data-month="${month}">
+                            <div class="text-left">
+                                <div class="text-sm font-bold text-white group-hover:text-theme-primaryLight transition">${label}</div>
+                                <div class="text-[10px] text-slate-500 mt-0.5">${catCount} categor${catCount === 1 ? 'y' : 'ies'}: ${Object.keys(cats).join(', ')}</div>
+                            </div>
+                            <i class="fas fa-arrow-right text-slate-600 group-hover:text-theme-primaryLight text-xs transition"></i>
+                        </button>`;
+                    }).join('');
+
+                    listEl.querySelectorAll('.copy-month-pick').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const srcMonth = btn.dataset.month;
+                            const srcBudgets = allBudgets[srcMonth] || {};
+                            const cats = Object.keys(srcBudgets);
+                            if (cats.length === 0) return;
+
+                            document.getElementById('copy-month-modal').classList.add('hidden');
+                            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                            // Copy each category one by one
+                            for (const cat of cats) {
+                                await saveBudgetToSheets(budgetViewDate, cat, srcBudgets[cat]);
+                            }
+                            renderBudgetView();
+                            showToast(`Copied ${cats.length} budget${cats.length > 1 ? 's' : ''} from ${btn.querySelector('div > div').textContent}`, 'success');
+                        });
+                    });
+                }
+
+                document.getElementById('copy-month-modal').classList.remove('hidden');
+            });
+
+            document.getElementById('copy-month-close').addEventListener('click', () => {
+                document.getElementById('copy-month-modal').classList.add('hidden');
+            });
+
             // Load budgets from Sheets when switching to Budget tab, only if not yet loaded
             async function onBudgetTabOpen() {
                 if (!budgetLoaded) {
