@@ -1071,4 +1071,262 @@ Do not wrap in markdown tags like \`\`\`json.`;
                     btn.disabled = false;
                 });
             });
+
+            // ============================================================
+            // MONTHLY BUDGET FEATURE — Synced to Google Sheets (Budget tab)
+            // ============================================================
+            let budgetViewDate = new Date();
+            let allBudgets = {}; // Cache: { "2025-05": { Food: 500000 } }
+            let budgetLoaded = false;
+
+            function getBudgetMonthKey(date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            }
+
+            function getBudgetsForMonth(date) {
+                return allBudgets[getBudgetMonthKey(date)] || {};
+            }
+
+            async function loadBudgetsFromSheets() {
+                try {
+                    const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getBudgets' }) });
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        allBudgets = result.budgets || {};
+                        budgetLoaded = true;
+                    }
+                } catch (e) { console.warn('Failed to load budgets:', e); }
+            }
+
+            async function saveBudgetToSheets(date, cat, amount) {
+                const month = getBudgetMonthKey(date);
+                // Optimistic update in cache
+                if (!allBudgets[month]) allBudgets[month] = {};
+                if (amount <= 0) delete allBudgets[month][cat];
+                else allBudgets[month][cat] = amount;
+
+                try {
+                    const res = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'setBudget', month, category: cat, amount })
+                    });
+                    const result = await res.json();
+                    if (result.status !== 'success') throw new Error(result.message);
+                } catch (e) {
+                    showToast('Failed to save budget: ' + e.message, 'error');
+                }
+            }
+
+            function getSpentByCategory(date) {
+                const key = getBudgetMonthKey(date);
+                const spent = {};
+                masterData.forEach(d => {
+                    if (d.type === 'expense' && d.cat !== 'Transfer' && d.date.startsWith(key)) {
+                        const amtIDR = d.curr === 'USD' ? d.amt * exchangeRate : d.amt;
+                        spent[d.cat] = (spent[d.cat] || 0) + amtIDR;
+                    }
+                });
+                return spent;
+            }
+
+            function renderBudgetView() {
+                const budgets = getBudgetsForMonth(budgetViewDate);
+                const spent = getSpentByCategory(budgetViewDate);
+
+                // Update month header
+                document.getElementById('budget-header').textContent = budgetViewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+                // Compute totals
+                const budgetedCats = Object.keys(budgets);
+                const totalLimit = budgetedCats.reduce((s, c) => s + budgets[c], 0);
+                const totalSpent = budgetedCats.reduce((s, c) => s + (spent[c] || 0), 0);
+                const totalRemaining = totalLimit - totalSpent;
+                const overallPct = totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
+
+                document.getElementById('budget-total-limit').textContent = fmt(totalLimit, 'IDR');
+                document.getElementById('budget-total-spent').textContent = fmt(totalSpent, 'IDR');
+
+                const remainEl = document.getElementById('budget-total-remaining');
+                remainEl.textContent = fmt(Math.abs(totalRemaining), 'IDR');
+                remainEl.className = `font-bold font-mono text-sm ${totalRemaining >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                if (totalRemaining < 0) remainEl.textContent = '- ' + remainEl.textContent;
+
+                // Overall bar
+                const bar = document.getElementById('budget-overall-bar');
+                const pctLabel = document.getElementById('budget-overall-pct');
+                bar.style.width = overallPct + '%';
+                pctLabel.textContent = Math.round(overallPct) + '%';
+                if (overallPct >= 100) {
+                    bar.style.background = 'linear-gradient(90deg, #f43f5e, #e11d48)';
+                    bar.style.boxShadow = '0 0 10px rgba(244,63,94,0.5)';
+                    pctLabel.className = 'text-xs font-mono font-bold text-rose-400';
+                } else if (overallPct >= 75) {
+                    bar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+                    bar.style.boxShadow = '0 0 10px rgba(245,158,11,0.4)';
+                    pctLabel.className = 'text-xs font-mono font-bold text-amber-400';
+                } else {
+                    bar.style.background = 'linear-gradient(90deg, #4f46e5, #06b6d4)';
+                    bar.style.boxShadow = '0 0 10px rgba(79,70,229,0.4)';
+                    pctLabel.className = 'text-xs font-mono font-bold text-white';
+                }
+
+                // Category budget list
+                const listEl = document.getElementById('budget-list');
+                const emptyEl = document.getElementById('budget-empty');
+
+                if (budgetedCats.length === 0) {
+                    listEl.innerHTML = '';
+                    emptyEl.classList.remove('hidden');
+                } else {
+                    emptyEl.classList.add('hidden');
+                    listEl.innerHTML = budgetedCats.sort().map(cat => {
+                        const limit = budgets[cat];
+                        const catSpent = spent[cat] || 0;
+                        const pct = Math.min((catSpent / limit) * 100, 100);
+                        const remaining = limit - catSpent;
+                        const isOver = catSpent > limit;
+                        const isWarning = pct >= 75;
+
+                        let barColor, barGlow, statusClass, statusText;
+                        if (isOver) {
+                            barColor = 'linear-gradient(90deg, #f43f5e, #e11d48)';
+                            barGlow = '0 0 8px rgba(244,63,94,0.5)';
+                            statusClass = 'text-rose-400';
+                            statusText = `Over by ${fmt(catSpent - limit, 'IDR')}`;
+                        } else if (isWarning) {
+                            barColor = 'linear-gradient(90deg, #f59e0b, #d97706)';
+                            barGlow = '0 0 8px rgba(245,158,11,0.4)';
+                            statusClass = 'text-amber-400';
+                            statusText = `${fmt(remaining, 'IDR')} left`;
+                        } else {
+                            barColor = 'linear-gradient(90deg, #4f46e5, #06b6d4)';
+                            barGlow = '0 0 8px rgba(79,70,229,0.4)';
+                            statusClass = 'text-emerald-400';
+                            statusText = `${fmt(remaining, 'IDR')} left`;
+                        }
+
+                        return `
+                        <div class="space-y-2 bg-black/20 p-4 rounded-2xl border border-white/5 group hover:border-white/10 transition">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    ${isOver ? '<i class="fas fa-exclamation-circle text-rose-400 text-xs"></i>' : isWarning ? '<i class="fas fa-exclamation-triangle text-amber-400 text-xs"></i>' : '<i class="fas fa-check-circle text-emerald-500/60 text-xs"></i>'}
+                                    <span class="text-sm font-bold text-slate-200">${cat}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs ${statusClass} font-mono font-bold">${statusText}</span>
+                                    <button class="budget-delete-btn opacity-0 group-hover:opacity-100 transition text-slate-600 hover:text-rose-400 text-xs" data-cat="${cat}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                                <div class="h-full rounded-full transition-all duration-700 ease-out" style="width: ${pct}%; background: ${barColor}; box-shadow: ${barGlow};"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                                <span>${fmt(catSpent, 'IDR')} spent</span>
+                                <span>Limit: ${fmt(limit, 'IDR')}</span>
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    // Wire up delete buttons
+                    listEl.querySelectorAll('.budget-delete-btn').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                            await saveBudgetToSheets(budgetViewDate, btn.dataset.cat, 0);
+                            renderBudgetView();
+                            showToast(`Budget for "${btn.dataset.cat}" removed`, 'success');
+                        });
+                    });
+                }
+
+                // Unbudgeted spending
+                const untrackedEl = document.getElementById('budget-untracked-list');
+                const untrackedEmptyEl = document.getElementById('budget-untracked-empty');
+                const untrackedCats = Object.entries(spent).filter(([cat]) => !budgets[cat]);
+                if (untrackedCats.length === 0) {
+                    untrackedEl.innerHTML = '';
+                    untrackedEmptyEl.classList.remove('hidden');
+                } else {
+                    untrackedEmptyEl.classList.add('hidden');
+                    untrackedEl.innerHTML = untrackedCats.sort((a, b) => b[1] - a[1]).map(([cat, val]) => `
+                        <div class="flex items-center justify-between py-2.5 px-3 bg-black/20 rounded-xl border border-white/5 hover:border-white/10 transition">
+                            <span class="text-sm text-slate-300 font-medium">${cat}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-sm font-bold text-amber-400">${fmt(val, 'IDR')}</span>
+                                <button class="budget-quick-add text-[10px] bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/30 font-bold transition" data-cat="${cat}" data-amt="${Math.ceil(val / 100000) * 100000}">
+                                    + Budget
+                                </button>
+                            </div>
+                        </div>`).join('');
+
+                    untrackedEl.querySelectorAll('.budget-quick-add').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const form = document.getElementById('budget-form');
+                            form.classList.remove('hidden');
+                            // Populate category select from system config
+                            const sel = document.getElementById('budget-cat-select');
+                            const cats = SYSTEM_CONFIG.exp || [];
+                            sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+                            sel.value = btn.dataset.cat;
+                            document.getElementById('budget-amount-input').value = btn.dataset.amt;
+                            document.getElementById('budget-amount-input').focus();
+                        });
+                    });
+                }
+            }
+
+            // Budget month navigation
+            document.getElementById('budget-prev-month').addEventListener('click', () => {
+                budgetViewDate.setMonth(budgetViewDate.getMonth() - 1);
+                renderBudgetView();
+            });
+            document.getElementById('budget-next-month').addEventListener('click', () => {
+                budgetViewDate.setMonth(budgetViewDate.getMonth() + 1);
+                renderBudgetView();
+            });
+
+            // Budget add form toggle
+            document.getElementById('budget-add-btn').addEventListener('click', () => {
+                const form = document.getElementById('budget-form');
+                form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) {
+                    const sel = document.getElementById('budget-cat-select');
+                    const cats = SYSTEM_CONFIG.exp || [];
+                    sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+                    document.getElementById('budget-amount-input').value = '';
+                    document.getElementById('budget-amount-input').focus();
+                }
+            });
+            document.getElementById('budget-cancel-btn').addEventListener('click', () => {
+                document.getElementById('budget-form').classList.add('hidden');
+            });
+            document.getElementById('budget-save-btn').addEventListener('click', async () => {
+                const btn = document.getElementById('budget-save-btn');
+                const cat = document.getElementById('budget-cat-select').value;
+                const amt = parseFloat(document.getElementById('budget-amount-input').value);
+                if (!cat || isNaN(amt) || amt <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+                const origTxt = btn.textContent;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+                await saveBudgetToSheets(budgetViewDate, cat, amt);
+                document.getElementById('budget-form').classList.add('hidden');
+                renderBudgetView();
+                showToast(`Budget set for ${cat}`, 'success');
+                btn.innerHTML = origTxt;
+                btn.disabled = false;
+            });
+
+            // Load budgets from Sheets when switching to Budget tab, only if not yet loaded
+            async function onBudgetTabOpen() {
+                if (!budgetLoaded) {
+                    document.getElementById('budget-list').innerHTML = '<div class="text-center py-6 text-slate-500 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Loading budgets...</div>';
+                    await loadBudgetsFromSheets();
+                }
+                renderBudgetView();
+            }
+
+            deskNavBtns.forEach(b => { if (b.dataset.target === 'view-budget') b.addEventListener('click', onBudgetTabOpen); });
+            mobNavBtns.forEach(b => { if (b.dataset.target === 'view-budget') b.addEventListener('click', onBudgetTabOpen); });
+
         });
