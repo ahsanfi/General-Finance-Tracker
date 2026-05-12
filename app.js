@@ -532,7 +532,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function fmt(n, c) {
                 if (window.isBalancesHidden) return '***';
-                return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
+                const maxDigits = c === 'IDR' ? 0 : 2;
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: maxDigits }).format(n);
             }
             function showToast(m, type) {
                 const t = document.getElementById('toast');
