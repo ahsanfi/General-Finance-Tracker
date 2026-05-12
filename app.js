@@ -369,10 +369,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             function renderCalendar(data) {
+                const safeData = Array.isArray(data) ? data : [];
                 const g = document.getElementById('calendar-grid'); g.innerHTML = ''; const y = calendarDate.getFullYear(), m = calendarDate.getMonth(); document.getElementById('calendar-header').textContent = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
                 for (let i = 0; i < new Date(y, m, 1).getDay(); i++) g.appendChild(document.createElement('div'));
                 for (let d = 1; d <= new Date(y, m + 1, 0).getDate(); d++) {
-                    const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, items = data.filter(i => i.date === dateStr), el = document.createElement('div');
+                    const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, items = safeData.filter(i => i.date === dateStr), el = document.createElement('div');
                     el.className = "calendar-day bg-black/20 border border-white/5 rounded-2xl p-2 flex flex-col items-center justify-start cursor-pointer relative overflow-hidden group";
                     el.innerHTML = `<span class="text-xs text-slate-400 mb-1 font-bold z-10 group-hover:text-white transition">${d}</span>`;
                     if (items.length > 0) {
