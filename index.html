@@ -682,9 +682,14 @@
                         <h3 class="text-sm font-bold text-white flex items-center gap-2">
                             <i class="fas fa-bullseye text-theme-primaryLight"></i> Category Budgets
                         </h3>
-                        <button id="budget-add-btn" class="text-xs bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
-                            <i class="fas fa-plus text-[10px]"></i> Set Budget
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button id="budget-copy-btn" class="text-xs bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
+                                <i class="fas fa-copy text-[10px]"></i> Copy
+                            </button>
+                            <button id="budget-add-btn" class="text-xs bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
+                                <i class="fas fa-plus text-[10px]"></i> Set Budget
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Add Budget Form (hidden by default) -->
@@ -847,6 +852,25 @@
             </button>
         </div>
     </nav>
+
+    <!-- Copy Budget Month Modal -->
+    <div id="copy-month-modal" class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass-card rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h3 class="font-bold text-white text-base">Copy Budget From</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Select a month to copy its budgets</p>
+                </div>
+                <button id="copy-month-close" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+            <div id="copy-month-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <!-- Dynamically populated -->
+            </div>
+            <p id="copy-month-empty" class="hidden text-center text-slate-500 text-sm py-6 italic">No other months with budgets found.</p>
+        </div>
+    </div>
 
     <!-- Modals -->
     <div id="delete-modal"
