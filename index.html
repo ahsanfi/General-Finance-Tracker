@@ -163,10 +163,10 @@
                     data-target="view-add">Add/Transfer</button>
                 <button id="desk-tab-daily"
                     class="desk-nav-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all"
-                    data-target="view-daily">Daily</button>
-                <button id="desk-tab-calendar"
+                    data-target="view-daily">Daily &amp; Calendar</button>
+                <button id="desk-tab-budget"
                     class="desk-nav-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all"
-                    data-target="view-calendar">Calendar</button>
+                    data-target="view-budget">Budget</button>
             </nav>
 
             <div class="quick-actions flex gap-2">
@@ -405,60 +405,78 @@
                 </div>
             </div>
 
-            <!-- VIEW: DAILY -->
-            <div id="view-daily" class="tab-view hidden">
-                <div class="glass-card rounded-3xl overflow-hidden max-w-4xl mx-auto">
-                    <div class="p-5 border-b border-white/5 bg-black/20 flex items-center gap-2"><i
-                            class="fas fa-calendar-day text-theme-primaryLight"></i>
-                        <h3 class="text-sm font-semibold text-white">Daily Expenses Overview</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-white/5 text-sm">
-                            <thead class="bg-black/30">
-                                <tr>
-                                    <th
-                                        class="px-6 py-4 text-left font-medium text-slate-400 text-xs uppercase tracking-wider">
-                                        Date</th>
-                                    <th
-                                        class="px-6 py-4 text-right font-medium text-slate-400 text-xs uppercase tracking-wider">
-                                        Total IDR</th>
-                                    <th
-                                        class="px-6 py-4 text-right font-medium text-slate-400 text-xs uppercase tracking-wider">
-                                        Total USD</th>
-                                </tr>
-                            </thead>
-                            <tbody id="daily-body" class="divide-y divide-white/5"></tbody>
-                        </table>
+            <!-- VIEW: DAILY + CALENDAR (merged) -->
+            <div id="view-daily" class="tab-view hidden space-y-4">
+
+                <!-- Sub-tab toggle -->
+                <div class="flex gap-1 bg-black/30 p-1 rounded-2xl border border-white/5 max-w-xs mx-auto">
+                    <button id="subtab-daily-btn"
+                        class="flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition">
+                        <i class="fas fa-calendar-day mr-1"></i> Daily
+                    </button>
+                    <button id="subtab-calendar-btn"
+                        class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition">
+                        <i class="far fa-calendar-alt mr-1"></i> Calendar
+                    </button>
+                </div>
+
+                <!-- Daily Sub-view -->
+                <div id="subtab-daily-content">
+                    <div class="glass-card rounded-3xl overflow-hidden max-w-4xl mx-auto">
+                        <div class="p-5 border-b border-white/5 bg-black/20 flex items-center gap-2"><i
+                                class="fas fa-calendar-day text-theme-primaryLight"></i>
+                            <h3 class="text-sm font-semibold text-white">Daily Expenses Overview</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-white/5 text-sm">
+                                <thead class="bg-black/30">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-4 text-left font-medium text-slate-400 text-xs uppercase tracking-wider">
+                                            Date</th>
+                                        <th
+                                            class="px-6 py-4 text-right font-medium text-slate-400 text-xs uppercase tracking-wider">
+                                            Total IDR</th>
+                                        <th
+                                            class="px-6 py-4 text-right font-medium text-slate-400 text-xs uppercase tracking-wider">
+                                            Total USD</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="daily-body" class="divide-y divide-white/5"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Calendar Sub-view -->
+                <div id="subtab-calendar-content" class="hidden">
+                    <div class="glass-card p-5 sm:p-6 rounded-3xl max-w-5xl mx-auto">
+                        <div
+                            class="flex items-center justify-between mb-6 bg-black/20 p-2 rounded-2xl border border-white/5">
+                            <button id="prev-month"
+                                class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                                    class="fas fa-chevron-left"></i></button>
+                            <h2 id="calendar-header" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+                            <button id="next-month"
+                                class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                                    class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div
+                            class="grid grid-cols-7 text-center text-[10px] sm:text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest">
+                            <div>S</div>
+                            <div>M</div>
+                            <div>T</div>
+                            <div>W</div>
+                            <div>T</div>
+                            <div>F</div>
+                            <div>S</div>
+                        </div>
+                        <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- VIEW: CALENDAR -->
-            <div id="view-calendar" class="tab-view hidden">
-                <div class="glass-card p-5 sm:p-6 rounded-3xl max-w-5xl mx-auto">
-                    <div
-                        class="flex items-center justify-between mb-6 bg-black/20 p-2 rounded-2xl border border-white/5">
-                        <button id="prev-month"
-                            class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
-                                class="fas fa-chevron-left"></i></button>
-                        <h2 id="calendar-header" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
-                        <button id="next-month"
-                            class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
-                                class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <div
-                        class="grid grid-cols-7 text-center text-[10px] sm:text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest">
-                        <div>S</div>
-                        <div>M</div>
-                        <div>T</div>
-                        <div>W</div>
-                        <div>T</div>
-                        <div>F</div>
-                        <div>S</div>
-                    </div>
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
-                </div>
-            </div>
 
             <!-- VIEW: ADD / TRANSFER -->
             <div id="view-add" class="tab-view hidden">
@@ -610,6 +628,105 @@
                 </div>
             </div>
 
+            <!-- VIEW: BUDGET -->
+            <div id="view-budget" class="tab-view hidden space-y-5">
+
+                <!-- Budget Month Header -->
+                <div class="glass-card p-4 sm:p-5 rounded-3xl flex items-center justify-between">
+                    <button id="budget-prev-month"
+                        class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                            class="fas fa-chevron-left text-xs sm:text-sm"></i></button>
+                    <div class="text-center">
+                        <h2 id="budget-header" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Monthly Budget</p>
+                    </div>
+                    <button id="budget-next-month"
+                        class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                            class="fas fa-chevron-right text-xs sm:text-sm"></i></button>
+                </div>
+
+                <!-- Budget Summary Row -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="glass-card p-4 rounded-2xl text-center">
+                        <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Total Budget</div>
+                        <div id="budget-total-limit" class="font-bold font-mono text-sm text-white">IDR 0</div>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl text-center">
+                        <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Spent</div>
+                        <div id="budget-total-spent" class="font-bold font-mono text-sm text-rose-400">IDR 0</div>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl text-center">
+                        <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Remaining</div>
+                        <div id="budget-total-remaining" class="font-bold font-mono text-sm text-emerald-400">IDR 0</div>
+                    </div>
+                </div>
+
+                <!-- Budget Overall Progress -->
+                <div class="glass-card p-4 rounded-2xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Overall Progress</span>
+                        <span id="budget-overall-pct" class="text-xs font-mono font-bold text-white">0%</span>
+                    </div>
+                    <div class="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                        <div id="budget-overall-bar" class="h-full rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Category Budget Cards -->
+                <div class="glass-card p-5 rounded-3xl">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-bullseye text-theme-primaryLight"></i> Category Budgets
+                        </h3>
+                        <button id="budget-add-btn" class="text-xs bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
+                            <i class="fas fa-plus text-[10px]"></i> Set Budget
+                        </button>
+                    </div>
+
+                    <!-- Add Budget Form (hidden by default) -->
+                    <div id="budget-form" class="hidden mb-5 bg-black/30 p-4 rounded-2xl border border-white/5 space-y-3">
+                        <p class="text-xs text-slate-400 font-medium">Set a monthly spending limit for a category</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Category</label>
+                                <select id="budget-cat-select" class="input-glow rounded-xl px-3 py-2.5 text-sm w-full text-slate-200 appearance-none"></select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Limit (IDR)</label>
+                                <input type="number" id="budget-amount-input" placeholder="e.g. 500000"
+                                    class="input-glow rounded-xl px-3 py-2.5 text-sm w-full text-slate-200" min="0">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="budget-save-btn" class="flex-1 bg-theme-primary text-white font-bold py-2.5 rounded-xl text-sm hover:bg-theme-primaryHover transition">Save Budget</button>
+                            <button id="budget-cancel-btn" class="px-4 bg-white/5 text-slate-400 font-bold py-2.5 rounded-xl text-sm hover:bg-white/10 transition">Cancel</button>
+                        </div>
+                    </div>
+
+                    <!-- Budget List -->
+                    <div id="budget-list" class="space-y-4">
+                        <!-- Dynamically populated -->
+                    </div>
+                    <div id="budget-empty" class="hidden text-center py-10 text-slate-500 text-sm italic">
+                        No budgets set yet. Click "Set Budget" to get started.
+                    </div>
+                </div>
+
+                <!-- Unbudgeted Spending -->
+                <div class="glass-card p-5 rounded-3xl">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-4">
+                        <i class="fas fa-receipt text-amber-400"></i> Unbudgeted Spending
+                    </h3>
+                    <div id="budget-untracked-list" class="space-y-2">
+                        <!-- Dynamically populated -->
+                    </div>
+                    <div id="budget-untracked-empty" class="hidden text-center py-6 text-slate-500 text-sm italic">
+                        All spending is tracked by a budget 🎉
+                    </div>
+                </div>
+
+            </div>
+
             <!-- View: System Config -->
             <div id="view-config" class="tab-view hidden space-y-6">
                 <div
@@ -717,12 +834,12 @@
             </button>
             <button
                 class="mob-nav-btn text-slate-500 hover:text-slate-300 flex flex-col items-center w-1/5 relative group transition-colors"
-                data-target="view-calendar">
+                data-target="view-budget">
                 <div
                     class="nav-icon-bg absolute top-0 w-10 h-10 rounded-full transition-all duration-300 -z-10 group-hover:bg-theme-primary/10">
                 </div>
-                <i class="far fa-calendar-alt text-lg mt-2 mb-1 z-10"></i>
-                <span class="text-[10px] font-medium z-10">Month</span>
+                <i class="fas fa-bullseye text-lg mt-2 mb-1 z-10"></i>
+                <span class="text-[10px] font-medium z-10">Budget</span>
             </button>
         </div>
     </nav>
