@@ -360,27 +360,22 @@
                             onclick="applyDatePreset('clear')">Clear</button>
                     </div>
 
-                    <div
-                        class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 bg-black/20 p-3 rounded-2xl border border-white/5">
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">From</label>
-                            <input type="date" id="filter-start"
-                                class="input-glow rounded-xl px-3 py-2 text-xs w-full text-slate-200">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4 bg-black/20 p-2.5 rounded-2xl border border-white/5">
+                        <div class="space-y-1 min-w-0">
+                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">From</label>
+                            <input type="date" id="filter-start" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200">
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">To</label>
-                            <input type="date" id="filter-end"
-                                class="input-glow rounded-xl px-3 py-2 text-xs w-full text-slate-200">
+                        <div class="space-y-1 min-w-0">
+                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">To</label>
+                            <input type="date" id="filter-end" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200">
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Category</label>
-                            <select id="filter-cat"
-                                class="input-glow rounded-xl px-3 py-2 text-xs w-full text-slate-200 appearance-none"></select>
+                        <div class="space-y-1 min-w-0">
+                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">Category</label>
+                            <select id="filter-cat" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200 appearance-none"></select>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Wallet</label>
-                            <select id="filter-acc"
-                                class="input-glow rounded-xl px-3 py-2 text-xs w-full text-slate-200 appearance-none"></select>
+                        <div class="space-y-1 min-w-0">
+                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">Wallet</label>
+                            <select id="filter-acc" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200 appearance-none"></select>
                         </div>
                     </div>
 
