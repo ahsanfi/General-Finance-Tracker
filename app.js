@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let SYSTEM_CONFIG = { exp: [], inc: [], walletsIDR: [], walletsUSD: [], pin: null };
             let masterData = [], itemToDelete = null, sortState = { k: 'date', o: 'desc' }, calendarDate = new Date(), exchangeRate = 16000;
+            window.masterData = masterData; // exposed for AI assistant
+            window.exchangeRate = exchangeRate;
             let isEditing = false, editItem = null;
             window.isBalancesHidden = localStorage.getItem('hideBalances') === 'true';
 
@@ -246,6 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('filter-cat').innerHTML = '<option value="all">All Categories</option>' + cats.map(c => `<option>${c}</option>`).join('');
                     document.getElementById('filter-acc').innerHTML = '<option value="all">All Accounts</option>' + accs.map(a => `<option>${a}</option>`).join('');
                     renderAll();
+                    window.masterData = masterData;     // keep AI context in sync
+                    window.exchangeRate = exchangeRate;
                 } catch (e) { showToast("Error loading data: " + e.message, 'error'); }
             }
 
@@ -1440,3 +1444,255 @@ Do not wrap in markdown tags like \`\`\`json.`;
             mobNavBtns.forEach(b => { if (b.dataset.target === 'view-budget') b.addEventListener('click', onBudgetTabOpen); });
 
         });
+
+        // ============================================================
+        // AI FINANCE ASSISTANT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function () {
+        (function () {
+            const GROQ_KEY_STORAGE = 'mtracker_groq_key';
+            let aiChatHistory = []; // { role: 'user'|'model', text: string }
+
+            const panel     = document.getElementById('ai-panel');
+            const backdrop  = document.getElementById('ai-backdrop');
+            const messagesEl = document.getElementById('ai-messages');
+            const inputEl   = document.getElementById('ai-input');
+            const sendBtn   = document.getElementById('ai-send-btn');
+            const keySetup  = document.getElementById('ai-key-setup');
+            const suggestEl = document.getElementById('ai-suggestions');
+
+            function getKey() { return localStorage.getItem(GROQ_KEY_STORAGE) || ''; }
+
+            function openPanel() {
+                panel.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+                const key = getKey();
+                if (!key) {
+                    keySetup.classList.remove('hidden');
+                    keySetup.style.display = 'flex';
+                    messagesEl.classList.add('hidden');
+                    suggestEl.classList.add('hidden');
+                } else {
+                    keySetup.style.display = 'none';
+                    keySetup.classList.add('hidden');
+                    messagesEl.classList.remove('hidden');
+                    suggestEl.classList.toggle('hidden', aiChatHistory.length > 0);
+                }
+                setTimeout(() => inputEl.focus(), 350);
+            }
+
+            function closePanel() {
+                panel.classList.add('translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+
+            document.getElementById('ai-chat-btn').addEventListener('click', openPanel);
+            document.getElementById('ai-close-btn').addEventListener('click', closePanel);
+            backdrop.addEventListener('click', closePanel);
+
+            // API Key save
+            document.getElementById('ai-key-save-btn').addEventListener('click', () => {
+                const key = document.getElementById('ai-key-input').value.trim();
+                if (!key) { return; }
+                localStorage.setItem(GROQ_KEY_STORAGE, key);
+                keySetup.style.display = 'none';
+                keySetup.classList.add('hidden');
+                messagesEl.classList.remove('hidden');
+                suggestEl.classList.remove('hidden');
+                addMessage('model', "Hi! I'm your AI Finance Assistant 👋 I have full access to your transaction data. Ask me anything about your spending, income, trends, or budgets!");
+            });
+
+            // Settings (re-show key setup)
+            document.getElementById('ai-settings-btn').addEventListener('click', () => {
+                document.getElementById('ai-key-input').value = getKey();
+                keySetup.style.display = 'flex';
+                keySetup.classList.remove('hidden');
+                messagesEl.classList.add('hidden');
+                suggestEl.classList.add('hidden');
+            });
+
+            // Clear chat
+            document.getElementById('ai-clear-btn').addEventListener('click', () => {
+                aiChatHistory = [];
+                messagesEl.innerHTML = '';
+                suggestEl.classList.remove('hidden');
+            });
+
+            // Suggestions
+            document.querySelectorAll('.ai-suggestion').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const text = btn.textContent.replace(/^[^\s]+\s/, '').replace('?', '').trim() + '?';
+                    sendMessage(text.charAt(0).toUpperCase() + text.slice(1));
+                });
+            });
+
+            // Auto-resize textarea
+            inputEl.addEventListener('input', () => {
+                inputEl.style.height = 'auto';
+                inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+            });
+
+            inputEl.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); triggerSend(); }
+            });
+            sendBtn.addEventListener('click', triggerSend);
+
+            function triggerSend() {
+                const text = inputEl.value.trim();
+                if (!text) return;
+                inputEl.value = '';
+                inputEl.style.height = 'auto';
+                sendMessage(text);
+            }
+
+            function addMessage(role, text, isLoading = false) {
+                suggestEl.classList.add('hidden');
+                const isUser = role === 'user';
+                const div = document.createElement('div');
+                div.className = `flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`;
+
+                const bubble = document.createElement('div');
+                bubble.className = isUser
+                    ? 'max-w-[80%] px-4 py-3 rounded-2xl rounded-tr-sm text-sm text-white leading-relaxed'
+                    : 'max-w-[88%] px-4 py-3 rounded-2xl rounded-tl-sm text-sm text-slate-200 leading-relaxed';
+                bubble.style.background = isUser
+                    ? 'linear-gradient(135deg, #7c3aed, #4f46e5)'
+                    : 'rgba(255,255,255,0.05)';
+                bubble.style.border = isUser ? 'none' : '1px solid rgba(255,255,255,0.08)';
+
+                if (isLoading) {
+                    bubble.innerHTML = '<span class="inline-flex gap-1 items-center"><span class="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style="animation-delay:0ms"></span><span class="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style="animation-delay:150ms"></span><span class="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style="animation-delay:300ms"></span></span>';
+                    div.id = 'ai-loading-bubble';
+                } else {
+                    // Render simple markdown: **bold**, *italic*, newlines
+                    bubble.innerHTML = text
+                        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                        .replace(/\*\*(.+?)\*\*/g,'<strong class="text-white">$1</strong>')
+                        .replace(/\*(.+?)\*/g,'<em>$1</em>')
+                        .replace(/`(.+?)`/g,'<code class="bg-black/40 px-1 rounded text-violet-300 text-xs font-mono">$1</code>')
+                        .replace(/\n/g,'<br>');
+                }
+
+                div.appendChild(bubble);
+                messagesEl.appendChild(div);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+                return div;
+            }
+
+            function buildDataContext() {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                const data = window.masterData || [];
+
+                // --- Recent transactions: last 3 months (raw, for detailed queries) ---
+                const cutoff3m = new Date(today);
+                cutoff3m.setMonth(cutoff3m.getMonth() - 3);
+                const cutoff3mStr = cutoff3m.toISOString().split('T')[0];
+
+                const recentTx = data
+                    .filter(d => d.date >= cutoff3mStr)
+                    .sort((a, b) => b.date.localeCompare(a.date))
+                    .map(d => `${d.date}|${d.type}|${d.desc}|${d.cat}|${d.curr}|${d.amt}`)
+                    .join('\n') || '(none)';
+
+                // --- Monthly summary: all time, aggregated by month+category ---
+                const monthlySummary = {};
+                data.forEach(d => {
+                    const month = d.date.slice(0, 7);
+                    const key = `${month}|${d.type}|${d.cat}|${d.curr}`;
+                    monthlySummary[key] = (monthlySummary[key] || 0) + d.amt;
+                });
+                const summaryLines = Object.entries(monthlySummary)
+                    .sort((a, b) => b[0].localeCompare(a[0]))
+                    .map(([k, v]) => `${k}|${Math.round(v)}`)
+                    .join('\n') || '(none)';
+
+                return `You are a personal finance assistant for MTracker app.
+Today's date: ${todayStr}
+Exchange rate: 1 USD = ${window.exchangeRate || 16000} IDR
+Currency: Primary is IDR (Indonesian Rupiah).
+
+== RECENT TRANSACTIONS (last 3 months) ==
+Format: date|type|description|category|currency|amount
+${recentTx}
+
+== MONTHLY SUMMARY (all time, aggregated) ==
+Format: month|type|category|currency|total_amount
+${summaryLines}
+
+Instructions:
+- For specific transaction lookups (e.g. "coffee last week"), use RECENT TRANSACTIONS.
+- For trend/history questions, use MONTHLY SUMMARY.
+- Format IDR amounts with commas, e.g. IDR 1,234,567.
+- "Last week" = Mon-Sun of the previous calendar week.
+- Be concise and friendly. Say honestly if data is unavailable.`;
+            }
+
+
+            async function sendMessage(text) {
+                if (!getKey()) { openPanel(); return; }
+
+                aiChatHistory.push({ role: 'user', text });
+                addMessage('user', text);
+
+                const loadingEl = addMessage('model', '', true);
+                loadingEl.id = 'ai-loading-bubble';
+                sendBtn.disabled = true;
+
+                try {
+                    const systemCtx = buildDataContext();
+                    // Groq OpenAI-compatible format
+                    const messages = [
+                        { role: 'system', content: systemCtx },
+                        ...aiChatHistory.map(m => ({
+                            role: m.role === 'model' ? 'assistant' : m.role,
+                            content: m.text
+                        }))
+                    ];
+
+                    const res = await fetch(
+                        'https://api.groq.com/openai/v1/chat/completions',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${getKey()}`
+                            },
+                            body: JSON.stringify({
+                                model: 'llama-3.3-70b-versatile',
+                                messages,
+                                temperature: 0.4,
+                                max_tokens: 1024
+                            })
+                        }
+                    );
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error?.message || `HTTP ${res.status}`);
+                    }
+
+                    const data = await res.json();
+                    const reply = data.choices?.[0]?.message?.content || 'Sorry, I couldn\'t generate a response.';
+
+                    document.getElementById('ai-loading-bubble')?.remove();
+                    addMessage('model', reply);
+                    aiChatHistory.push({ role: 'model', text: reply });
+
+                } catch (e) {
+                    document.getElementById('ai-loading-bubble')?.remove();
+                    const errMsg = e.message.includes('API_KEY_INVALID') || e.message.includes('400')
+                        ? '❌ Invalid API key. Click the 🔑 key icon to update it.'
+                        : `❌ Error: ${e.message}`;
+                    addMessage('model', errMsg);
+                } finally {
+                    sendBtn.disabled = false;
+                    inputEl.focus();
+                }
+            }
+
+            // Expose masterData and exchangeRate to window for the AI context builder
+            // (they are defined inside DOMContentLoaded but we reference them via window)
+        })();
+        }); // end DOMContentLoaded for AI module
+
