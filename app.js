@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('mobile-nav').classList.remove('hidden');
                     fetchData();
+                    loadBudgetsFromSheets();
                     handleUrlParams();
                 } else {
                     document.getElementById('pin-error').textContent = `Access denied for ${email}. Contact the app owner.`;
@@ -89,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('mobile-nav').classList.remove('hidden');
                     fetchData();
+                    loadBudgetsFromSheets();
                     handleUrlParams();
                 } else {
                     document.getElementById('pin-modal').classList.remove('hidden');
@@ -138,6 +140,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Expose switchTab globally for edit buttons
             window.switchTab = updateTabUI;
+
+            // --- Daily / Calendar Sub-tab logic ---
+            function setDailySubTab(tab) {
+                const isDaily = tab === 'daily';
+                document.getElementById('subtab-daily-content').classList.toggle('hidden', !isDaily);
+                document.getElementById('subtab-calendar-content').classList.toggle('hidden', isDaily);
+
+                const dailyBtn = document.getElementById('subtab-daily-btn');
+                const calBtn = document.getElementById('subtab-calendar-btn');
+
+                if (isDaily) {
+                    dailyBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition';
+                    calBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition';
+                } else {
+                    calBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition';
+                    dailyBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition';
+                    renderCalendar(masterData); // Refresh calendar when switching to it
+                }
+            }
+
+            document.getElementById('subtab-daily-btn').addEventListener('click', () => setDailySubTab('daily'));
+            document.getElementById('subtab-calendar-btn').addEventListener('click', () => setDailySubTab('calendar'));
 
             window.applyDatePreset = (type) => {
                 const now = new Date();
@@ -1091,11 +1115,38 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 try {
                     const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getBudgets' }) });
                     const result = await res.json();
+                    console.log('[Budget] Response from sheet:', result);
                     if (result.status === 'success') {
-                        allBudgets = result.budgets || {};
+                        // Normalize keys: Sheets may return Date-based keys ("Sat Apr 30 2026...") instead of "YYYY-MM"
+                        // This handles both old (pre-normalizeMonth deploy) and new data
+                        const raw = result.budgets || {};
+                        const normalized = {};
+                        Object.entries(raw).forEach(([key, cats]) => {
+                            const normKey = normalizeMonthClient(key);
+                            if (!normalized[normKey]) normalized[normKey] = {};
+                            Object.assign(normalized[normKey], cats);
+                        });
+                        allBudgets = normalized;
                         budgetLoaded = true;
+                        console.log('[Budget] Loaded (normalized):', allBudgets);
+                    } else {
+                        console.warn('[Budget] Error from script:', result.message);
                     }
-                } catch (e) { console.warn('Failed to load budgets:', e); }
+                } catch (e) {
+                    console.warn('[Budget] Failed to load budgets:', e);
+                }
+            }
+
+            // Normalizes a month key from Sheets — handles both "YYYY-MM" strings and Date-like strings
+            function normalizeMonthClient(val) {
+                // If it's already in YYYY-MM format, return as-is
+                if (/^\d{4}-\d{2}$/.test(String(val).trim())) return String(val).trim();
+                // Otherwise try to parse as a date
+                const d = new Date(val);
+                if (!isNaN(d.getTime())) {
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                }
+                return String(val).trim();
             }
 
             async function saveBudgetToSheets(date, cat, amount) {
