@@ -583,7 +583,7 @@
                                         <option value="IDR">IDR</option>
                                         <option value="USD">USD</option>
                                     </select>
-                                    <input type="number" step="any" id="entry-amt-source" placeholder="0"
+                                    <input type="text" inputmode="decimal" id="entry-amt-source" placeholder="0"
                                         class="w-full input-glow rounded-xl px-4 py-3.5 text-slate-100 font-mono text-right text-lg font-bold placeholder-slate-600"
                                         required>
                                 </div>
@@ -614,7 +614,7 @@
                                         <option value="IDR">IDR</option>
                                         <option value="USD">USD</option>
                                     </select>
-                                    <input type="number" step="any" id="entry-amt-target" placeholder="Auto"
+                                    <input type="text" inputmode="decimal" id="entry-amt-target" placeholder="Auto"
                                         class="w-full input-glow bg-black/40 rounded-xl px-4 py-3.5 text-slate-100 font-mono text-right text-lg font-bold placeholder-slate-600">
                                 </div>
                             </div>
@@ -702,7 +702,7 @@
                             </div>
                             <div class="space-y-1">
                                 <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Limit (IDR)</label>
-                                <input type="number" id="budget-amount-input" placeholder="e.g. 500000"
+                                <input type="text" inputmode="decimal" id="budget-amount-input" placeholder="e.g. 500000"
                                     class="input-glow rounded-xl px-3 py-2.5 text-sm w-full text-slate-200" min="0">
                             </div>
                         </div>
@@ -782,14 +782,50 @@
 
                         <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20">
                             <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i
-                                    class="fas fa-robot mr-2 text-slate-500"></i> AI Receipt Scanner</h3>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq
-                                API Key</label>
-                            <input type="password" id="groq-api-key" placeholder="gsk_..."
-                                class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                            <p class="text-[10px] text-slate-500 mt-2">Powered by <strong class="text-slate-300">Llama 4
-                                    Scout Vision</strong>. Get a free key from <a href="https://console.groq.com/keys"
-                                    target="_blank" class="text-blue-400 underline">console.groq.com</a></p>
+                                    class="fas fa-camera mr-2 text-slate-500"></i> AI Receipt Scanner</h3>
+
+                            <!-- Provider toggle -->
+                            <div class="flex rounded-xl overflow-hidden border border-white/10 mb-4">
+                                <button id="scan-tab-groq" onclick="scanSelectProvider('groq')"
+                                    class="flex-1 py-2 text-xs font-bold transition-all"
+                                    style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
+                                    <i class="fas fa-bolt mr-1"></i>Groq
+                                </button>
+                                <button id="scan-tab-minimax" onclick="scanSelectProvider('minimax')"
+                                    class="flex-1 py-2 text-xs font-bold transition-all"
+                                    style="background:rgba(255,255,255,0.05);color:#94a3b8">
+                                    <i class="fas fa-star mr-1"></i>MiniMax
+                                </button>
+                            </div>
+
+                            <!-- Groq section -->
+                            <div id="scan-setup-groq">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API Key</label>
+                                <input type="password" id="groq-api-key" placeholder="gsk_..."
+                                    class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
+                                <p class="text-[10px] text-slate-500 mt-2">Model: <strong class="text-slate-300">Llama 4 Scout Vision</strong>. Free key at <a href="https://console.groq.com/keys" target="_blank" class="text-violet-400 underline">console.groq.com</a></p>
+                            </div>
+
+                            <!-- MiniMax section -->
+                            <div id="scan-setup-minimax" class="hidden">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">MiniMax API Key</label>
+                                <input type="password" id="minimax-scan-key" placeholder="eyJ..."
+                                    class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
+                                <div class="mt-2">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Model</label>
+                                    <select id="scan-model-minimax"
+                                        class="w-full bg-black/40 rounded-xl px-4 py-2.5 text-sm text-slate-100 border border-white/10 focus:border-cyan-500/40 focus:outline-none">
+                                        <option value="MiniMax-M2.5">MiniMax-M2.5 (Recommended)</option>
+                                        <option value="MiniMax-M2.5-highspeed">MiniMax-M2.5 Highspeed</option>
+                                        <option value="MiniMax-M2.7">MiniMax-M2.7</option>
+                                        <option value="MiniMax-M2.7-highspeed">MiniMax-M2.7 Highspeed</option>
+                                        <option value="MiniMax-M2.1">MiniMax-M2.1</option>
+                                        <option value="MiniMax-M2">MiniMax-M2</option>
+                                    </select>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-2">Uses your MiniMax key &bull; <a href="https://platform.minimax.io" target="_blank" class="text-cyan-400 underline">platform.minimax.io</a></p>
+                            </div>
+
                         </div>
 
                         <button id="save-config-btn"
@@ -951,7 +987,7 @@
                 </div>
                 <div>
                     <div class="text-sm font-bold text-white">AI Finance Assistant</div>
-                    <div class="text-[10px] text-violet-400/70 font-medium">Powered by Groq � Llama 3.3</div>
+                    <div id="ai-provider-badge" class="text-[10px] font-medium text-violet-400/70">Powered by Groq &bull; Llama 3.3</div>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -968,25 +1004,59 @@
         </div>
 
         <!-- API Key Setup (shown when no key) -->
-        <div id="ai-key-setup" class="hidden flex-col items-center justify-center flex-grow p-6 text-center gap-4">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-violet-400 text-2xl mb-2"
-                style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3)">
-                <i class="fas fa-key"></i>
-            </div>
-            <div>
-                <h3 class="text-white font-bold text-base mb-1">Setup Groq API Key</h3>
-                <p class="text-slate-500 text-xs leading-relaxed">Get your free API key from <a href="https://console.groq.com/keys" target="_blank" class="text-violet-400 hover:underline">Groq Console</a> and paste it below.</p>
-            </div>
-            <div class="w-full space-y-3">
-                <input id="ai-key-input" type="password" placeholder="gsk_..."
-                    class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-violet-500/30 focus:border-violet-500/60 focus:outline-none"
-                    style="background: rgba(0,0,0,0.4)">
-                <button id="ai-key-save-btn"
-                    class="w-full py-3 rounded-xl text-sm font-bold text-white transition"
-                    style="background: linear-gradient(135deg, #7c3aed, #4f46e5)">
-                    Save & Start Chatting
+        <div id="ai-key-setup" class="hidden flex-col flex-grow p-5 gap-4" style="overflow-y:auto">
+            <!-- Provider Tabs -->
+            <div class="flex rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+                <button id="ai-tab-groq" onclick="aiSelectProvider('groq')" class="flex-1 py-2.5 text-xs font-bold transition-all" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
+                    <i class="fas fa-bolt mr-1"></i>Groq
+                </button>
+                <button id="ai-tab-minimax" onclick="aiSelectProvider('minimax')" class="flex-1 py-2.5 text-xs font-bold transition-all" style="background:rgba(255,255,255,0.05);color:#94a3b8">
+                    <i class="fas fa-star mr-1"></i>MiniMax
                 </button>
             </div>
+
+            <!-- Groq setup -->
+            <div id="ai-setup-groq" class="flex flex-col gap-3">
+                <div class="text-center">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-violet-400 text-xl mx-auto mb-2" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3)"><i class="fas fa-bolt"></i></div>
+                    <h3 class="text-white font-bold text-sm mb-1">Groq API Key</h3>
+                    <p class="text-slate-500 text-xs">Free at <a href="https://console.groq.com/keys" target="_blank" class="text-violet-400 hover:underline">console.groq.com/keys</a></p>
+                </div>
+                <input id="ai-key-groq" type="password" placeholder="gsk_..."
+                    class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-violet-500/30 focus:border-violet-500/60 focus:outline-none"
+                    style="background:rgba(0,0,0,0.4)">
+                <p class="text-[10px] text-slate-600 text-center">Model: llama-3.3-70b-versatile &bull; 14,400 req/day free</p>
+            </div>
+
+            <!-- MiniMax setup -->
+            <div id="ai-setup-minimax" class="hidden flex-col gap-3">
+                <div class="text-center">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-cyan-400 text-xl mx-auto mb-2" style="background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3)"><i class="fas fa-star"></i></div>
+                    <h3 class="text-white font-bold text-sm mb-1">MiniMax API Key</h3>
+                    <p class="text-slate-500 text-xs">Get key at <a href="https://www.minimax.io/platform" target="_blank" class="text-cyan-400 hover:underline">minimax.io/platform</a></p>
+                </div>
+                <input id="ai-key-minimax" type="password" placeholder="eyJ..."
+                    class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-cyan-500/30 focus:border-cyan-500/60 focus:outline-none"
+                    style="background:rgba(0,0,0,0.4)">
+                <select id="ai-model-minimax"
+                    class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-cyan-500/30 focus:border-cyan-500/60 focus:outline-none"
+                    style="background:rgba(0,0,0,0.5)">
+                    <option value="MiniMax-M2.5">MiniMax-M2.5 &mdash; Peak Performance (60 tps)</option>
+                    <option value="MiniMax-M2.5-highspeed">MiniMax-M2.5 Highspeed (100 tps)</option>
+                    <option value="MiniMax-M2.7">MiniMax-M2.7 &mdash; Self-improving (60 tps)</option>
+                    <option value="MiniMax-M2.7-highspeed">MiniMax-M2.7 Highspeed (100 tps)</option>
+                    <option value="MiniMax-M2.1">MiniMax-M2.1 &mdash; Multi-language (60 tps)</option>
+                    <option value="MiniMax-M2.1-highspeed">MiniMax-M2.1 Highspeed (100 tps)</option>
+                    <option value="MiniMax-M2">MiniMax-M2 &mdash; Agentic Reasoning</option>
+                    <option value="MiniMax-Text-01">MiniMax-Text-01 (legacy)</option>
+                </select>
+            </div>
+
+            <button id="ai-key-save-btn"
+                class="w-full py-3 rounded-xl text-sm font-bold text-white transition flex-shrink-0"
+                style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+                Save &amp; Start Chatting
+            </button>
         </div>
 
         <!-- Chat Messages -->
