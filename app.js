@@ -11,6 +11,56 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('entry-date').valueAsDate = new Date();
             loadSystemConfig();
 
+            // ── Inline Calculator ────────────────────────────────────────────
+            // Typing "10+60=" auto-evaluates to "10+60 = 70" then collapses to 70
+            function attachCalculator(inputEl) {
+                if (!inputEl) return;
+                let calcTimer = null;
+                inputEl.addEventListener('input', function () {
+                    const raw = this.value;
+                    if (!raw.endsWith('=')) return;
+                    const expr = raw.slice(0, -1).trim();
+                    if (!expr || !/^[\d\s\+\-\*\/\(\)\.]+$/.test(expr)) return;
+                    try {
+                        // eslint-disable-next-line no-new-func
+                        const result = Function('"use strict"; return (' + expr + ')')();
+                        if (!isFinite(result) || result < 0) return;
+                        const rounded = Math.round(result * 100) / 100;
+                        this.value = expr + ' = ' + rounded.toLocaleString('id-ID');
+                        this.style.color = '#34d399'; // green flash
+                        clearTimeout(calcTimer);
+                        calcTimer = setTimeout(() => {
+                            this.value = rounded;
+                            this.style.color = '';
+                        }, 1500);
+                    } catch (e) { /* invalid expression, ignore */ }
+                });
+                // Also allow pressing Enter to trigger calculation
+                inputEl.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === '=') {
+                        // handled by input event on next tick
+                    }
+                });
+            }
+            // Attach to all amount inputs
+            attachCalculator(document.getElementById('entry-amt-source'));
+            attachCalculator(document.getElementById('entry-amt-target'));
+            attachCalculator(document.getElementById('budget-amount-input'));
+
+            // Helper: read numeric amount from a field (handles "10+60 = 70" mid-animation)
+            function readAmt(id) {
+                const val = (document.getElementById(id)?.value || '').trim();
+                // If it contains " = ", grab the right-hand side (the result)
+                if (val.includes(' = ')) return Math.abs(parseFloat(val.split(' = ').pop().replace(/\./g, '').replace(',', '.')));
+                // Try safe-eval of pure expressions
+                if (/^[\d\s\+\-\*\/\(\)\.]+$/.test(val)) {
+                    try { return Math.abs(Function('"use strict"; return (' + val + ')')()) || 0; } catch (e) {}
+                }
+                return Math.abs(parseFloat(val)) || 0;
+            }
+            // ────────────────────────────────────────────────────────────────
+
+
             async function loadSystemConfig() {
                 // Safety: always hide the loader after 8s so it never permanently blocks the UI
                 const loaderEl = document.getElementById('init-loader');
@@ -491,16 +541,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         oldSheetName: editItem.type === 'income' ? 'Income' : 'Expenses',
                         originalData: editItem,
                         newSheetName: type === 'income' ? 'Income' : 'Expenses',
-                        newData: { date, description: desc, category: cat, account: document.getElementById('entry-acc-source').value, currency: document.getElementById('entry-curr-source').value, amount: Math.abs(parseFloat(document.getElementById('entry-amt-source').value)) }
+                        newData: { date, description: desc, category: cat, account: document.getElementById('entry-acc-source').value, currency: document.getElementById('entry-curr-source').value, amount: readAmt('entry-amt-source') }
                     };
                 } else {
                     if (type === 'transfer') {
-                        const fromAmt = parseFloat(document.getElementById('entry-amt-source').value), toAmtInput = document.getElementById('entry-amt-target').value, toAmt = toAmtInput ? parseFloat(toAmtInput) : fromAmt;
+                        const fromAmt = readAmt('entry-amt-source'), toAmtRaw = document.getElementById('entry-amt-target').value, toAmt = toAmtRaw ? readAmt('entry-amt-target') : fromAmt;
                         if (document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) { showToast("Source and Target are identical!", 'error'); btn.innerHTML = origTxt; btn.disabled = false; return; }
                         payload = { action: 'transfer', date, description: desc, fromAccount: document.getElementById('entry-acc-source').value, fromCurrency: document.getElementById('entry-curr-source').value, fromAmount: Math.abs(fromAmt), toAccount: document.getElementById('entry-acc-target').value, toCurrency: document.getElementById('entry-curr-target').value, toAmount: Math.abs(toAmt) };
                     } else {
                         let cat = document.getElementById('entry-cat').value; if (cat === 'Other') cat = document.getElementById('entry-cat-other').value;
-                        payload = { action: 'add', sheetName: type === 'income' ? 'Income' : 'Expenses', date, description: desc, category: cat, account: document.getElementById('entry-acc-source').value, currency: document.getElementById('entry-curr-source').value, amount: Math.abs(parseFloat(document.getElementById('entry-amt-source').value)) };
+                        payload = { action: 'add', sheetName: type === 'income' ? 'Income' : 'Expenses', date, description: desc, category: cat, account: document.getElementById('entry-acc-source').value, currency: document.getElementById('entry-curr-source').value, amount: readAmt('entry-amt-source') };
                     }
                 }
 
@@ -774,16 +824,47 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Settings & AI Receipt Scanner
+            let scanProvider = localStorage.getItem('mtracker_scan_provider') || 'groq';
+
+            window.scanSelectProvider = function(p) {
+                scanProvider = p;
+                localStorage.setItem('mtracker_scan_provider', p);
+                const gTab   = document.getElementById('scan-tab-groq');
+                const mmTab  = document.getElementById('scan-tab-minimax');
+                const gSetup = document.getElementById('scan-setup-groq');
+                const mmSetup = document.getElementById('scan-setup-minimax');
+                if (!gTab) return;
+                if (p === 'groq') {
+                    gTab.style.cssText  = 'flex:1;padding:8px 0;font-size:.75rem;font-weight:700;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff';
+                    mmTab.style.cssText = 'flex:1;padding:8px 0;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.05);color:#94a3b8';
+                    gSetup.classList.remove('hidden');
+                    mmSetup.classList.add('hidden');
+                } else {
+                    mmTab.style.cssText = 'flex:1;padding:8px 0;font-size:.75rem;font-weight:700;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff';
+                    gTab.style.cssText  = 'flex:1;padding:8px 0;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.05);color:#94a3b8';
+                    mmSetup.classList.remove('hidden');
+                    gSetup.classList.add('hidden');
+                }
+            };
+
             document.getElementById('config-btn').addEventListener('click', () => {
                 document.getElementById('groq-api-key').value = localStorage.getItem('groqApiKey') || '';
+                const mmScanInp = document.getElementById('minimax-scan-key');
+                if (mmScanInp) mmScanInp.value = localStorage.getItem('mtracker_minimax_key') || '';
+                // Restore provider tab state
+                window.scanSelectProvider(scanProvider);
             });
 
             const scanBtn = document.getElementById('scan-receipt-btn');
             const uploadInput = document.getElementById('receipt-upload');
             scanBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (!localStorage.getItem('groqApiKey')) {
-                    showToast("Please save your Groq API Key in Config first", "error");
+                const key = scanProvider === 'groq'
+                    ? localStorage.getItem('groqApiKey')
+                    : localStorage.getItem('mtracker_minimax_key');
+                if (!key) {
+                    const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
+                    showToast(`Please save your ${label} API Key in Config first`, 'error');
                     switchTab('view-config');
                     return;
                 }
@@ -821,49 +902,59 @@ document.addEventListener('DOMContentLoaded', () => {
                         reader.readAsDataURL(file);
                     });
 
-                    const apiKey = localStorage.getItem('groqApiKey');
-                    const prompt = `You are a receipt data extractor. Analyze this receipt and extract:
+                    const prompt = `You are a receipt data extractor. Analyze this receipt image and extract:
 1. Total Amount (number only, no currency symbols)
 2. Description (store name or short summary)
-3. Date (YYYY-MM-DD format, if not visible return current date)
-4. Category (choose the most appropriate one: Food, Shopping, Transport, Utilities, Health, Entertainment, Error, Transfer, Charity, Salary, Interest, Deposit)
-Return ONLY a valid JSON object matching this exact structure:
+3. Date (YYYY-MM-DD format, if not visible return today)
+4. Category (choose the most appropriate: Food, Shopping, Transport, Utilities, Health, Entertainment, Error, Transfer, Charity, Salary, Interest, Deposit)
+Return ONLY a valid JSON object with this exact structure:
 {"amount": 100000, "description": "Store Name", "date": "2024-05-05", "category": "Food"}
-Do not wrap in markdown tags like \`\`\`json.`;
+Do not wrap in markdown or code blocks.`;
 
-                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    let endpoint, model, apiKey, headers;
+                    if (scanProvider === 'minimax') {
+                        apiKey   = localStorage.getItem('mtracker_minimax_key');
+                        const mmModelEl = document.getElementById('scan-model-minimax');
+                        model    = mmModelEl ? mmModelEl.value : 'MiniMax-M2.5';
+                        endpoint = 'https://api.minimax.io/v1/chat/completions';
+                        headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+                    } else {
+                        apiKey   = localStorage.getItem('groqApiKey');
+                        model    = 'meta-llama/llama-4-scout-17b-16e-instruct';
+                        endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+                        headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+                    }
+
+                    const res = await fetch(endpoint, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${apiKey}`
-                        },
+                        headers,
                         body: JSON.stringify({
-                            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                            model,
                             messages: [{
-                                role: "user",
+                                role: 'user',
                                 content: [
-                                    { type: "text", text: prompt },
-                                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Img}` } }
+                                    { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
+                                    { type: 'text', text: prompt }
                                 ]
                             }],
                             temperature: 0.1,
-                            max_tokens: 1024
+                            max_tokens: 512
                         })
                     });
 
-                    if (res.status === 429) throw new Error("Groq Rate Limit Exceeded. Please try again shortly.");
+                    if (res.status === 429) throw new Error('Rate Limit Exceeded. Please try again shortly.');
                     if (!res.ok) {
                         const errData = await res.json().catch(() => null);
                         const errMsg = errData && errData.error ? errData.error.message : await res.text();
-                        throw new Error(`Groq API Error: ${res.status} - ${errMsg}`);
+                        throw new Error(`API Error (${res.status}): ${errMsg}`);
                     }
                     const data = await res.json();
                     let text = data.choices[0].message.content.trim();
-
+                    // Strip think tags from reasoning models
+                    text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
                     if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '').trim();
 
                     const parsed = JSON.parse(text);
-
 
                     if (parsed.amount) document.getElementById('entry-amt-source').value = parsed.amount;
                     if (parsed.description) document.getElementById('entry-desc').value = parsed.description;
@@ -881,10 +972,11 @@ Do not wrap in markdown tags like \`\`\`json.`;
                             document.getElementById('entry-cat-other').value = parsed.category;
                         }
                     }
-                    showToast("Receipt scanned successfully!", "success");
+                    const label = scanProvider === 'minimax' ? 'MiniMax' : 'Groq';
+                    showToast(`Receipt scanned via ${label}!`, 'success');
                 } catch (err) {
                     console.error(err);
-                    showToast("Failed to scan receipt: " + err.message, "error");
+                    showToast('Failed to scan receipt: ' + err.message, 'error');
                 } finally {
                     scanBtn.innerHTML = origHtml;
                     scanBtn.disabled = false;
@@ -1086,6 +1178,12 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 // Also save the Groq API key
                 const groqKey = document.getElementById('groq-api-key').value.trim();
                 if (groqKey) localStorage.setItem('groqApiKey', groqKey);
+
+                // Also save MiniMax scan key if filled
+                const mmScanKeyEl = document.getElementById('minimax-scan-key');
+                if (mmScanKeyEl && mmScanKeyEl.value.trim()) {
+                    localStorage.setItem('mtracker_minimax_key', mmScanKeyEl.value.trim());
+                }
 
                 btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent mx-auto"></div>';
                 btn.disabled = true;
@@ -1455,23 +1553,66 @@ Do not wrap in markdown tags like \`\`\`json.`;
         // ============================================================
         document.addEventListener('DOMContentLoaded', function () {
         (function () {
-            const GROQ_KEY_STORAGE = 'mtracker_groq_key';
-            let aiChatHistory = []; // { role: 'user'|'model', text: string }
+            const GROQ_KEY    = 'mtracker_groq_key';
+            const MINIMAX_KEY  = 'mtracker_minimax_key';
+            const PROVIDER_KEY = 'mtracker_ai_provider';
+            let aiChatHistory = [];
+            let currentProvider = localStorage.getItem('mtracker_ai_provider') || 'groq';
 
-            const panel     = document.getElementById('ai-panel');
-            const backdrop  = document.getElementById('ai-backdrop');
+            const panel      = document.getElementById('ai-panel');
+            const backdrop   = document.getElementById('ai-backdrop');
             const messagesEl = document.getElementById('ai-messages');
-            const inputEl   = document.getElementById('ai-input');
-            const sendBtn   = document.getElementById('ai-send-btn');
-            const keySetup  = document.getElementById('ai-key-setup');
-            const suggestEl = document.getElementById('ai-suggestions');
+            const inputEl    = document.getElementById('ai-input');
+            const sendBtn    = document.getElementById('ai-send-btn');
+            const keySetup   = document.getElementById('ai-key-setup');
+            const suggestEl  = document.getElementById('ai-suggestions');
 
-            function getKey() { return localStorage.getItem(GROQ_KEY_STORAGE) || ''; }
+            function getKey(p) {
+                p = p || currentProvider;
+                return localStorage.getItem(p === 'groq' ? GROQ_KEY : MINIMAX_KEY) || '';
+            }
+
+            window.aiSelectProvider = function(p) {
+                currentProvider = p;
+                localStorage.setItem(PROVIDER_KEY, p);
+                const groqTab   = document.getElementById('ai-tab-groq');
+                const mmTab     = document.getElementById('ai-tab-minimax');
+                const groqSetup = document.getElementById('ai-setup-groq');
+                const mmSetup   = document.getElementById('ai-setup-minimax');
+                if (!groqTab || !mmTab) return;
+                if (p === 'groq') {
+                    groqTab.style.cssText = 'flex:1;padding:10px 0;font-size:.75rem;font-weight:700;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff';
+                    mmTab.style.cssText   = 'flex:1;padding:10px 0;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.05);color:#94a3b8';
+                    if (groqSetup) { groqSetup.classList.remove('hidden'); groqSetup.style.display = 'flex'; }
+                    if (mmSetup)   { mmSetup.classList.add('hidden'); mmSetup.style.display = 'none'; }
+                } else {
+                    mmTab.style.cssText   = 'flex:1;padding:10px 0;font-size:.75rem;font-weight:700;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff';
+                    groqTab.style.cssText = 'flex:1;padding:10px 0;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.05);color:#94a3b8';
+                    if (mmSetup)   { mmSetup.classList.remove('hidden'); mmSetup.style.display = 'flex'; }
+                    if (groqSetup) { groqSetup.classList.add('hidden'); groqSetup.style.display = 'none'; }
+                }
+            };
+
+            function updateProviderBadge() {
+                const badge = document.getElementById('ai-provider-badge');
+                if (!badge) return;
+                if (currentProvider === 'groq') {
+                    badge.textContent = 'Powered by Groq • Llama 3.3';
+                    badge.style.color = 'rgba(167,139,250,.7)';
+                } else {
+                    const mmSel = document.getElementById('ai-model-minimax');
+                    const mmName = mmSel ? mmSel.value : 'MiniMax-M2.5';
+                    badge.textContent = `Powered by MiniMax \u2022 ${mmName}`;
+                    badge.style.color = 'rgba(34,211,238,.7)';
+                }
+            }
 
             function openPanel() {
                 panel.classList.remove('translate-x-full');
                 backdrop.classList.remove('hidden');
-                document.getElementById('ai-chat-btn').classList.add('scale-0', 'opacity-0', 'pointer-events-none'); // hide FAB
+                document.getElementById('ai-chat-btn').classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+                updateProviderBadge();
+                window.aiSelectProvider(currentProvider);
                 const key = getKey();
                 if (!key) {
                     keySetup.classList.remove('hidden');
@@ -1490,7 +1631,7 @@ Do not wrap in markdown tags like \`\`\`json.`;
             function closePanel() {
                 panel.classList.add('translate-x-full');
                 backdrop.classList.add('hidden');
-                document.getElementById('ai-chat-btn').classList.remove('scale-0', 'opacity-0', 'pointer-events-none'); // restore FAB
+                document.getElementById('ai-chat-btn').classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
             }
 
             document.getElementById('ai-chat-btn').addEventListener('click', openPanel);
@@ -1499,19 +1640,28 @@ Do not wrap in markdown tags like \`\`\`json.`;
 
             // API Key save
             document.getElementById('ai-key-save-btn').addEventListener('click', () => {
-                const key = document.getElementById('ai-key-input').value.trim();
-                if (!key) { return; }
-                localStorage.setItem(GROQ_KEY_STORAGE, key);
+                const inputId = currentProvider === 'groq' ? 'ai-key-groq' : 'ai-key-minimax';
+                const keyInput = document.getElementById(inputId);
+                const key = keyInput ? keyInput.value.trim() : '';
+                if (!key) return;
+                localStorage.setItem(currentProvider === 'groq' ? GROQ_KEY : MINIMAX_KEY, key);
                 keySetup.style.display = 'none';
                 keySetup.classList.add('hidden');
                 messagesEl.classList.remove('hidden');
                 suggestEl.classList.remove('hidden');
-                addMessage('model', "Hi! I'm your AI Finance Assistant 👋 I have full access to your transaction data. Ask me anything about your spending, income, trends, or budgets!");
+                updateProviderBadge();
+                const label = currentProvider === 'groq' ? 'Groq (Llama 3.3)' : 'MiniMax';
+                addMessage('model', `Hi! I'm your AI Finance Assistant \U0001f44b Connected via **${label}**. Ask me anything about your spending, income, trends, or budgets!`);
             });
 
-            // Settings (re-show key setup)
+            // Settings: re-show provider setup
             document.getElementById('ai-settings-btn').addEventListener('click', () => {
-                document.getElementById('ai-key-input').value = getKey();
+                window.aiSelectProvider(currentProvider);
+                // Pre-fill existing keys
+                const gInp = document.getElementById('ai-key-groq');
+                const mInp = document.getElementById('ai-key-minimax');
+                if (gInp) gInp.value = getKey('groq');
+                if (mInp) mInp.value = getKey('minimax');
                 keySetup.style.display = 'flex';
                 keySetup.classList.remove('hidden');
                 messagesEl.classList.add('hidden');
@@ -1591,33 +1741,57 @@ Do not wrap in markdown tags like \`\`\`json.`;
                 const todayStr = today.toISOString().split('T')[0];
                 const data = window.masterData || [];
 
-                // --- Recent transactions: last 3 months (raw, for detailed queries) ---
-                const cutoff3m = new Date(today);
-                cutoff3m.setMonth(cutoff3m.getMonth() - 3);
-                const cutoff3mStr = cutoff3m.toISOString().split('T')[0];
-
-                const recentTx = data
-                    .filter(d => d.date >= cutoff3mStr)
-                    .sort((a, b) => b.date.localeCompare(a.date))
-                    .map(d => `${d.date}|${d.type}|${d.desc}|${d.cat}|${d.curr}|${d.amt}`)
-                    .join('\n') || '(none)';
-
-                // --- Monthly summary: all time, aggregated by month+category ---
-                const monthlySummary = {};
-                data.forEach(d => {
-                    const month = d.date.slice(0, 7);
-                    const key = `${month}|${d.type}|${d.cat}|${d.curr}`;
-                    monthlySummary[key] = (monthlySummary[key] || 0) + d.amt;
-                });
-                const summaryLines = Object.entries(monthlySummary)
-                    .sort((a, b) => b[0].localeCompare(a[0]))
-                    .map(([k, v]) => `${k}|${Math.round(v)}`)
-                    .join('\n') || '(none)';
-
-                return `You are a personal finance assistant for MTracker app.
+                const header = `You are a personal finance assistant for MTracker app.
 Today's date: ${todayStr}
 Exchange rate: 1 USD = ${window.exchangeRate || 16000} IDR
-Currency: Primary is IDR (Indonesian Rupiah).
+Currency: Primary is IDR (Indonesian Rupiah).`;
+
+                const instructions = `Instructions:
+- Format IDR amounts with commas, e.g. IDR 1,234,567.
+- "Last week" = Mon-Sun of the previous calendar week.
+- Be concise and friendly. Say honestly if data is unavailable.`;
+
+                if (currentProvider === 'minimax') {
+                    // MiniMax M2 has 204,800 token context — send ALL transactions
+                    const allTx = data
+                        .slice()
+                        .sort((a, b) => b.date.localeCompare(a.date))
+                        .map(d => `${d.date}|${d.type}|${d.desc}|${d.cat}|${d.acc}|${d.curr}|${d.amt}`)
+                        .join('\n') || '(none)';
+
+                    return `${header}
+
+== ALL TRANSACTIONS (complete history) ==
+Format: date|type|description|category|account|currency|amount
+${allTx}
+
+${instructions}
+- You have the user's FULL transaction history. Use it for any time range or deep analysis.`;
+
+                } else {
+                    // Groq: 12k TPM limit — send last 3 months raw + all-time monthly summary
+                    const cutoff3m = new Date(today);
+                    cutoff3m.setMonth(cutoff3m.getMonth() - 3);
+                    const cutoff3mStr = cutoff3m.toISOString().split('T')[0];
+
+                    const recentTx = data
+                        .filter(d => d.date >= cutoff3mStr)
+                        .sort((a, b) => b.date.localeCompare(a.date))
+                        .map(d => `${d.date}|${d.type}|${d.desc}|${d.cat}|${d.curr}|${d.amt}`)
+                        .join('\n') || '(none)';
+
+                    const monthlySummary = {};
+                    data.forEach(d => {
+                        const month = d.date.slice(0, 7);
+                        const key = `${month}|${d.type}|${d.cat}|${d.curr}`;
+                        monthlySummary[key] = (monthlySummary[key] || 0) + d.amt;
+                    });
+                    const summaryLines = Object.entries(monthlySummary)
+                        .sort((a, b) => b[0].localeCompare(a[0]))
+                        .map(([k, v]) => `${k}|${Math.round(v)}`)
+                        .join('\n') || '(none)';
+
+                    return `${header}
 
 == RECENT TRANSACTIONS (last 3 months) ==
 Format: date|type|description|category|currency|amount
@@ -1627,12 +1801,9 @@ ${recentTx}
 Format: month|type|category|currency|total_amount
 ${summaryLines}
 
-Instructions:
-- For specific transaction lookups (e.g. "coffee last week"), use RECENT TRANSACTIONS.
-- For trend/history questions, use MONTHLY SUMMARY.
-- Format IDR amounts with commas, e.g. IDR 1,234,567.
-- "Last week" = Mon-Sun of the previous calendar week.
-- Be concise and friendly. Say honestly if data is unavailable.`;
+${instructions}
+- For specific lookups, use RECENT TRANSACTIONS. For trends, use MONTHLY SUMMARY.`;
+                }
             }
 
 
@@ -1648,7 +1819,15 @@ Instructions:
 
                 try {
                     const systemCtx = buildDataContext();
-                    // Groq OpenAI-compatible format
+                    // Provider-aware API call
+                    const isGroq = currentProvider === 'groq';
+                    const endpoint = isGroq
+                        ? 'https://api.groq.com/openai/v1/chat/completions'
+                        : 'https://api.minimax.io/v1/chat/completions';
+                    const mmModelEl = document.getElementById('ai-model-minimax');
+                    const mmModel = mmModelEl ? mmModelEl.value : 'MiniMax-M2.5';
+                    const model = isGroq ? 'llama-3.3-70b-versatile' : mmModel;
+
                     const messages = [
                         { role: 'system', content: systemCtx },
                         ...aiChatHistory.map(m => ({
@@ -1658,7 +1837,7 @@ Instructions:
                     ];
 
                     const res = await fetch(
-                        'https://api.groq.com/openai/v1/chat/completions',
+                        endpoint,
                         {
                             method: 'POST',
                             headers: {
@@ -1666,7 +1845,7 @@ Instructions:
                                 'Authorization': `Bearer ${getKey()}`
                             },
                             body: JSON.stringify({
-                                model: 'llama-3.3-70b-versatile',
+                                model,
                                 messages,
                                 temperature: 0.4,
                                 max_tokens: 1024
@@ -1680,7 +1859,9 @@ Instructions:
                     }
 
                     const data = await res.json();
-                    const reply = data.choices?.[0]?.message?.content || 'Sorry, I couldn\'t generate a response.';
+                    const rawReply = data.choices?.[0]?.message?.content || 'Sorry, I couldn\'t generate a response.';
+                    // Strip <think>...</think> reasoning blocks (MiniMax M2 series shows chain-of-thought)
+                    const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
                     document.getElementById('ai-loading-bubble')?.remove();
                     addMessage('model', reply);
