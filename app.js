@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('pin-modal').classList.add('hidden');
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('mobile-nav').classList.remove('hidden');
+                    document.getElementById('ai-chat-btn').classList.remove('hidden');
                     fetchData();
                     loadBudgetsFromSheets();
                     handleUrlParams();
@@ -146,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('pin-modal').classList.add('hidden');
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('mobile-nav').classList.remove('hidden');
+                    document.getElementById('ai-chat-btn').classList.remove('hidden');
                     fetchData();
                     loadBudgetsFromSheets();
                     handleUrlParams();
