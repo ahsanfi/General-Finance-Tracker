@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const keypad  = document.getElementById('calc-keypad');
             const exprEl  = document.getElementById('calc-expr');
             const doneBtn = document.getElementById('calc-done');
+            const clearBtn = document.getElementById('calc-clear');
             let activeEl  = null;
             let expr      = '';
 
@@ -123,6 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 doneBtn && doneBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     kpCommit(true);
+                }, { passive: false });
+
+                // Clear button
+                clearBtn && clearBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (!activeEl) return;
+                    expr = '';
+                    exprEl.textContent = '0';
+                    activeEl.value = '';
                 }, { passive: false });
 
                 // Tap outside keypad to close
