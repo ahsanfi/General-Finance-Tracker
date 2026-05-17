@@ -105,23 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         const k = btn.dataset.k;
                         if (k === '⌫') {
                             expr = expr.slice(0, -1);
-                        } else if (k === '=') {
-                            const result = calcEval(expr);
-                            if (result !== null) {
-                                exprEl.textContent = expr + ' = ' + result.toLocaleString('id-ID');
-                                activeEl.value = result.toLocaleString('id-ID');
-                                activeEl.style.color = '#34d399';
-                                setTimeout(() => {
-                                    activeEl.value = result;
-                                    activeEl.style.color = '';
-                                }, 1500);
-                                expr = String(result);
-                            }
-                            return;
                         } else {
                             expr += k;
                         }
-                        exprEl.textContent = expr || '0';
+                        // Auto-evaluate and show result preview
+                        const result = calcEval(expr);
+                        exprEl.textContent = result !== null && expr.match(/[\+\-\*\/]/) 
+                            ? expr + ' = ' + result.toLocaleString('id-ID') 
+                            : (expr || '0');
                         activeEl.value = expr;
                     }, { passive: false });
                 });
