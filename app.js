@@ -11,54 +11,151 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('entry-date').valueAsDate = new Date();
             loadSystemConfig();
 
-            // ── Inline Calculator ────────────────────────────────────────────
-            // Typing "10+60=" auto-evaluates to "10+60 = 70" then collapses to 70
-            function attachCalculator(inputEl) {
-                if (!inputEl) return;
-                let calcTimer = null;
-                inputEl.addEventListener('input', function () {
+            // ── Calculator (dual-mode: custom keypad on mobile, keyboard on desktop) ─
+            const CALC_IDS = ['entry-amt-source', 'entry-amt-target', 'budget-amount-input'];
+            const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+            // ── Shared evaluator ──────────────────────────────────────────────
+            function calcEval(expr) {
+                const clean = expr.trim();
+                if (!clean || !/^[\d\s\+\-\*\/\(\)\.]+$/.test(clean)) return null;
+                try {
+                    // eslint-disable-next-line no-new-func
+                    const r = Function('"use strict"; return (' + clean + ')')();
+                    return (isFinite(r) && r >= 0) ? Math.round(r * 100) / 100 : null;
+                } catch (e) { return null; }
+            }
+
+            function flashResult(el, result) {
+                el.value = result;
+                el.style.color = '#34d399';
+                setTimeout(() => { el.style.color = ''; }, 1500);
+            }
+
+            // ── Desktop: type "10+60=" to auto-calculate ──────────────────────
+            function attachDesktopCalc(el) {
+                if (!el) return;
+                let t = null;
+                el.addEventListener('input', function () {
                     const raw = this.value;
                     if (!raw.endsWith('=')) return;
-                    const expr = raw.slice(0, -1).trim();
-                    if (!expr || !/^[\d\s\+\-\*\/\(\)\.]+$/.test(expr)) return;
-                    try {
-                        // eslint-disable-next-line no-new-func
-                        const result = Function('"use strict"; return (' + expr + ')')();
-                        if (!isFinite(result) || result < 0) return;
-                        const rounded = Math.round(result * 100) / 100;
-                        this.value = expr + ' = ' + rounded.toLocaleString('id-ID');
-                        this.style.color = '#34d399'; // green flash
-                        clearTimeout(calcTimer);
-                        calcTimer = setTimeout(() => {
-                            this.value = rounded;
-                            this.style.color = '';
-                        }, 1500);
-                    } catch (e) { /* invalid expression, ignore */ }
-                });
-                // Also allow pressing Enter to trigger calculation
-                inputEl.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter' || e.key === '=') {
-                        // handled by input event on next tick
-                    }
+                    const expr = raw.slice(0, -1);
+                    const result = calcEval(expr);
+                    if (result === null) return;
+                    this.value = expr + ' = ' + result.toLocaleString('id-ID');
+                    this.style.color = '#34d399';
+                    clearTimeout(t);
+                    t = setTimeout(() => { this.value = result; this.style.color = ''; }, 1500);
                 });
             }
-            // Attach to all amount inputs
-            attachCalculator(document.getElementById('entry-amt-source'));
-            attachCalculator(document.getElementById('entry-amt-target'));
-            attachCalculator(document.getElementById('budget-amount-input'));
 
-            // Helper: read numeric amount from a field (handles "10+60 = 70" mid-animation)
+            // ── Mobile: custom keypad ─────────────────────────────────────────
+            const keypad  = document.getElementById('calc-keypad');
+            const exprEl  = document.getElementById('calc-expr');
+            const doneBtn = document.getElementById('calc-done');
+            let activeEl  = null;
+            let expr      = '';
+
+            function kpShow(inputEl) {
+                activeEl = inputEl;
+                // Seed expression from current value (numbers only)
+                const cur = (inputEl.value || '').trim();
+                expr = /^[\d\+\-\*\/\.\s]+$/.test(cur) ? cur : '';
+                exprEl.textContent = expr || '0';
+                keypad.style.display = 'block';
+                requestAnimationFrame(() => { keypad.style.transform = 'translateY(0)'; });
+                // Scroll the input into view above the keypad
+                setTimeout(() => inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 260);
+            }
+
+            function kpHide() {
+                keypad.style.transform = 'translateY(100%)';
+                setTimeout(() => { keypad.style.display = 'none'; }, 260);
+                activeEl = null;
+            }
+
+            function kpCommit(doClose) {
+                if (!activeEl) return;
+                const result = calcEval(expr);
+                if (result !== null) flashResult(activeEl, result);
+                else if (expr) activeEl.value = expr;
+                if (doClose) kpHide();
+            }
+
+            if (isTouchDevice && keypad) {
+                // Suppress native keyboard on amount inputs
+                CALC_IDS.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.setAttribute('inputmode', 'none');
+                    el.setAttribute('autocomplete', 'off');
+                    el.addEventListener('focus', () => kpShow(el));
+                    el.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        el.focus();
+                        kpShow(el);
+                    }, { passive: false });
+                });
+
+                // Keypad button handler
+                keypad.querySelectorAll('[data-k]').forEach(btn => {
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        if (!activeEl) return;
+                        const k = btn.dataset.k;
+                        if (k === '⌫') {
+                            expr = expr.slice(0, -1);
+                        } else if (k === '=') {
+                            const result = calcEval(expr);
+                            if (result !== null) {
+                                exprEl.textContent = expr + ' = ' + result.toLocaleString('id-ID');
+                                activeEl.value = result.toLocaleString('id-ID');
+                                activeEl.style.color = '#34d399';
+                                setTimeout(() => {
+                                    activeEl.value = result;
+                                    activeEl.style.color = '';
+                                }, 1500);
+                                expr = String(result);
+                            }
+                            return;
+                        } else {
+                            expr += k;
+                        }
+                        exprEl.textContent = expr || '0';
+                        activeEl.value = expr;
+                    }, { passive: false });
+                });
+
+                // Done button
+                doneBtn && doneBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    kpCommit(true);
+                }, { passive: false });
+
+                // Tap outside keypad to close
+                document.addEventListener('touchstart', (e) => {
+                    if (!activeEl) return;
+                    if (!keypad.contains(e.target) && !CALC_IDS.includes(e.target.id)) {
+                        kpCommit(true);
+                    }
+                }, { passive: true });
+
+            } else {
+                // Desktop: keyboard typing calculator
+                CALC_IDS.forEach(id => attachDesktopCalc(document.getElementById(id)));
+            }
+
+            // ── Helper: read numeric amount from a field ──────────────────────
             function readAmt(id) {
                 const val = (document.getElementById(id)?.value || '').trim();
-                // If it contains " = ", grab the right-hand side (the result)
                 if (val.includes(' = ')) return Math.abs(parseFloat(val.split(' = ').pop().replace(/\./g, '').replace(',', '.')));
-                // Try safe-eval of pure expressions
                 if (/^[\d\s\+\-\*\/\(\)\.]+$/.test(val)) {
                     try { return Math.abs(Function('"use strict"; return (' + val + ')')()) || 0; } catch (e) {}
                 }
-                return Math.abs(parseFloat(val)) || 0;
+                return Math.abs(parseFloat(val.replace(/\./g, '').replace(',', '.'))) || 0;
             }
-            // ────────────────────────────────────────────────────────────────
+            // ─────────────────────────────────────────────────────────────────
+
 
 
             async function loadSystemConfig() {
