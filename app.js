@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 expr = /^[\d\+\-\*\/\.\s]+$/.test(cur) ? cur : '';
                 exprEl.textContent = expr || '0';
                 keypad.style.display = 'block';
+                document.body.style.paddingBottom = '320px'; // Make room for keypad
                 requestAnimationFrame(() => { keypad.style.transform = 'translateY(0)'; });
                 // Scroll the input into view above the keypad
                 setTimeout(() => inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 260);
@@ -70,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function kpHide() {
                 keypad.style.transform = 'translateY(100%)';
+                document.body.style.paddingBottom = ''; // Remove padding
                 setTimeout(() => { keypad.style.display = 'none'; }, 260);
                 activeEl = null;
             }
