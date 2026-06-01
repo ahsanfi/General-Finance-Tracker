@@ -1591,6 +1591,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 uploadInput.click();
             });
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 8c10c3a9ded903df40e6dbb618b48bac4f506262
             const pasteBtn = document.getElementById('paste-receipt-btn');
             if (pasteBtn) {
                 pasteBtn.addEventListener('click', async (e) => {
@@ -1638,6 +1642,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 70546160ba44404ff4d95378b76573b5d3499f94
+>>>>>>> 8c10c3a9ded903df40e6dbb618b48bac4f506262
             async function processReceiptImage(file) {
                 if (!file) return;
 
