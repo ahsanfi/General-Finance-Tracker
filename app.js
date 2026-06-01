@@ -1591,6 +1591,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 uploadInput.click();
             });
 
+<<<<<<< HEAD
             const pasteBtn = document.getElementById('paste-receipt-btn');
             if (pasteBtn) {
                 pasteBtn.addEventListener('click', async (e) => {
@@ -1638,6 +1639,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+=======
+>>>>>>> 70546160ba44404ff4d95378b76573b5d3499f94
             async function processReceiptImage(file) {
                 if (!file) return;
 
