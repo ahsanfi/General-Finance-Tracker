@@ -163,10 +163,10 @@
                     data-target="view-add">Add/Transfer</button>
                 <button id="desk-tab-daily"
                     class="desk-nav-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all"
-                    data-target="view-daily">Daily &amp; Calendar</button>
+                    data-target="view-daily">Calendar</button>
                 <button id="desk-tab-budget"
                     class="desk-nav-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all"
-                    data-target="view-budget">Budget</button>
+                    data-target="view-budget">Plan & Invest</button>
             </nav>
 
             <div class="quick-actions flex gap-2">
@@ -348,22 +348,30 @@
                             onclick="applyDatePreset('clear')">Clear</button>
                     </div>
 
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4 bg-black/20 p-2.5 rounded-2xl border border-white/5">
+                    <div
+                        class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4 bg-black/20 p-2.5 rounded-2xl border border-white/5">
                         <div class="space-y-1 min-w-0">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">From</label>
-                            <input type="date" id="filter-start" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200">
+                            <label
+                                class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">From</label>
+                            <input type="date" id="filter-start"
+                                class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200">
                         </div>
                         <div class="space-y-1 min-w-0">
                             <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">To</label>
-                            <input type="date" id="filter-end" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200">
+                            <input type="date" id="filter-end"
+                                class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200">
                         </div>
                         <div class="space-y-1 min-w-0">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">Category</label>
-                            <select id="filter-cat" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200 appearance-none"></select>
+                            <label
+                                class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">Category</label>
+                            <select id="filter-cat"
+                                class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200 appearance-none"></select>
                         </div>
                         <div class="space-y-1 min-w-0">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">Wallet</label>
-                            <select id="filter-acc" class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200 appearance-none"></select>
+                            <label
+                                class="text-[10px] text-slate-500 uppercase font-bold ml-1 truncate block">Wallet</label>
+                            <select id="filter-acc"
+                                class="input-glow rounded-xl px-2 py-2 text-xs w-full text-slate-200 appearance-none"></select>
                         </div>
                     </div>
 
@@ -409,7 +417,7 @@
             <div id="view-daily" class="tab-view hidden space-y-4">
 
                 <!-- Sub-tab toggle -->
-                <div class="flex gap-1 bg-black/30 p-1 rounded-2xl border border-white/5 max-w-xs mx-auto">
+                <div class="flex gap-1 bg-black/30 p-1 rounded-2xl border border-white/5 max-w-sm mx-auto">
                     <button id="subtab-daily-btn"
                         class="flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition">
                         <i class="fas fa-calendar-day mr-1"></i> Daily
@@ -417,6 +425,10 @@
                     <button id="subtab-calendar-btn"
                         class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition">
                         <i class="far fa-calendar-alt mr-1"></i> Calendar
+                    </button>
+                    <button id="subtab-monthly-btn"
+                        class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition">
+                        <i class="fas fa-chart-bar mr-1"></i> Monthly
                     </button>
                 </div>
 
@@ -456,7 +468,8 @@
                             <button id="prev-month"
                                 class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
                                     class="fas fa-chevron-left"></i></button>
-                            <h2 id="calendar-header" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+                            <h2 id="calendar-header" class="text-lg sm:text-xl font-bold text-white tracking-tight">
+                            </h2>
                             <button id="next-month"
                                 class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
                                     class="fas fa-chevron-right"></i></button>
@@ -472,6 +485,43 @@
                             <div>S</div>
                         </div>
                         <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- Monthly Sub-view -->
+                <div id="subtab-monthly-content" class="hidden">
+                    <div class="glass-card rounded-3xl overflow-hidden max-w-4xl mx-auto">
+                        <div class="flex items-center justify-between mb-2 bg-black/20 p-3 border-b border-white/5">
+                            <button id="prev-monthly"
+                                class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                                    class="fas fa-chevron-left"></i></button>
+                            <h2 id="monthly-header"
+                                class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                                <i class="fas fa-chart-bar text-theme-primaryLight"></i> <span
+                                    id="monthly-header-text">...</span>
+                            </h2>
+                            <button id="next-monthly"
+                                class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                                    class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-white/5 text-sm">
+                                <thead class="bg-black/30">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-4 text-left font-medium text-slate-400 text-xs uppercase tracking-wider">
+                                            Category</th>
+                                        <th
+                                            class="px-6 py-4 text-right font-medium text-slate-400 text-xs uppercase tracking-wider">
+                                            Total IDR</th>
+                                        <th
+                                            class="px-6 py-4 text-right font-medium text-slate-400 text-xs uppercase tracking-wider">
+                                            Total USD</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="monthly-body" class="divide-y divide-white/5"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -497,6 +547,10 @@
                             <button id="scan-receipt-btn"
                                 class="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-2 rounded-xl transition font-medium flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                                 <i class="fas fa-camera"></i> <span class="hidden sm:inline">Scan AI</span>
+                            </button>
+                            <button id="paste-receipt-btn"
+                                class="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl transition font-medium flex items-center gap-1.5 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                                <i class="fas fa-paste"></i> <span class="hidden sm:inline">Paste Image</span>
                             </button>
                             <input type="file" id="receipt-upload" accept="image/*" class="hidden">
                             <button id="cancel-edit-btn"
@@ -628,111 +682,223 @@
                 </div>
             </div>
 
-            <!-- VIEW: BUDGET -->
-            <div id="view-budget" class="tab-view hidden space-y-5">
+            <!-- VIEW: BUDGET / INVESTMENTS -->
+            <div id="view-budget" class="tab-view hidden">
 
-                <!-- Budget Month Header -->
-                <div class="glass-card p-4 sm:p-5 rounded-3xl flex items-center justify-between">
-                    <button id="budget-prev-month"
-                        class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
-                            class="fas fa-chevron-left text-xs sm:text-sm"></i></button>
-                    <div class="text-center">
-                        <h2 id="budget-header" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Monthly Budget</p>
-                    </div>
-                    <button id="budget-next-month"
-                        class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
-                            class="fas fa-chevron-right text-xs sm:text-sm"></i></button>
+                <!-- Sub-tab toggle -->
+                <div class="flex gap-1 bg-black/30 p-1 rounded-2xl border border-white/5 max-w-sm mx-auto mb-5">
+                    <button id="subtab-budget-btn"
+                        class="flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition">
+                        <i class="fas fa-bullseye mr-1"></i> Budget
+                    </button>
+                    <button id="subtab-investments-btn"
+                        class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition">
+                        <i class="fas fa-chart-line mr-1"></i> Investments
+                    </button>
                 </div>
 
-                <!-- Budget Summary Row -->
-                <div class="space-y-2">
-                    <!-- Row 1: Total Budget (full width) -->
-                    <div class="glass-card p-4 rounded-2xl flex items-center justify-between">
-                        <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Budget</div>
-                        <div id="budget-total-limit" class="font-bold font-mono text-sm text-white">IDR 0</div>
-                    </div>
-                    <!-- Row 2: Spent + Remaining (2 cols) -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="glass-card p-4 rounded-2xl text-center">
-                            <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Spent</div>
-                            <div id="budget-total-spent" class="font-bold font-mono text-xs sm:text-sm text-rose-400 break-all leading-tight">IDR 0</div>
+                <!-- BUDGET SUB-VIEW -->
+                <div id="subtab-budget-content" class="space-y-5">
+
+                    <!-- Budget Month Header -->
+                    <div class="glass-card p-4 sm:p-5 rounded-3xl flex items-center justify-between">
+                        <button id="budget-prev-month"
+                            class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                                class="fas fa-chevron-left text-xs sm:text-sm"></i></button>
+                        <div class="text-center">
+                            <h2 id="budget-header" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Monthly Budget</p>
                         </div>
-                        <div class="glass-card p-4 rounded-2xl text-center">
-                            <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Remaining</div>
-                            <div id="budget-total-remaining" class="font-bold font-mono text-xs sm:text-sm text-emerald-400 break-all leading-tight">IDR 0</div>
+                        <button id="budget-next-month"
+                            class="p-2 sm:p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white transition"><i
+                                class="fas fa-chevron-right text-xs sm:text-sm"></i></button>
+                    </div>
+
+                    <!-- Budget Summary Row -->
+                    <div class="space-y-2">
+                        <!-- Row 1: Total Budget (full width) -->
+                        <div class="glass-card p-4 rounded-2xl flex items-center justify-between">
+                            <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Budget
+                            </div>
+                            <div id="budget-total-limit" class="font-bold font-mono text-sm text-white">IDR 0</div>
+                        </div>
+                        <!-- Row 2: Spent + Remaining (2 cols) -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="glass-card p-4 rounded-2xl text-center">
+                                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Spent
+                                </div>
+                                <div id="budget-total-spent"
+                                    class="font-bold font-mono text-xs sm:text-sm text-rose-400 break-all leading-tight">
+                                    IDR 0</div>
+                            </div>
+                            <div class="glass-card p-4 rounded-2xl text-center">
+                                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                                    Remaining</div>
+                                <div id="budget-total-remaining"
+                                    class="font-bold font-mono text-xs sm:text-sm text-emerald-400 break-all leading-tight">
+                                    IDR 0</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Budget Overall Progress -->
-                <div class="glass-card p-4 rounded-2xl">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Overall Progress</span>
-                        <span id="budget-overall-pct" class="text-xs font-mono font-bold text-white">0%</span>
+                    <!-- Budget Overall Progress -->
+                    <div class="glass-card p-4 rounded-2xl">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Overall
+                                Progress</span>
+                            <span id="budget-overall-pct" class="text-xs font-mono font-bold text-white">0%</span>
+                        </div>
+                        <div class="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                            <div id="budget-overall-bar"
+                                class="h-full rounded-full transition-all duration-700 ease-out" style="width: 0%">
+                            </div>
+                        </div>
                     </div>
-                    <div class="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                        <div id="budget-overall-bar" class="h-full rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
-                    </div>
-                </div>
 
-                <!-- Category Budget Cards -->
-                <div class="glass-card p-5 rounded-3xl">
-                    <div class="flex items-center justify-between mb-5">
-                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <i class="fas fa-bullseye text-theme-primaryLight"></i> Category Budgets
+                    <!-- Category Budget Cards -->
+                    <div class="glass-card p-5 rounded-3xl">
+                        <div class="flex items-center justify-between mb-5">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fas fa-bullseye text-theme-primaryLight"></i> Category Budgets
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <button id="budget-copy-btn"
+                                    class="text-xs bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
+                                    <i class="fas fa-copy text-[10px]"></i> Copy
+                                </button>
+                                <button id="budget-add-btn"
+                                    class="text-xs bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
+                                    <i class="fas fa-plus text-[10px]"></i> Set Budget
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Add Budget Form (hidden by default) -->
+                        <div id="budget-form"
+                            class="hidden mb-5 bg-black/30 p-4 rounded-2xl border border-white/5 space-y-3">
+                            <p class="text-xs text-slate-400 font-medium">Set a monthly spending limit for a category
+                            </p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Category</label>
+                                    <select id="budget-cat-select"
+                                        class="input-glow rounded-xl px-3 py-2.5 text-sm w-full text-slate-200 appearance-none"></select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Limit
+                                        (IDR)</label>
+                                    <input type="text" inputmode="decimal" id="budget-amount-input"
+                                        placeholder="e.g. 500000"
+                                        class="input-glow rounded-xl px-3 py-2.5 text-sm w-full text-slate-200" min="0">
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="budget-save-btn"
+                                    class="flex-1 bg-theme-primary text-white font-bold py-2.5 rounded-xl text-sm hover:bg-theme-primaryHover transition">Save
+                                    Budget</button>
+                                <button id="budget-cancel-btn"
+                                    class="px-4 bg-white/5 text-slate-400 font-bold py-2.5 rounded-xl text-sm hover:bg-white/10 transition">Cancel</button>
+                            </div>
+                        </div>
+
+                        <!-- Budget List -->
+                        <div id="budget-list" class="space-y-4">
+                            <!-- Dynamically populated -->
+                        </div>
+                        <div id="budget-empty" class="hidden text-center py-10 text-slate-500 text-sm italic">
+                            No budgets set yet. Click "Set Budget" to get started.
+                        </div>
+                    </div>
+
+                    <!-- Unbudgeted Spending -->
+                    <div class="glass-card p-5 rounded-3xl">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-4">
+                            <i class="fas fa-receipt text-amber-400"></i> Unbudgeted Spending
                         </h3>
-                        <div class="flex items-center gap-2">
-                            <button id="budget-copy-btn" class="text-xs bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
-                                <i class="fas fa-copy text-[10px]"></i> Copy
-                            </button>
-                            <button id="budget-add-btn" class="text-xs bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
-                                <i class="fas fa-plus text-[10px]"></i> Set Budget
-                            </button>
+                        <div id="budget-untracked-list" class="space-y-2">
+                            <!-- Dynamically populated -->
+                        </div>
+                        <div id="budget-untracked-empty" class="hidden text-center py-6 text-slate-500 text-sm italic">
+                            All spending is tracked by a budget 🎉
                         </div>
                     </div>
 
-                    <!-- Add Budget Form (hidden by default) -->
-                    <div id="budget-form" class="hidden mb-5 bg-black/30 p-4 rounded-2xl border border-white/5 space-y-3">
-                        <p class="text-xs text-slate-400 font-medium">Set a monthly spending limit for a category</p>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Category</label>
-                                <select id="budget-cat-select" class="input-glow rounded-xl px-3 py-2.5 text-sm w-full text-slate-200 appearance-none"></select>
+                </div> <!-- END BUDGET SUB-VIEW -->
+                <!-- INVESTMENTS SUB-VIEW -->
+                <div id="subtab-investments-content" class="hidden space-y-5">
+                    <div
+                        class="glass-card p-6 sm:p-8 rounded-3xl relative overflow-hidden border border-purple-500/10 flex flex-col md:flex-row items-center gap-6">
+                        <div
+                            class="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none">
+                        </div>
+                        <div
+                            class="absolute bottom-0 left-0 w-32 h-32 bg-theme-primary/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none">
+                        </div>
+
+                        <div class="flex-1 text-center md:text-left relative z-10">
+                            <div class="text-[10px] text-purple-400/80 uppercase font-bold tracking-wider mb-2">Total
+                                Portfolio Value</div>
+                            <div id="portfolio-total-value"
+                                class="font-bold font-mono text-4xl sm:text-5xl text-white mb-2">IDR 0</div>
+                            <div class="flex items-center justify-center md:justify-start gap-3 mt-3">
+                                <div class="bg-black/30 border border-white/5 px-3 py-1.5 rounded-lg">
+                                    <div class="text-[9px] text-slate-500 uppercase tracking-wide">Invested Cash</div>
+                                    <div id="portfolio-invested-cash"
+                                        class="text-sm font-bold font-mono text-slate-300">IDR 0</div>
+                                </div>
+                                <div class="bg-black/30 border border-white/5 px-3 py-1.5 rounded-lg">
+                                    <div class="text-[9px] text-slate-500 uppercase tracking-wide">Total P&L</div>
+                                    <div id="portfolio-total-pnl" class="text-sm font-bold font-mono text-emerald-400">+
+                                        IDR 0</div>
+                                </div>
                             </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-slate-500 uppercase font-bold ml-1">Limit (IDR)</label>
-                                <input type="text" inputmode="decimal" id="budget-amount-input" placeholder="e.g. 500000"
-                                    class="input-glow rounded-xl px-3 py-2.5 text-sm w-full text-slate-200" min="0">
+                        </div>
+
+                        <!-- Chart & Allocation Legend -->
+                        <div class="w-full md:w-auto flex flex-col md:flex-row items-center gap-6 relative z-10 flex-shrink-0 mt-4 md:mt-0">
+                            <!-- Mini Chart -->
+                            <div class="w-40 h-40 md:w-48 md:h-48 relative flex-shrink-0">
+                                <canvas id="portfolio-donut-chart"></canvas>
+                            </div>
+                            <!-- Custom Legend -->
+                            <div id="portfolio-chart-legend" class="flex flex-col gap-2.5 w-full md:w-40 max-h-40 md:max-h-48 overflow-y-auto custom-scroll pr-2">
+                                <!-- Populated dynamically by app.js -->
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button id="budget-save-btn" class="flex-1 bg-theme-primary text-white font-bold py-2.5 rounded-xl text-sm hover:bg-theme-primaryHover transition">Save Budget</button>
-                            <button id="budget-cancel-btn" class="px-4 bg-white/5 text-slate-400 font-bold py-2.5 rounded-xl text-sm hover:bg-white/10 transition">Cancel</button>
+                    </div>
+
+                    <!-- Investment Accounts (Cash) -->
+                    <div class="glass-card p-5 rounded-3xl border border-white/5">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fas fa-wallet text-purple-400"></i> Unallocated Cash (Brokers)
+                            </h3>
+                            <button onclick="renderConfigUI(); switchTab('view-config')"
+                                class="text-xs bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 px-3 py-1.5 rounded-lg font-bold tracking-wider transition flex items-center gap-1.5">
+                                <i class="fas fa-cog text-[10px]"></i> Manage
+                            </button>
+                        </div>
+                        <div id="investments-list" class="space-y-2">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
 
-                    <!-- Budget List -->
-                    <div id="budget-list" class="space-y-4">
-                        <!-- Dynamically populated -->
+                    <!-- Assets List -->
+                    <div class="glass-card p-5 rounded-3xl border border-white/5">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fas fa-layer-group text-purple-400"></i> My Assets
+                            </h3>
+                            <button onclick="openPortfolioModal()"
+                                class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl font-bold transition shadow-md flex items-center gap-2">
+                                <i class="fas fa-plus"></i> Add Asset
+                            </button>
+                        </div>
+                        <div id="portfolio-assets-list" class="space-y-3">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
-                    <div id="budget-empty" class="hidden text-center py-10 text-slate-500 text-sm italic">
-                        No budgets set yet. Click "Set Budget" to get started.
-                    </div>
-                </div>
-
-                <!-- Unbudgeted Spending -->
-                <div class="glass-card p-5 rounded-3xl">
-                    <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-4">
-                        <i class="fas fa-receipt text-amber-400"></i> Unbudgeted Spending
-                    </h3>
-                    <div id="budget-untracked-list" class="space-y-2">
-                        <!-- Dynamically populated -->
-                    </div>
-                    <div id="budget-untracked-empty" class="hidden text-center py-6 text-slate-500 text-sm italic">
-                        All spending is tracked by a budget 🎉
-                    </div>
-                </div>
+                </div> <!-- END INVESTMENTS SUB-VIEW -->
 
             </div>
 
@@ -800,19 +966,26 @@
 
                             <!-- Groq section -->
                             <div id="scan-setup-groq">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq API Key</label>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Groq
+                                    API Key</label>
                                 <input type="password" id="groq-api-key" placeholder="gsk_..."
                                     class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
-                                <p class="text-[10px] text-slate-500 mt-2">Model: <strong class="text-slate-300">Llama 4 Scout Vision</strong>. Free key at <a href="https://console.groq.com/keys" target="_blank" class="text-violet-400 underline">console.groq.com</a></p>
+                                <p class="text-[10px] text-slate-500 mt-2">Model: <strong class="text-slate-300">Llama 4
+                                        Scout Vision</strong>. Free key at <a href="https://console.groq.com/keys"
+                                        target="_blank" class="text-violet-400 underline">console.groq.com</a></p>
                             </div>
 
                             <!-- MiniMax section -->
                             <div id="scan-setup-minimax" class="hidden">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">MiniMax API Key</label>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">MiniMax
+                                    API Key</label>
                                 <input type="password" id="minimax-scan-key" placeholder="eyJ..."
                                     class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
                                 <div class="mt-2">
-                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Model</label>
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Model</label>
                                     <select id="scan-model-minimax"
                                         class="w-full bg-black/40 rounded-xl px-4 py-2.5 text-sm text-slate-100 border border-white/10 focus:border-cyan-500/40 focus:outline-none">
                                         <option value="MiniMax-M2.5">MiniMax-M2.5 (Recommended)</option>
@@ -823,7 +996,9 @@
                                         <option value="MiniMax-M2">MiniMax-M2</option>
                                     </select>
                                 </div>
-                                <p class="text-[10px] text-slate-500 mt-2">Uses your MiniMax key &bull; <a href="https://platform.minimax.io" target="_blank" class="text-cyan-400 underline">platform.minimax.io</a></p>
+                                <p class="text-[10px] text-slate-500 mt-2">Uses your MiniMax key &bull; <a
+                                        href="https://platform.minimax.io" target="_blank"
+                                        class="text-cyan-400 underline">platform.minimax.io</a></p>
                             </div>
 
                         </div>
@@ -875,7 +1050,7 @@
                     class="nav-icon-bg absolute top-0 w-10 h-10 rounded-full transition-all duration-300 -z-10 group-hover:bg-theme-primary/10">
                 </div>
                 <i class="fas fa-calendar-day text-lg mt-2 mb-1 z-10"></i>
-                <span class="text-[10px] font-medium z-10">Daily</span>
+                <span class="text-[10px] font-medium z-10">Calendar</span>
             </button>
             <button
                 class="mob-nav-btn text-slate-500 hover:text-slate-300 flex flex-col items-center w-1/5 relative group transition-colors"
@@ -884,27 +1059,30 @@
                     class="nav-icon-bg absolute top-0 w-10 h-10 rounded-full transition-all duration-300 -z-10 group-hover:bg-theme-primary/10">
                 </div>
                 <i class="fas fa-bullseye text-lg mt-2 mb-1 z-10"></i>
-                <span class="text-[10px] font-medium z-10">Budget</span>
+                <span class="text-[10px] font-medium z-10">Plan</span>
             </button>
         </div>
     </nav>
 
     <!-- Copy Budget Month Modal -->
-    <div id="copy-month-modal" class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
+    <div id="copy-month-modal"
+        class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
         <div class="glass-card rounded-3xl p-6 w-full max-w-sm shadow-2xl">
             <div class="flex items-center justify-between mb-5">
                 <div>
                     <h3 class="font-bold text-white text-base">Copy Budget From</h3>
                     <p class="text-xs text-slate-500 mt-0.5">Select a month to copy its budgets</p>
                 </div>
-                <button id="copy-month-close" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
+                <button id="copy-month-close"
+                    class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
                     <i class="fas fa-times text-sm"></i>
                 </button>
             </div>
             <div id="copy-month-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
                 <!-- Dynamically populated -->
             </div>
-            <p id="copy-month-empty" class="hidden text-center text-slate-500 text-sm py-6 italic">No other months with budgets found.</p>
+            <p id="copy-month-empty" class="hidden text-center text-slate-500 text-sm py-6 italic">No other months with
+                budgets found.</p>
         </div>
     </div>
 
@@ -967,6 +1145,131 @@
         </div>
     </div>
 
+    <!-- Portfolio Modal -->
+    <div id="portfolio-modal"
+        class="hidden fixed inset-0 bg-theme-bg/90 z-[70] flex items-center justify-center p-4 backdrop-blur-md">
+        <div
+            class="glass-card rounded-3xl p-6 sm:p-8 w-full max-w-sm shadow-2xl relative overflow-hidden border border-purple-500/10 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 relative z-10 flex-shrink-0">
+                <h3 id="portfolio-modal-title" class="font-bold text-white text-xl flex items-center gap-2"><i
+                        class="fas fa-layer-group text-purple-400"></i> Add Asset</h3>
+                <button onclick="document.getElementById('portfolio-modal').classList.add('hidden')"
+                    class="text-slate-400 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <input type="hidden" id="portfolio-id">
+
+            <!-- Tabs -->
+            <div id="portfolio-tabs-container" class="hidden flex bg-black/40 p-1 rounded-xl mb-5 flex-shrink-0">
+                <button id="tab-trade"
+                    class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-white bg-purple-600/30 shadow-sm"
+                    onclick="switchPortfolioTab('trade')">Quick Trade</button>
+                <button id="tab-edit"
+                    class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-slate-200"
+                    onclick="switchPortfolioTab('edit')">Edit Details</button>
+            </div>
+
+            <div class="overflow-y-auto custom-scroll pr-2 flex-grow space-y-4"
+                style="-webkit-overflow-scrolling: touch;">
+
+                <!-- TRADE TAB CONTENT -->
+                <div id="portfolio-trade-content" class="hidden space-y-4">
+                    <div class="flex bg-black/40 p-1 rounded-xl mb-2">
+                        <button id="trade-buy-btn"
+                            class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                            onclick="setTradeType('buy')">Buy</button>
+                        <button id="trade-sell-btn"
+                            class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all text-slate-400 hover:text-rose-400"
+                            onclick="setTradeType('sell')">Sell</button>
+                        <button id="trade-update-btn"
+                            class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all text-slate-400 hover:text-blue-400"
+                            onclick="setTradeType('update')">Update Price</button>
+                    </div>
+
+                    <input type="hidden" id="trade-type" value="buy">
+
+                    <div id="trade-amount-container">
+                        <label id="trade-amount-label"
+                            class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Trade
+                            Amount</label>
+                        <input type="text" id="trade-amount"
+                            class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                            placeholder="0" inputmode="decimal">
+                    </div>
+
+                    <div id="trade-new-value-container" class="hidden">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">New Total
+                            Market Value</label>
+                        <input type="text" id="trade-new-value"
+                            class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                            placeholder="0" inputmode="decimal">
+                    </div>
+
+                    <div class="bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl mt-4">
+                        <p id="trade-info" class="text-xs text-blue-300 font-medium">This will automatically add to your
+                            Invested Cost and Market Value.</p>
+                    </div>
+                </div>
+
+                <!-- EDIT TAB CONTENT -->
+                <div id="portfolio-edit-content" class="space-y-4 block">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Asset Name /
+                            Ticker</label>
+                        <input type="text" id="portfolio-name"
+                            class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600"
+                            placeholder="e.g. BTC, BBCA, Mutual Fund">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Platform /
+                            Wallet</label>
+                        <select id="portfolio-platform"
+                            class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white appearance-none">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Currency</label>
+                            <select id="portfolio-curr"
+                                class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white appearance-none">
+                                <option value="IDR">IDR</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Total
+                            Invested (Cost Basis)</label>
+                        <input type="text" id="portfolio-invested"
+                            class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                            placeholder="0" inputmode="decimal">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Current
+                            Market Value</label>
+                        <input type="text" id="portfolio-value"
+                            class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                            placeholder="0" inputmode="decimal">
+                    </div>
+                </div>
+
+            </div> <!-- End scroll container -->
+
+            <div class="flex-shrink-0 pt-4 bg-theme-bg/80 border-t border-white/5 mt-2">
+                <button id="portfolio-save-btn" onclick="savePortfolioAsset()"
+                    class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_15px_rgba(147,51,234,0.3)] transition active:scale-[0.98]">
+                    Save Asset
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast"
         class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 glass text-white px-6 py-3 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/10 z-[80] flex items-center gap-3 min-w-[200px] justify-center transition-all duration-300 translate-y-[-100px] opacity-0 font-medium">
     </div>
@@ -974,7 +1277,8 @@
     <script src="app.js"></script>
 
     <!-- AI Finance Assistant Panel -->
-    <div id="ai-panel" class="fixed inset-y-0 right-0 w-full sm:w-[420px] z-[80] flex flex-col translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+    <div id="ai-panel"
+        class="fixed inset-y-0 right-0 w-full sm:w-[420px] z-[80] flex flex-col translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style="background: linear-gradient(135deg, #0f1117 0%, #131929 100%); border-left: 1px solid rgba(139,92,246,0.2); box-shadow: -10px 0 40px rgba(0,0,0,0.5);">
 
         <!-- Panel Header -->
@@ -987,17 +1291,23 @@
                 </div>
                 <div>
                     <div class="text-sm font-bold text-white">AI Finance Assistant</div>
-                    <div id="ai-provider-badge" class="text-[10px] font-medium text-violet-400/70">Powered by Groq &bull; Llama 3.3</div>
+                    <div id="ai-provider-badge" class="text-[10px] font-medium text-violet-400/70">Powered by Groq
+                        &bull; Llama 3.3</div>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="ai-settings-btn" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition" title="API Key Settings">
+                <button id="ai-settings-btn"
+                    class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
+                    title="API Key Settings">
                     <i class="fas fa-key text-xs"></i>
                 </button>
-                <button id="ai-clear-btn" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition" title="Clear Chat">
+                <button id="ai-clear-btn"
+                    class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
+                    title="Clear Chat">
                     <i class="fas fa-trash-alt text-xs"></i>
                 </button>
-                <button id="ai-close-btn" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition">
+                <button id="ai-close-btn"
+                    class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition">
                     <i class="fas fa-times text-sm"></i>
                 </button>
             </div>
@@ -1007,10 +1317,14 @@
         <div id="ai-key-setup" class="hidden flex-col flex-grow p-5 gap-4" style="overflow-y:auto">
             <!-- Provider Tabs -->
             <div class="flex rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
-                <button id="ai-tab-groq" onclick="aiSelectProvider('groq')" class="flex-1 py-2.5 text-xs font-bold transition-all" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
+                <button id="ai-tab-groq" onclick="aiSelectProvider('groq')"
+                    class="flex-1 py-2.5 text-xs font-bold transition-all"
+                    style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
                     <i class="fas fa-bolt mr-1"></i>Groq
                 </button>
-                <button id="ai-tab-minimax" onclick="aiSelectProvider('minimax')" class="flex-1 py-2.5 text-xs font-bold transition-all" style="background:rgba(255,255,255,0.05);color:#94a3b8">
+                <button id="ai-tab-minimax" onclick="aiSelectProvider('minimax')"
+                    class="flex-1 py-2.5 text-xs font-bold transition-all"
+                    style="background:rgba(255,255,255,0.05);color:#94a3b8">
                     <i class="fas fa-star mr-1"></i>MiniMax
                 </button>
             </div>
@@ -1018,22 +1332,29 @@
             <!-- Groq setup -->
             <div id="ai-setup-groq" class="flex flex-col gap-3">
                 <div class="text-center">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-violet-400 text-xl mx-auto mb-2" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3)"><i class="fas fa-bolt"></i></div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-violet-400 text-xl mx-auto mb-2"
+                        style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3)"><i
+                            class="fas fa-bolt"></i></div>
                     <h3 class="text-white font-bold text-sm mb-1">Groq API Key</h3>
-                    <p class="text-slate-500 text-xs">Free at <a href="https://console.groq.com/keys" target="_blank" class="text-violet-400 hover:underline">console.groq.com/keys</a></p>
+                    <p class="text-slate-500 text-xs">Free at <a href="https://console.groq.com/keys" target="_blank"
+                            class="text-violet-400 hover:underline">console.groq.com/keys</a></p>
                 </div>
                 <input id="ai-key-groq" type="password" placeholder="gsk_..."
                     class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-violet-500/30 focus:border-violet-500/60 focus:outline-none"
                     style="background:rgba(0,0,0,0.4)">
-                <p class="text-[10px] text-slate-600 text-center">Model: llama-3.3-70b-versatile &bull; 14,400 req/day free</p>
+                <p class="text-[10px] text-slate-600 text-center">Model: llama-3.3-70b-versatile &bull; 14,400 req/day
+                    free</p>
             </div>
 
             <!-- MiniMax setup -->
             <div id="ai-setup-minimax" class="hidden flex-col gap-3">
                 <div class="text-center">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-cyan-400 text-xl mx-auto mb-2" style="background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3)"><i class="fas fa-star"></i></div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-cyan-400 text-xl mx-auto mb-2"
+                        style="background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3)"><i
+                            class="fas fa-star"></i></div>
                     <h3 class="text-white font-bold text-sm mb-1">MiniMax API Key</h3>
-                    <p class="text-slate-500 text-xs">Get key at <a href="https://www.minimax.io/platform" target="_blank" class="text-cyan-400 hover:underline">minimax.io/platform</a></p>
+                    <p class="text-slate-500 text-xs">Get key at <a href="https://www.minimax.io/platform"
+                            target="_blank" class="text-cyan-400 hover:underline">minimax.io/platform</a></p>
                 </div>
                 <input id="ai-key-minimax" type="password" placeholder="eyJ..."
                     class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-cyan-500/30 focus:border-cyan-500/60 focus:outline-none"
@@ -1066,11 +1387,21 @@
         <div id="ai-suggestions" class="px-4 pb-3 flex-shrink-0">
             <p class="text-[10px] text-slate-600 uppercase font-bold tracking-wider mb-2">Try asking</p>
             <div class="flex flex-wrap gap-2">
-                <button class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">💸 Spending this month?</button>
-                <button class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">☕ Coffee last month?</button>
-                <button class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">📊 Top 3 expenses?</button>
-                <button class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">💰 Net savings last 3 months?</button>
-                <button class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">📅 Food spending this week?</button>
+                <button
+                    class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">💸
+                    Spending this month?</button>
+                <button
+                    class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">☕
+                    Coffee last month?</button>
+                <button
+                    class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">📊
+                    Top 3 expenses?</button>
+                <button
+                    class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">💰
+                    Net savings last 3 months?</button>
+                <button
+                    class="ai-suggestion text-[11px] bg-white/5 hover:bg-violet-500/15 text-slate-400 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 px-3 py-1.5 rounded-lg transition">📅
+                    Food spending this week?</button>
             </div>
         </div>
 
@@ -1098,12 +1429,12 @@
         style="background: linear-gradient(135deg, #7c3aed, #4f46e5); box-shadow: 0 8px 32px rgba(124,58,237,0.45);"
         title="AI Finance Assistant">
         <i class="fas fa-robot text-xl transition-transform duration-300 group-hover:rotate-12"></i>
-        <span class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[#0f1117] animate-pulse"></span>
+        <span
+            class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[#0f1117] animate-pulse"></span>
     </button>
 
     <!-- ── Custom Calculator Keypad (mobile) ──────────────────────────── -->
-    <div id="calc-keypad"
-        style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:300;
+    <div id="calc-keypad" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:300;
                background:#1c1c1e; border-top:1px solid rgba(255,255,255,0.12);
                box-shadow:0 -8px 40px rgba(0,0,0,0.6);
                padding-bottom:env(safe-area-inset-bottom,0px);
@@ -1115,13 +1446,11 @@
             <span id="calc-expr" style="font-family:'JetBrains Mono',monospace; font-size:13px;
                   color:#94a3b8; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
             <div style="display:flex; gap:8px;">
-                <button id="calc-clear"
-                    style="color:#f87171; font-weight:600; font-size:15px; padding:4px 12px;
+                <button id="calc-clear" style="color:#f87171; font-weight:600; font-size:15px; padding:4px 12px;
                            background:rgba(248,113,113,0.12); border-radius:8px; border:none; cursor:pointer;">
                     Clear
                 </button>
-                <button id="calc-done"
-                    style="color:#818cf8; font-weight:700; font-size:15px; padding:4px 12px;
+                <button id="calc-done" style="color:#818cf8; font-weight:700; font-size:15px; padding:4px 12px;
                            background:rgba(129,140,248,0.12); border-radius:8px; border:none; cursor:pointer;">
                     Done ✓
                 </button>
@@ -1129,7 +1458,8 @@
         </div>
 
         <!-- keypad grid: 4 cols -->
-        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,0.06); padding:1px;">
+        <div
+            style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,0.06); padding:1px;">
 
             <!-- Row 1 -->
             <button class="ck" data-k="7">7</button>
@@ -1173,9 +1503,21 @@
             transition: background .1s;
             text-align: center;
         }
-        .ck:active { background: #3a3a3c; }
-        .ck-op { color: #f97316; font-weight: 700; font-size: 24px; }
-        .ck-del { color: #94a3b8; font-size: 20px; }
+
+        .ck:active {
+            background: #3a3a3c;
+        }
+
+        .ck-op {
+            color: #f97316;
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        .ck-del {
+            color: #94a3b8;
+            font-size: 20px;
+        }
     </style>
 
 </body>
