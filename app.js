@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadSystemConfig();
 
             // ── Calculator (dual-mode: custom keypad on mobile, keyboard on desktop) ─
-            const CALC_IDS = ['entry-amt-source', 'entry-amt-target', 'budget-amount-input'];
+            const CALC_IDS = ['entry-amt-source', 'entry-amt-target', 'budget-amount-input', 'portfolio-invested', 'portfolio-value', 'trade-amount', 'trade-new-value'];
             const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
             // ── Shared evaluator ──────────────────────────────────────────────
@@ -195,7 +195,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function handleUrlParams() {
                 const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.has('amount') || urlParams.has('desc')) {
+                if (urlParams.has('scanBase64')) {
+                    setTimeout(() => {
+                        updateTabUI('view-add');
+                        try {
+                            const base64 = urlParams.get('scanBase64').replace(/ /g, '+');
+                            const byteCharacters = atob(base64);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], {type: 'image/jpeg'});
+                            
+                            const key = scanProvider === 'groq'
+                                ? localStorage.getItem('groqApiKey')
+                                : localStorage.getItem('mtracker_minimax_key');
+                            if (!key) {
+                                const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
+                                showToast(`Please save your ${label} API Key in Config first`, 'error');
+                                window.switchTab('view-config');
+                            } else {
+                                processReceiptImage(blob);
+                            }
+                        } catch(e) {
+                            showToast("Failed to read image from URL", 'error');
+                            console.error(e);
+                        }
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }, 500);
+                } else if (urlParams.has('amount') || urlParams.has('desc')) {
                     setTimeout(() => {
                         updateTabUI('view-add');
 
@@ -300,27 +329,53 @@ document.addEventListener('DOMContentLoaded', () => {
             // Expose switchTab globally for edit buttons
             window.switchTab = updateTabUI;
 
-            // --- Daily / Calendar Sub-tab logic ---
+            // --- Daily / Calendar / Monthly Sub-tab logic ---
             function setDailySubTab(tab) {
                 const isDaily = tab === 'daily';
+                const isCal = tab === 'calendar';
+                const isMonthly = tab === 'monthly';
+
                 document.getElementById('subtab-daily-content').classList.toggle('hidden', !isDaily);
-                document.getElementById('subtab-calendar-content').classList.toggle('hidden', isDaily);
+                document.getElementById('subtab-calendar-content').classList.toggle('hidden', !isCal);
+                document.getElementById('subtab-monthly-content').classList.toggle('hidden', !isMonthly);
 
                 const dailyBtn = document.getElementById('subtab-daily-btn');
                 const calBtn = document.getElementById('subtab-calendar-btn');
+                const monthlyBtn = document.getElementById('subtab-monthly-btn');
 
-                if (isDaily) {
-                    dailyBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition';
-                    calBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition';
-                } else {
-                    calBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition';
-                    dailyBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition';
-                    renderCalendar(masterData); // Refresh calendar when switching to it
-                }
+                const activeClass = 'flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition';
+                const inactiveClass = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition';
+
+                dailyBtn.className = isDaily ? activeClass : inactiveClass;
+                calBtn.className = isCal ? activeClass : inactiveClass;
+                monthlyBtn.className = isMonthly ? activeClass : inactiveClass;
+
+                if (isCal) renderCalendar(masterData);
             }
 
             document.getElementById('subtab-daily-btn').addEventListener('click', () => setDailySubTab('daily'));
             document.getElementById('subtab-calendar-btn').addEventListener('click', () => setDailySubTab('calendar'));
+            document.getElementById('subtab-monthly-btn').addEventListener('click', () => setDailySubTab('monthly'));
+
+            // --- Budget / Investments Sub-tab logic ---
+            function setBudgetSubTab(tab) {
+                const isBudget = tab === 'budget';
+                
+                document.getElementById('subtab-budget-content').classList.toggle('hidden', !isBudget);
+                document.getElementById('subtab-investments-content').classList.toggle('hidden', isBudget);
+
+                const budgetBtn = document.getElementById('subtab-budget-btn');
+                const investBtn = document.getElementById('subtab-investments-btn');
+
+                const activeClass = 'flex-1 py-2 text-xs font-bold rounded-xl bg-theme-primary/20 text-theme-primaryLight border border-theme-primary/30 transition';
+                const inactiveClass = 'flex-1 py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-slate-300 transition';
+
+                budgetBtn.className = isBudget ? activeClass : inactiveClass;
+                investBtn.className = !isBudget ? activeClass : inactiveClass;
+            }
+
+            document.getElementById('subtab-budget-btn').addEventListener('click', () => setBudgetSubTab('budget'));
+            document.getElementById('subtab-investments-btn').addEventListener('click', () => setBudgetSubTab('investments'));
 
             window.applyDatePreset = (type) => {
                 const now = new Date();
@@ -385,6 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (result.status !== 'success') throw new Error(result.message || "Failed to load");
 
                     masterData = [];
+                    window.portfolioData = result.portfolio || [];
                     exchangeRate = result.rate || 16000;
 
                     const parse = (rows, type) => {
@@ -425,14 +481,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
+                const invAccs = SYSTEM_CONFIG.investmentAccounts || [];
+                let totalPortfolioPnlIDR = 0;
+
                 document.getElementById('account-balances-container').innerHTML = Object.values(bals).sort((a, b) => a.n.localeCompare(b.n)).map((b, idx) => {
                     const isUSD = b.c === 'USD';
                     const id = `bal-${idx}`;
+                    
+                    let displayVal = b.v;
+                    let isInv = invAccs.includes(b.n);
+                    
+                    if (isInv) {
+                        let investedBase = 0;
+                        let marketBase = 0;
+                        (window.portfolioData || []).forEach(a => {
+                            if (a.platform === b.n) {
+                                const aInvBase = (a.currency === b.c) ? a.invested : (a.currency === 'IDR' && b.c === 'USD' ? a.invested / exchangeRate : a.invested * exchangeRate);
+                                const aValBase = (a.currency === b.c) ? a.currentValue : (a.currency === 'IDR' && b.c === 'USD' ? a.currentValue / exchangeRate : a.currentValue * exchangeRate);
+                                investedBase += aInvBase;
+                                marketBase += aValBase;
+                            }
+                        });
+                        const pnlBase = marketBase - investedBase;
+                        displayVal = b.v + pnlBase;
+                        
+                        // Add to total global PnL
+                        totalPortfolioPnlIDR += (b.c === 'IDR' ? pnlBase : pnlBase * exchangeRate);
+                    }
+
                     return `
-                    <div class="bg-black/30 p-4 rounded-2xl border border-white/5 hover:border-white/10 transition flex flex-col justify-center min-h-[80px] relative group shadow-inner">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest truncate mb-1" title="${b.n}">${b.n}</span>
-                        <span id="${id}" class="font-bold font-mono text-sm tracking-tighter truncate ${b.v >= 0 ? 'text-theme-primaryLight' : 'text-rose-400'} ${isUSD ? 'cursor-pointer' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${b.v})` : ''}">
-                            ${fmt(b.v, b.c)}
+                    <div class="bg-black/30 p-4 rounded-2xl border ${isInv ? 'border-purple-500/30' : 'border-white/5'} hover:border-white/10 transition flex flex-col justify-center min-h-[80px] relative group shadow-inner">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest truncate mb-1 flex items-center gap-1" title="${b.n}">
+                            ${isInv ? '<i class="fas fa-layer-group text-purple-400"></i>' : ''} ${b.n}
+                        </span>
+                        <span id="${id}" class="font-bold font-mono text-sm tracking-tighter truncate ${displayVal >= 0 ? (isInv ? 'text-purple-400' : 'text-theme-primaryLight') : 'text-rose-400'} ${isUSD ? 'cursor-pointer' : ''}" onclick="${isUSD ? `toggleCurrency('${id}', ${displayVal})` : ''}">
+                            ${fmt(displayVal, b.c)}
                         </span>
                         ${isUSD ? '<div class="absolute top-2 right-2 text-[8px] bg-white/5 p-1 rounded text-slate-500 group-hover:text-theme-primaryLight transition"><i class="fas fa-exchange-alt"></i></div>' : ''}
                     </div>
@@ -442,7 +525,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const totalIncReal = incIDR + (incUSD * exchangeRate);
                 const totalExpReal = expIDR + (expUSD * exchangeRate);
                 const netCashFlowIDR = totalIncReal - totalExpReal;
-                let totalAssetIDR = 0; Object.values(bals).forEach(b => { if (b.c === 'IDR') totalAssetIDR += b.v; if (b.c === 'USD') totalAssetIDR += (b.v * exchangeRate); });
+                let totalAssetIDR = totalPortfolioPnlIDR; 
+                Object.values(bals).forEach(b => { if (b.c === 'IDR') totalAssetIDR += b.v; if (b.c === 'USD') totalAssetIDR += (b.v * exchangeRate); });
 
                 const dashboardValueClass = 'stat-value amount-text text-[13px] min-[390px]:text-[14px] sm:text-base md:text-xl xl:text-2xl leading-tight whitespace-normal break-words font-bold z-10 font-mono';
                 const incomeEl = document.querySelector('#summary-income .stat-value');
@@ -516,8 +600,461 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (filtered.length === 0) document.getElementById('data-body').innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-500 text-sm italic">No data found</td></tr>';
                 }
 
-                renderDaily(masterData); renderCalendar(masterData); updateChart(masterData); updateTrendChart(masterData); renderDashWidgets(masterData);
+                renderDaily(masterData); renderCalendar(masterData); renderMonthlyOverview(masterData); updateChart(masterData); updateTrendChart(masterData); renderDashWidgets(masterData); renderInvestments(bals);
             }
+
+            let portfolioChart = null;
+
+            function renderInvestments(bals) {
+                const invAccs = SYSTEM_CONFIG.investmentAccounts || [];
+                let totalCashIDR = 0;
+                let html = '';
+
+                if (invAccs.length === 0) {
+                    html = '<div class="text-center py-10 text-slate-500 text-sm italic glass rounded-2xl">No investment accounts configured. Manage them in Config.</div>';
+                } else {
+                    const invBals = Object.values(bals).filter(b => invAccs.includes(b.n)).sort((a, b) => a.n.localeCompare(b.n));
+                    if (invBals.length === 0) {
+                        html = '<div class="text-center py-10 text-slate-500 text-sm italic glass rounded-2xl">No cash data for configured investment accounts.</div>';
+                    } else {
+                        html = invBals.map(b => {
+                            const valIDR = b.c === 'IDR' ? b.v : (b.v * exchangeRate);
+                            totalCashIDR += valIDR;
+                            
+                            let investedInThisPlatformIDR = 0;
+                            (window.portfolioData || []).forEach(a => {
+                                if (a.platform === b.n) {
+                                    investedInThisPlatformIDR += (a.currency === 'IDR' ? a.invested : a.invested * exchangeRate);
+                                }
+                            });
+                            
+                            let unallocatedIDR = valIDR - investedInThisPlatformIDR;
+                            let unallocatedBase = b.c === 'IDR' ? unallocatedIDR : (unallocatedIDR / exchangeRate);
+                            
+                            // Fix floating-point imprecision (e.g., -0.0000001 becoming -$0)
+                            if (Math.abs(unallocatedBase) < 0.005) {
+                                unallocatedBase = 0;
+                            }
+                            
+                            const isWarning = unallocatedBase < -0.005;
+                            const warningHtml = isWarning ? `<div class="text-[10px] text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded mt-1"><i class="fas fa-exclamation-triangle mr-1"></i>Invested exceeds transferred cash</div>` : '';
+
+                            return `
+                            <div class="flex items-center justify-between p-4 bg-black/20 rounded-2xl border ${isWarning ? 'border-rose-500/30' : 'border-white/5'} hover:bg-black/40 transition group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2.5 h-2.5 rounded-full ${isWarning ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]' : 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]'}"></div>
+                                    <div>
+                                        <div class="font-bold text-slate-200 text-sm sm:text-base">${b.n}</div>
+                                        ${warningHtml}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold font-mono ${isWarning ? 'text-rose-400' : 'text-white'} group-hover:text-purple-400 transition">${fmt(unallocatedBase, b.c)}</div>
+                                    <div class="text-[9px] font-mono text-slate-500 mt-1">Total Transferred: ${fmt(b.v, b.c)}</div>
+                                </div>
+                            </div>
+                            `;
+                        }).join('');
+                    }
+                }
+                
+                const listEl = document.getElementById('investments-list');
+                if (listEl) listEl.innerHTML = html;
+                
+                renderPortfolio(totalCashIDR);
+            }
+
+            function renderPortfolio(totalCashIDR) {
+                let totalInvestedIDR = 0;
+                let totalMarketValIDR = 0;
+                
+                const pList = [...(window.portfolioData || [])].sort((a, b) => {
+                    const valA = a.currency === 'IDR' ? a.currentValue : (a.currentValue * exchangeRate);
+                    const valB = b.currency === 'IDR' ? b.currentValue : (b.currentValue * exchangeRate);
+                    return valB - valA;
+                });
+                
+                let pListHtml = '';
+                if (pList.length === 0) {
+                    pListHtml = '<div class="text-center py-10 text-slate-500 text-sm italic glass rounded-2xl">No assets added. Click Add Asset to start tracking your portfolio.</div>';
+                } else {
+                    pListHtml = pList.map(a => {
+                        const invIDR = a.currency === 'IDR' ? a.invested : (a.invested * exchangeRate);
+                        const valIDR = a.currency === 'IDR' ? a.currentValue : (a.currentValue * exchangeRate);
+                        totalInvestedIDR += invIDR;
+                        totalMarketValIDR += valIDR;
+                        
+                        const pnl = valIDR - invIDR;
+                        const roi = invIDR > 0 ? (pnl / invIDR) * 100 : 0;
+                        const isProfit = pnl >= 0;
+                        const colorClass = isProfit ? 'text-emerald-400' : 'text-rose-400';
+                        const sign = isProfit ? '+' : '';
+                        
+                        return `
+                        <div class="p-4 bg-black/20 rounded-2xl border border-white/5 hover:bg-black/40 transition relative group cursor-pointer" onclick="openPortfolioModal('${a.id}')">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <div class="font-bold text-white text-base">${a.name}</div>
+                                    <div class="text-[10px] uppercase font-bold tracking-wider text-slate-500">${a.platform}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold font-mono ${colorClass} text-sm">${sign}${fmt(pnl, 'IDR')}</div>
+                                    <div class="text-[10px] font-bold ${colorClass} bg-${isProfit ? 'emerald' : 'rose'}-500/10 px-2 py-0.5 rounded ml-auto w-fit mt-1">${sign}${roi.toFixed(2)}%</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-xs font-mono text-slate-400 border-t border-white/5 pt-2 mt-1">
+                                <div>Cost: ${fmt(a.invested, a.currency)}</div>
+                                <div class="text-slate-200">Val: ${fmt(a.currentValue, a.currency)}</div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                }
+                
+                document.getElementById('portfolio-assets-list').innerHTML = pListHtml;
+                
+                const unallocatedCashIDR = Math.max(0, totalCashIDR - totalInvestedIDR);
+                const overallPortfolioValueIDR = totalMarketValIDR + unallocatedCashIDR;
+                const overallInvestedCashIDR = totalCashIDR; 
+                
+                const overallPnl = overallPortfolioValueIDR - overallInvestedCashIDR;
+                const overallRoi = overallInvestedCashIDR > 0 ? (overallPnl / overallInvestedCashIDR) * 100 : 0;
+                
+                document.getElementById('portfolio-total-value').textContent = window.isBalancesHidden ? '***' : fmt(overallPortfolioValueIDR, 'IDR');
+                document.getElementById('portfolio-invested-cash').textContent = window.isBalancesHidden ? '***' : fmt(overallInvestedCashIDR, 'IDR');
+                
+                const pnlEl = document.getElementById('portfolio-total-pnl');
+                
+                const sign = overallPnl >= 0 ? '+' : '';
+                const colorClass = overallPnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                const bgClass = overallPnl >= 0 ? 'bg-emerald-500/10' : 'bg-rose-500/10';
+                
+                const absValue = window.isBalancesHidden ? '***' : `${sign}${fmt(overallPnl, 'IDR')}`;
+                
+                pnlEl.innerHTML = `
+                    ${absValue}
+                    <span class="text-[10px] ml-1.5 px-1.5 py-0.5 rounded ${bgClass} ${colorClass}">${sign}${overallRoi.toFixed(2)}%</span>
+                `;
+                
+                pnlEl.className = `text-sm font-bold font-mono flex items-center ${overallPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                
+                renderPortfolioChart(pList, unallocatedCashIDR);
+            }
+            
+            function renderPortfolioChart(pList, unallocatedCashIDR) {
+                const ctx = document.getElementById('portfolio-donut-chart');
+                if (!ctx) return;
+                
+                if (portfolioChart) portfolioChart.destroy();
+                
+                const bgColorsSource = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#14b8a6'];
+                
+                let chartItems = [];
+                pList.forEach(a => {
+                    const val = a.currency === 'IDR' ? a.currentValue : (a.currentValue * exchangeRate);
+                    if (val > 0) chartItems.push({ label: a.name, val: val });
+                });
+                
+                if (unallocatedCashIDR > 0) chartItems.push({ label: 'Cash', val: unallocatedCashIDR });
+                
+                // Sort biggest items first
+                chartItems.sort((a, b) => b.val - a.val);
+                
+                let labels = [];
+                let data = [];
+                let bgColors = [];
+                
+                if (chartItems.length === 0) { 
+                    labels.push('Empty'); data.push(1); bgColors.push('#334155'); 
+                } else {
+                    chartItems.forEach((item, i) => {
+                        labels.push(item.label);
+                        data.push(item.val);
+                        bgColors.push(bgColorsSource[i % bgColorsSource.length]);
+                    });
+                }
+                
+                let totalChartValue = data.reduce((a, b) => a + b, 0);
+                
+                let legendHtml = '';
+                if (data.length === 1 && labels[0] === 'Empty') {
+                    legendHtml = '<div class="text-xs text-slate-500 italic p-2 text-center">No assets</div>';
+                } else {
+                    labels.forEach((label, i) => {
+                        const val = data[i];
+                        const bg = bgColors[i % bgColors.length];
+                        const pct = totalChartValue > 0 ? ((val / totalChartValue) * 100).toFixed(1) : 0;
+                        legendHtml += `
+                        <div class="flex items-center justify-between text-xs p-2 rounded-lg bg-black/20 border border-white/5 hover:bg-black/40 transition">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${bg}; box-shadow: 0 0 8px ${bg}80"></div>
+                                <span class="text-slate-300 font-medium truncate max-w-[70px] md:max-w-[85px]" title="${label}">${label}</span>
+                            </div>
+                            <span class="font-bold font-mono text-white text-[10px]">${pct}%</span>
+                        </div>
+                        `;
+                    });
+                }
+                
+                const legendEl = document.getElementById('portfolio-chart-legend');
+                if (legendEl) legendEl.innerHTML = legendHtml;
+                
+                portfolioChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels, datasets: [{ data, backgroundColor: bgColors, borderWidth: 0, hoverOffset: 4 }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '75%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let val = context.raw;
+                                        if (data.length === 1 && labels[0] === 'Empty') return '0 IDR';
+                                        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            window.switchPortfolioTab = (tab) => {
+                const tradeBtn = document.getElementById('tab-trade');
+                const editBtn = document.getElementById('tab-edit');
+                const tradeContent = document.getElementById('portfolio-trade-content');
+                const editContent = document.getElementById('portfolio-edit-content');
+                
+                if (tab === 'trade') {
+                    tradeBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-white bg-purple-600/30 shadow-sm';
+                    editBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-slate-200';
+                    tradeContent.classList.remove('hidden');
+                    editContent.classList.add('hidden');
+                } else {
+                    editBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-white bg-purple-600/30 shadow-sm';
+                    tradeBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-emerald-400';
+                    editContent.classList.remove('hidden');
+                    tradeContent.classList.add('hidden');
+                }
+            };
+
+            window.setTradeType = (type) => {
+                document.getElementById('trade-type').value = type;
+                const buyBtn = document.getElementById('trade-buy-btn');
+                const sellBtn = document.getElementById('trade-sell-btn');
+                const updateBtn = document.getElementById('trade-update-btn');
+                
+                const amtContainer = document.getElementById('trade-amount-container');
+                const valContainer = document.getElementById('trade-new-value-container');
+                const infoTxt = document.getElementById('trade-info');
+                
+                // Reset styling
+                [buyBtn, sellBtn, updateBtn].forEach(b => b.className = 'flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all text-slate-400 hover:text-white');
+                
+                if (type === 'buy') {
+                    buyBtn.className = 'flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]';
+                    amtContainer.classList.remove('hidden');
+                    valContainer.classList.add('hidden');
+                    infoTxt.innerHTML = 'This will automatically <strong>ADD</strong> the amount to your Invested Cost and Market Value.';
+                } else if (type === 'sell') {
+                    sellBtn.className = 'flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]';
+                    amtContainer.classList.remove('hidden');
+                    valContainer.classList.add('hidden');
+                    infoTxt.innerHTML = 'This will <strong>PROPORTIONALLY REDUCE</strong> your Invested Cost, and deduct the amount from your Market Value.';
+                } else {
+                    updateBtn.className = 'flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]';
+                    amtContainer.classList.add('hidden');
+                    valContainer.classList.remove('hidden');
+                    infoTxt.innerHTML = 'This will <strong>ONLY UPDATE</strong> your Market Value. Your Invested Cost will not change. Use this to record profit/loss.';
+                }
+            };
+            
+            window.openPortfolioModal = (id = null) => {
+                const modal = document.getElementById('portfolio-modal');
+                const title = document.getElementById('portfolio-modal-title');
+                
+                const invAccs = SYSTEM_CONFIG.investmentAccounts || [];
+                document.getElementById('portfolio-platform').innerHTML = invAccs.map(a => `<option value="${a}">${a}</option>`).join('') || '<option value="" disabled>No investment accounts in Config</option>';
+                
+                if (id && typeof id === 'string') {
+                    document.getElementById('portfolio-tabs-container').classList.remove('hidden');
+                    switchPortfolioTab('trade');
+                    setTradeType('buy');
+                    document.getElementById('trade-amount').value = '';
+                    document.getElementById('trade-new-value').value = '';
+
+                    const item = window.portfolioData.find(a => a.id === id);
+                    if (item) {
+                        document.getElementById('trade-amount').dataset.oldValue = item.currentValue;
+                        title.innerHTML = '<i class="fas fa-layer-group text-purple-400"></i> Manage Asset';
+                        document.getElementById('portfolio-id').value = item.id;
+                        document.getElementById('portfolio-name').value = item.name;
+                        document.getElementById('portfolio-platform').value = item.platform;
+                        document.getElementById('portfolio-curr').value = item.currency;
+                        document.getElementById('portfolio-invested').value = item.invested;
+                        document.getElementById('portfolio-value').value = item.currentValue;
+                        
+                        let delBtn = document.getElementById('portfolio-del-btn');
+                        if (!delBtn) {
+                            delBtn = document.createElement('button');
+                            delBtn.id = 'portfolio-del-btn';
+                            delBtn.className = 'w-full mt-3 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 font-bold py-3 rounded-xl transition';
+                            delBtn.innerHTML = '<i class="fas fa-trash-alt mr-2"></i>Delete Asset';
+                            document.getElementById('portfolio-save-btn').parentNode.appendChild(delBtn);
+                        }
+                        delBtn.onclick = () => window.deletePortfolioAsset(id);
+                        delBtn.classList.remove('hidden');
+                    }
+                } else {
+                    document.getElementById('portfolio-tabs-container').classList.add('hidden');
+                    switchPortfolioTab('edit');
+                    title.innerHTML = '<i class="fas fa-layer-group text-purple-400"></i> Add Asset';
+                    document.getElementById('portfolio-id').value = '';
+                    document.getElementById('portfolio-name').value = '';
+                    document.getElementById('portfolio-invested').value = '';
+                    document.getElementById('portfolio-value').value = '';
+                    const delBtn = document.getElementById('portfolio-del-btn');
+                    if (delBtn) delBtn.classList.add('hidden');
+                }
+                
+                modal.classList.remove('hidden');
+            };
+            
+            window.savePortfolioAsset = () => {
+                const id = document.getElementById('portfolio-id').value;
+                const name = document.getElementById('portfolio-name').value.trim();
+                const platform = document.getElementById('portfolio-platform').value;
+                const currency = document.getElementById('portfolio-curr').value;
+                
+                let newPortfolio = [...(window.portfolioData || [])];
+                const isTradeMode = !document.getElementById('portfolio-trade-content').classList.contains('hidden') && id;
+                
+                let realizedPnL = 0;
+                let sellPlatform = platform;
+                let sellCurrency = currency;
+                
+                if (isTradeMode) {
+                    const tradeType = document.getElementById('trade-type').value;
+                    const tradeAmount = parseFloat(document.getElementById('trade-amount').value) || 0;
+                    const newMarketValueInput = parseFloat(document.getElementById('trade-new-value').value) || 0;
+                    
+                    if (tradeType !== 'update' && tradeAmount <= 0) return showToast('Trade Amount must be greater than 0', 'error');
+                    if (tradeType === 'update' && newMarketValueInput < 0) return showToast('New Market Value cannot be negative', 'error');
+                    
+                    const existingIdx = newPortfolio.findIndex(a => a.id === id);
+                    if (existingIdx > -1) {
+                        const oldAsset = newPortfolio[existingIdx];
+                        
+                        if (tradeType === 'buy') {
+                            oldAsset.invested += tradeAmount;
+                            oldAsset.currentValue += tradeAmount;
+                        } else if (tradeType === 'sell') {
+                            const sellRatio = oldAsset.currentValue > 0 ? (tradeAmount / oldAsset.currentValue) : 0;
+                            const principalSold = oldAsset.invested * sellRatio;
+                            
+                            oldAsset.invested = Math.max(0, oldAsset.invested - principalSold);
+                            oldAsset.currentValue = Math.max(0, oldAsset.currentValue - tradeAmount);
+                            
+                            realizedPnL = tradeAmount - principalSold;
+                            sellPlatform = oldAsset.platform;
+                            sellCurrency = oldAsset.currency;
+                        } else if (tradeType === 'update') {
+                            oldAsset.currentValue = newMarketValueInput;
+                        }
+                    }
+                } else {
+                    const invested = parseFloat(document.getElementById('portfolio-invested').value) || 0;
+                    const currentValue = parseFloat(document.getElementById('portfolio-value').value) || 0;
+                    if (!name || !platform) return showToast('Name and Platform are required', 'error');
+                    
+                    // Smart Merge Detection for New Assets
+                    if (!id) {
+                        const existingIdx = newPortfolio.findIndex(a => a.name.toLowerCase() === name.toLowerCase() && a.platform === platform && a.currency === currency);
+                        if (existingIdx > -1) {
+                            if (confirm(`You already have an asset named "${name}" in ${platform}.\n\nWould you like to MERGE this new amount into the existing one instead of creating a duplicate row?\n\nIf merged:\n- Your new Invested cost will be added to the old one.\n- The Current Market Value will also be ADDED to your old one.`)) {
+                                newPortfolio[existingIdx].invested += invested;
+                                newPortfolio[existingIdx].currentValue += currentValue;
+                                executeSave(newPortfolio);
+                                return;
+                            }
+                        }
+                    }
+                    
+                    const asset = { id: id || Date.now().toString(), name, platform, currency, invested, currentValue };
+                    
+                    if (id) {
+                        const idx = newPortfolio.findIndex(a => a.id === id);
+                        if (idx > -1) newPortfolio[idx] = asset; else newPortfolio.push(asset);
+                    } else newPortfolio.push(asset);
+                }
+                
+                executeSave(newPortfolio, realizedPnL, sellPlatform, sellCurrency, name);
+                
+                function executeSave(portfolioToSave, pnl = 0, pnlPlatform = '', pnlCurrency = '', assetName = '') {
+                    const btn = document.getElementById('portfolio-save-btn');
+                    const origTxt = btn.innerHTML;
+                    btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent mx-auto"></div>';
+                    btn.disabled = true;
+                    
+                    fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'updatePortfolio', portfolio: portfolioToSave })
+                    }).then(r => r.json()).then(d => {
+                        if (d.status === 'success') {
+                            if (Math.abs(pnl) >= 0.01) {
+                                // Auto-book profit/loss
+                                const type = pnl > 0 ? 'income' : 'expense';
+                                const cat = pnl > 0 ? 'Investment Profit' : 'Investment Loss';
+                                const amt = Math.abs(pnl);
+                                
+                                fetch(WEB_APP_URL, {
+                                    method: 'POST',
+                                    body: JSON.stringify({
+                                        action: 'addTransaction',
+                                        type: type,
+                                        date: new Date().toISOString().split('T')[0],
+                                        amount: amt,
+                                        currency: pnlCurrency,
+                                        account: pnlPlatform,
+                                        category: cat,
+                                        note: `Auto-realized PnL from selling ${assetName}`
+                                    })
+                                }).then(r => r.json()).then(pnlRes => {
+                                     showToast(`Asset saved & ${pnl > 0 ? 'Profit' : 'Loss'} booked!`, 'success');
+                                     window.portfolioData = portfolioToSave;
+                                     // Full refresh to fetch the new transaction and update wallet balances
+                                     if (typeof fetchData === 'function') fetchData(); 
+                                     document.getElementById('portfolio-modal').classList.add('hidden');
+                                });
+                            } else {
+                                showToast("Asset saved!", 'success');
+                                window.portfolioData = portfolioToSave;
+                                renderAll();
+                                document.getElementById('portfolio-modal').classList.add('hidden');
+                            }
+                        } else throw new Error(d.message);
+                    }).catch(e => showToast(e.message, 'error')).finally(() => { btn.innerHTML = origTxt; btn.disabled = false; });
+                }
+            };
+            
+            window.deletePortfolioAsset = (id) => {
+                if (!confirm('Are you sure you want to delete this asset?')) return;
+                
+                let newPortfolio = (window.portfolioData || []).filter(a => a.id !== id);
+                
+                fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'updatePortfolio', portfolio: newPortfolio })
+                }).then(r => r.json()).then(d => {
+                    if (d.status === 'success') {
+                        showToast("Asset deleted!", 'success');
+                        window.portfolioData = newPortfolio;
+                        renderAll();
+                        document.getElementById('portfolio-modal').classList.add('hidden');
+                    } else throw new Error(d.message);
+                }).catch(e => showToast(e.message, 'error'));
+            };
 
             window.toggleCurrency = (id, usdVal) => {
                 const el = document.getElementById(id);
@@ -526,8 +1063,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function renderDaily(data) {
                 const dly = {}; data.filter(d => d.type === 'expense' && d.cat !== 'Transfer').forEach(d => { if (!dly[d.date]) dly[d.date] = { idr: 0, usd: 0 }; if (d.curr === 'IDR') dly[d.date].idr += d.amt; else dly[d.date].usd += d.amt; });
-                document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0"><td class="px-6 py-4 text-sm text-slate-300 font-medium font-mono">${dt}</td><td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${dly[dt].idr > 0 ? fmt(dly[dt].idr, 'IDR') : '-'}</td><td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${dly[dt].usd > 0 ? fmt(dly[dt].usd, 'USD') : '-'}</td></tr>`).join('');
+                document.getElementById('daily-body').innerHTML = Object.keys(dly).sort().reverse().map(dt => `<tr onclick="showDailyDetails('${dt}')" class="cursor-pointer hover:bg-white/10 transition border-b border-white/5 last:border-0"><td class="px-6 py-4 text-sm text-slate-300 font-medium font-mono">${dt}</td><td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${dly[dt].idr > 0 ? fmt(dly[dt].idr, 'IDR') : '-'}</td><td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${dly[dt].usd > 0 ? fmt(dly[dt].usd, 'USD') : '-'}</td></tr>`).join('');
             }
+
+            window.showDailyDetails = function(dateStr) {
+                const items = masterData.filter(d => d.type === 'expense' && d.cat !== 'Transfer' && d.date === dateStr);
+                const displayDate = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('cal-detail-title').textContent = displayDate;
+                document.getElementById('cal-detail-content').innerHTML = items.map(x => `<div class="flex justify-between items-center p-4 bg-black/30 rounded-2xl border border-white/5 mb-2 hover:bg-black/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(225,29,72,0.8)]"></div><div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">${x.cat} • ${x.acc}</div></div></div><div class="text-rose-400 font-mono text-sm font-bold bg-white/5 px-2 py-1 rounded-lg">${fmt(x.amt, x.curr)}</div></div>`).join('');
+                document.getElementById('calendar-detail-modal').classList.remove('hidden');
+            };
+
+
+            let monthlyDate = new Date();
+
+            function renderMonthlyOverview(data) {
+                const yyyy = monthlyDate.getFullYear();
+                const mm = String(monthlyDate.getMonth() + 1).padStart(2, '0');
+                const currentMonthKey = `${yyyy}-${mm}`;
+                
+                document.getElementById('monthly-header-text').textContent = monthlyDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+                const mon = {};
+                data.filter(d => d.type === 'expense' && d.cat !== 'Transfer' && d.date.substring(0, 7) === currentMonthKey).forEach(d => {
+                    const catKey = d.cat;
+                    if (!mon[catKey]) mon[catKey] = { cat: catKey, idr: 0, usd: 0 };
+                    if (d.curr === 'IDR') mon[catKey].idr += d.amt;
+                    else mon[catKey].usd += d.amt;
+                });
+                
+                // Sort by total IDR amount descending
+                const sortedKeys = Object.keys(mon).sort((a, b) => mon[b].idr - mon[a].idr);
+                
+                document.getElementById('monthly-body').innerHTML = sortedKeys.map(k => {
+                    const m = mon[k];
+                    return `<tr onclick="showMonthlyDetails('${m.cat}', '${currentMonthKey}')" class="cursor-pointer hover:bg-white/10 transition border-b border-white/5 last:border-0 group">
+                        <td class="px-6 py-4 text-sm"><span class="bg-black/30 border border-white/5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 group-hover:text-white transition">${m.cat}</span></td>
+                        <td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${m.idr > 0 ? fmt(m.idr, 'IDR') : '-'}</td>
+                        <td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${m.usd > 0 ? fmt(m.usd, 'USD') : '-'}</td>
+                    </tr>`;
+                }).join('');
+                if (sortedKeys.length === 0) document.getElementById('monthly-body').innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-500 text-sm italic">No data found for this month</td></tr>';
+            }
+
+            document.getElementById('prev-monthly').addEventListener('click', () => { monthlyDate.setMonth(monthlyDate.getMonth() - 1); renderMonthlyOverview(masterData); });
+            document.getElementById('next-monthly').addEventListener('click', () => { monthlyDate.setMonth(monthlyDate.getMonth() + 1); renderMonthlyOverview(masterData); });
+
+            window.showMonthlyDetails = function(cat, monthKey) {
+                const items = masterData.filter(d => d.type === 'expense' && d.cat === cat && d.date.substring(0, 7) === monthKey);
+                document.getElementById('cal-detail-title').textContent = `${cat} - ${monthlyDate.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
+                document.getElementById('cal-detail-content').innerHTML = items.map(x => `<div class="flex justify-between items-center p-4 bg-black/30 rounded-2xl border border-white/5 mb-2 hover:bg-black/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(225,29,72,0.8)]"></div><div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">${x.date} • ${x.acc}</div></div></div><div class="text-rose-400 font-mono text-sm font-bold bg-white/5 px-2 py-1 rounded-lg">${fmt(x.amt, x.curr)}</div></div>`).join('');
+                document.getElementById('calendar-detail-modal').classList.remove('hidden');
+            };
 
             function renderCalendar(data) {
                 const safeData = Array.isArray(data) ? data : [];
@@ -631,8 +1218,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            let isSubmittingEntry = false;
             document.getElementById('add-entry-form').addEventListener('submit', e => {
-                e.preventDefault(); const btn = document.getElementById('submit-btn'); const origTxt = btn.innerHTML; btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent"></div>'; btn.disabled = true;
+                e.preventDefault(); 
+                if (isSubmittingEntry) return;
+                isSubmittingEntry = true;
+                
+                const btn = document.getElementById('submit-btn'); 
+                btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent mx-auto"></div>'; 
+                btn.disabled = true;
+
                 const type = document.querySelector('input[name="entry-type"]:checked').value, date = document.getElementById('entry-date').value, desc = document.getElementById('entry-desc').value;
                 let payload = {};
 
@@ -648,7 +1243,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     if (type === 'transfer') {
                         const fromAmt = readAmt('entry-amt-source'), toAmtRaw = document.getElementById('entry-amt-target').value, toAmt = toAmtRaw ? readAmt('entry-amt-target') : fromAmt;
-                        if (document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) { showToast("Source and Target are identical!", 'error'); btn.innerHTML = origTxt; btn.disabled = false; return; }
+                        if (document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) { 
+                            showToast("Source and Target are identical!", 'error'); 
+                            isSubmittingEntry = false;
+                            btn.disabled = false; 
+                            updateUIForType(type);
+                            return; 
+                        }
                         payload = { action: 'transfer', date, description: desc, fromAccount: document.getElementById('entry-acc-source').value, fromCurrency: document.getElementById('entry-curr-source').value, fromAmount: Math.abs(fromAmt), toAccount: document.getElementById('entry-acc-target').value, toCurrency: document.getElementById('entry-curr-target').value, toAmount: Math.abs(toAmt) };
                     } else {
                         let cat = document.getElementById('entry-cat').value; if (cat === 'Other') cat = document.getElementById('entry-cat-other').value;
@@ -656,14 +1257,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }).then(r => r.json()).then(d => {
-                    if (d.status === 'success') { showToast(d.message, 'success'); resetForm(); setTimeout(fetchData, 1500); } else throw new Error(d.message);
-                }).catch(e => showToast("Error: " + e.message, 'error')).finally(() => { btn.innerHTML = origTxt; btn.disabled = false; });
+                fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.status === 'success') { 
+                            showToast(d.message, 'success'); 
+                            resetForm(); 
+                            setTimeout(fetchData, 1500); 
+                        } else {
+                            throw new Error(d.message);
+                        }
+                    })
+                    .catch(e => showToast("Error: " + e.message, 'error'))
+                    .finally(() => { 
+                        isSubmittingEntry = false;
+                        btn.disabled = false; 
+                        updateUIForType(document.querySelector('input[name="entry-type"]:checked').value);
+                    });
             });
 
             function resetForm() {
-                document.getElementById('add-entry-form').reset(); document.getElementById('entry-date').valueAsDate = new Date();
+                document.getElementById('add-entry-form').reset(); 
+                const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+                document.getElementById('entry-date').value = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 10);
                 isEditing = false; editItem = null; document.getElementById('form-title').innerHTML = '<div class="w-10 h-10 rounded-xl bg-theme-primary/20 flex items-center justify-center text-theme-primaryLight border border-theme-primary/30"><i class="fas fa-plus"></i></div> New Entry'; document.getElementById('cancel-edit-btn').classList.add('hidden');
+                document.getElementById('entry-cat-other').classList.add('hidden');
                 updateWalletOptions('IDR', 'entry-acc-source'); updateWalletOptions('IDR', 'entry-acc-target');
                 document.querySelector('input[name="entry-type"][value="expense"]').checked = true; document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
             }
@@ -967,14 +1585,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!key) {
                     const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
                     showToast(`Please save your ${label} API Key in Config first`, 'error');
-                    switchTab('view-config');
+                    window.switchTab('view-config');
                     return;
                 }
                 uploadInput.click();
             });
 
-            uploadInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
+            const pasteBtn = document.getElementById('paste-receipt-btn');
+            if (pasteBtn) {
+                pasteBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const key = scanProvider === 'groq' ? localStorage.getItem('groqApiKey') : localStorage.getItem('mtracker_minimax_key');
+                    if (!key) {
+                        const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
+                        showToast(`Please save your ${label} API Key in Config first`, 'error');
+                        window.switchTab('view-config');
+                        return;
+                    }
+                    try {
+                        const clipboardItems = await navigator.clipboard.read();
+                        let found = false;
+                        for (const clipboardItem of clipboardItems) {
+                            for (const type of clipboardItem.types) {
+                                if (type.startsWith('image/')) {
+                                    const blob = await clipboardItem.getType(type);
+                                    processReceiptImage(blob);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found) break;
+                        }
+                        if (!found) showToast('No image found in clipboard!', 'error');
+                    } catch (err) {
+                        showToast('Failed to read clipboard. You may need to click "Paste" on the popup or use the screen directly.', 'error');
+                    }
+                });
+            }
+
+            document.addEventListener('paste', (e) => {
+                const items = e.clipboardData?.items;
+                if (!items) return;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        if (blob) {
+                            window.switchTab('view-add');
+                            processReceiptImage(blob);
+                        }
+                        break;
+                    }
+                }
+            });
+
+            async function processReceiptImage(file) {
                 if (!file) return;
 
                 const origHtml = scanBtn.innerHTML;
@@ -1083,6 +1747,34 @@ Do not wrap in markdown or code blocks.`;
                     scanBtn.innerHTML = origHtml;
                     scanBtn.disabled = false;
                     uploadInput.value = '';
+                }
+            }
+
+            uploadInput.addEventListener('change', async (e) => {
+                await processReceiptImage(e.target.files[0]);
+            });
+
+            document.addEventListener('paste', async (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in items) {
+                    const item = items[index];
+                    if (item.kind === 'file') {
+                        const blob = item.getAsFile();
+                        if (blob && blob.type.startsWith('image/')) {
+                            const key = scanProvider === 'groq'
+                                ? localStorage.getItem('groqApiKey')
+                                : localStorage.getItem('mtracker_minimax_key');
+                            if (!key) {
+                                const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
+                                showToast(`Please save your ${label} API Key in Config first`, 'error');
+                                window.switchTab('view-config');
+                                return;
+                            }
+                            window.switchTab('view-add');
+                            await processReceiptImage(blob);
+                            break;
+                        }
+                    }
                 }
             });
             // Reconcile Balances Feature
@@ -1195,18 +1887,36 @@ Do not wrap in markdown or code blocks.`;
             // --- SYSTEM CONFIG TAB LOGIC ---
             document.getElementById('config-btn').addEventListener('click', () => renderConfigUI());
 
+            window.renderConfigUI = renderConfigUI;
             function renderConfigUI() {
                 const container = document.getElementById('config-sections-container');
                 const sections = [
                     { title: "Expense Categories", key: "exp", color: "rose", icon: "fa-tags" },
                     { title: "Income Categories", key: "inc", color: "emerald", icon: "fa-tags" },
                     { title: "IDR Wallets", key: "walletsIDR", color: "blue", icon: "fa-wallet" },
-                    { title: "USD Wallets", key: "walletsUSD", color: "teal", icon: "fa-dollar-sign" }
+                    { title: "USD Wallets", key: "walletsUSD", color: "teal", icon: "fa-dollar-sign" },
+                    { title: "Investment Accounts (Names)", key: "investmentAccounts", color: "purple", icon: "fa-chart-line" }
                 ];
 
                 let html = '';
                 sections.forEach(s => {
-                    const list = SYSTEM_CONFIG[s.key] || [];
+                    if (!SYSTEM_CONFIG[s.key]) SYSTEM_CONFIG[s.key] = [];
+                    const list = SYSTEM_CONFIG[s.key];
+                    
+                    let inputHtml = '';
+                    if (s.key === 'investmentAccounts') {
+                        const allWallets = [...(SYSTEM_CONFIG.walletsIDR || []), ...(SYSTEM_CONFIG.walletsUSD || [])];
+                        const availableWallets = allWallets.filter(w => !list.includes(w));
+                        const options = availableWallets.map(w => `<option value="${w}">${w}</option>`).join('');
+                        inputHtml = `
+                            <select id="config-new-${s.key}" class="flex-grow input-glow bg-black/40 rounded-xl px-3 py-2 text-xs text-slate-100 appearance-none">
+                                ${options ? options : '<option value="" disabled selected>No wallets available</option>'}
+                            </select>
+                        `;
+                    } else {
+                        inputHtml = `<input type="text" id="config-new-${s.key}" class="flex-grow input-glow bg-black/40 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600" placeholder="New item...">`;
+                    }
+
                     html += `
                         <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20 flex flex-col">
                             <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i class="fas ${s.icon} mr-2 text-${s.color}-400"></i> ${s.title}</h3>
@@ -1219,7 +1929,7 @@ Do not wrap in markdown or code blocks.`;
                                 ${list.length === 0 ? `<span class="text-xs text-slate-500 italic">Empty</span>` : ''}
                             </div>
                             <div class="flex gap-2 mt-auto">
-                                <input type="text" id="config-new-${s.key}" class="flex-grow input-glow bg-black/40 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600" placeholder="New item...">
+                                ${inputHtml}
                                 <button onclick="addConfigItem('${s.key}')" class="bg-${s.color}-600 hover:bg-${s.color}-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow-md"><i class="fas fa-plus"></i></button>
                             </div>
                         </div>
@@ -1295,11 +2005,8 @@ Do not wrap in markdown or code blocks.`;
                     body: JSON.stringify({ action: 'updateSystemConfig', config: SYSTEM_CONFIG })
                 }).then(r => r.json()).then(d => {
                     if (d.status === 'success') {
-                        showToast("Configuration Saved!", 'success');
-                        // Update dropdowns immediately just in case
-                        updateWalletOptions(document.getElementById('entry-curr-source').value, 'entry-acc-source');
-                        updateWalletOptions(document.getElementById('entry-curr-target').value, 'entry-acc-target');
-                        updateCategoryOptions(document.querySelector('input[name="entry-type"]:checked').value);
+                        showToast("Configuration Saved! Reloading...", 'success');
+                        setTimeout(() => window.location.reload(), 1500);
                     } else throw new Error(d.message);
                 }).catch(e => showToast("Error: " + e.message, 'error')).finally(() => {
                     btn.innerHTML = origTxt;
