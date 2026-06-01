@@ -195,7 +195,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function handleUrlParams() {
                 const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.has('amount') || urlParams.has('desc')) {
+                if (urlParams.has('scanBase64')) {
+                    setTimeout(() => {
+                        updateTabUI('view-add');
+                        try {
+                            const base64 = urlParams.get('scanBase64').replace(/ /g, '+');
+                            const byteCharacters = atob(base64);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], {type: 'image/jpeg'});
+                            
+                            const key = scanProvider === 'groq'
+                                ? localStorage.getItem('groqApiKey')
+                                : localStorage.getItem('mtracker_minimax_key');
+                            if (!key) {
+                                const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
+                                showToast(`Please save your ${label} API Key in Config first`, 'error');
+                                window.switchTab('view-config');
+                            } else {
+                                processReceiptImage(blob);
+                            }
+                        } catch(e) {
+                            showToast("Failed to read image from URL", 'error');
+                            console.error(e);
+                        }
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }, 500);
+                } else if (urlParams.has('amount') || urlParams.has('desc')) {
                     setTimeout(() => {
                         updateTabUI('view-add');
 
@@ -631,8 +660,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            let isSubmittingEntry = false;
             document.getElementById('add-entry-form').addEventListener('submit', e => {
-                e.preventDefault(); const btn = document.getElementById('submit-btn'); const origTxt = btn.innerHTML; btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent"></div>'; btn.disabled = true;
+                e.preventDefault(); 
+                if (isSubmittingEntry) return;
+                isSubmittingEntry = true;
+                
+                const btn = document.getElementById('submit-btn'); 
+                btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent mx-auto"></div>'; 
+                btn.disabled = true;
+
                 const type = document.querySelector('input[name="entry-type"]:checked').value, date = document.getElementById('entry-date').value, desc = document.getElementById('entry-desc').value;
                 let payload = {};
 
@@ -648,7 +685,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     if (type === 'transfer') {
                         const fromAmt = readAmt('entry-amt-source'), toAmtRaw = document.getElementById('entry-amt-target').value, toAmt = toAmtRaw ? readAmt('entry-amt-target') : fromAmt;
-                        if (document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) { showToast("Source and Target are identical!", 'error'); btn.innerHTML = origTxt; btn.disabled = false; return; }
+                        if (document.getElementById('entry-acc-source').value === document.getElementById('entry-acc-target').value && document.getElementById('entry-curr-source').value === document.getElementById('entry-curr-target').value) { 
+                            showToast("Source and Target are identical!", 'error'); 
+                            isSubmittingEntry = false;
+                            btn.disabled = false; 
+                            updateUIForType(type);
+                            return; 
+                        }
                         payload = { action: 'transfer', date, description: desc, fromAccount: document.getElementById('entry-acc-source').value, fromCurrency: document.getElementById('entry-curr-source').value, fromAmount: Math.abs(fromAmt), toAccount: document.getElementById('entry-acc-target').value, toCurrency: document.getElementById('entry-curr-target').value, toAmount: Math.abs(toAmt) };
                     } else {
                         let cat = document.getElementById('entry-cat').value; if (cat === 'Other') cat = document.getElementById('entry-cat-other').value;
@@ -656,14 +699,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }).then(r => r.json()).then(d => {
-                    if (d.status === 'success') { showToast(d.message, 'success'); resetForm(); setTimeout(fetchData, 1500); } else throw new Error(d.message);
-                }).catch(e => showToast("Error: " + e.message, 'error')).finally(() => { btn.innerHTML = origTxt; btn.disabled = false; });
+                fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.status === 'success') { 
+                            showToast(d.message, 'success'); 
+                            resetForm(); 
+                            setTimeout(fetchData, 1500); 
+                        } else {
+                            throw new Error(d.message);
+                        }
+                    })
+                    .catch(e => showToast("Error: " + e.message, 'error'))
+                    .finally(() => { 
+                        isSubmittingEntry = false;
+                        btn.disabled = false; 
+                        updateUIForType(document.querySelector('input[name="entry-type"]:checked').value);
+                    });
             });
 
             function resetForm() {
-                document.getElementById('add-entry-form').reset(); document.getElementById('entry-date').valueAsDate = new Date();
+                document.getElementById('add-entry-form').reset(); 
+                const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+                document.getElementById('entry-date').value = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 10);
                 isEditing = false; editItem = null; document.getElementById('form-title').innerHTML = '<div class="w-10 h-10 rounded-xl bg-theme-primary/20 flex items-center justify-center text-theme-primaryLight border border-theme-primary/30"><i class="fas fa-plus"></i></div> New Entry'; document.getElementById('cancel-edit-btn').classList.add('hidden');
+                document.getElementById('entry-cat-other').classList.add('hidden');
                 updateWalletOptions('IDR', 'entry-acc-source'); updateWalletOptions('IDR', 'entry-acc-target');
                 document.querySelector('input[name="entry-type"][value="expense"]').checked = true; document.querySelector('input[name="entry-type"][value="expense"]').dispatchEvent(new Event('change'));
             }
@@ -973,8 +1033,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 uploadInput.click();
             });
 
-            uploadInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
+            async function processReceiptImage(file) {
                 if (!file) return;
 
                 const origHtml = scanBtn.innerHTML;
@@ -1083,6 +1142,34 @@ Do not wrap in markdown or code blocks.`;
                     scanBtn.innerHTML = origHtml;
                     scanBtn.disabled = false;
                     uploadInput.value = '';
+                }
+            }
+
+            uploadInput.addEventListener('change', async (e) => {
+                await processReceiptImage(e.target.files[0]);
+            });
+
+            document.addEventListener('paste', async (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in items) {
+                    const item = items[index];
+                    if (item.kind === 'file') {
+                        const blob = item.getAsFile();
+                        if (blob && blob.type.startsWith('image/')) {
+                            const key = scanProvider === 'groq'
+                                ? localStorage.getItem('groqApiKey')
+                                : localStorage.getItem('mtracker_minimax_key');
+                            if (!key) {
+                                const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
+                                showToast(`Please save your ${label} API Key in Config first`, 'error');
+                                window.switchTab('view-config');
+                                return;
+                            }
+                            window.switchTab('view-add');
+                            await processReceiptImage(blob);
+                            break;
+                        }
+                    }
                 }
             });
             // Reconcile Balances Feature
