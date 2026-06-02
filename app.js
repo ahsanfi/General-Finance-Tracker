@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const email = payload.email;
                 const allowed = SYSTEM_CONFIG.allowedEmails || [];
                 if (allowed.length === 0 || allowed.map(e => e.toLowerCase()).includes(email.toLowerCase())) {
-                    sessionStorage.setItem('auth', JSON.stringify({ email, name: payload.name, picture: payload.picture }));
+                    localStorage.setItem('auth', JSON.stringify({ email, name: payload.name, picture: payload.picture }));
                     document.getElementById('pin-modal').classList.add('hidden');
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('mobile-nav').classList.remove('hidden');
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             function checkAuth() {
-                if (sessionStorage.getItem('auth')) {
+                if (localStorage.getItem('auth')) {
                     document.getElementById('pin-modal').classList.add('hidden');
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('mobile-nav').classList.remove('hidden');
@@ -286,8 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             document.getElementById('logout-btn').addEventListener('click', () => {
-                sessionStorage.removeItem('auth');
-                google.accounts.id.revoke(JSON.parse(sessionStorage.getItem('auth') || '{}').email || '', () => { });
+                localStorage.removeItem('auth');
+                google.accounts.id.revoke(JSON.parse(localStorage.getItem('auth') || '{}').email || '', () => { });
                 location.reload();
             });
 
@@ -463,6 +463,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderAll();
                     window.masterData = masterData;     // keep AI context in sync
                     window.exchangeRate = exchangeRate;
+                    
+                    // Check for autosync parameter ONLY after everything is loaded perfectly
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('autosync') === 'true') {
+                        if (window.syncTokocrypto) {
+                            console.log("Auto-syncing Tokocrypto...");
+                            window.syncTokocrypto();
+                        }
+                    }
                 } catch (e) { showToast("Error loading data: " + e.message, 'error'); }
             }
 
@@ -2880,5 +2889,6 @@ ${instructions}
             // Expose masterData and exchangeRate to window for the AI context builder
             // (they are defined inside DOMContentLoaded but we reference them via window)
         })();
+        
         }); // end DOMContentLoaded for AI module
 
