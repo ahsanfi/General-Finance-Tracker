@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-            const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzt2el5OeYDohIdAKM3x_GEdth5XroKsOkSALeJi3UfM6u8_C8oUiC26epdw2lMoNEVJw/exec";
+            const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbykb1FGpRDzDwi-lVSa8bwt3fL6ZNrnttOr2_pztItGobZge9sfaut-NZP0WghJEQg6/exec";
 
             let SYSTEM_CONFIG = { exp: [], inc: [], walletsIDR: [], walletsUSD: [], pin: null };
             let masterData = [], itemToDelete = null, sortState = { k: 'date', o: 'desc' }, calendarDate = new Date(), exchangeRate = 16000;
@@ -1055,6 +1055,183 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else throw new Error(d.message);
                 }).catch(e => showToast(e.message, 'error'));
             };
+            
+            window.syncTokocrypto = async function() {
+                const apiKey = (SYSTEM_CONFIG.tokoApiKey || "").trim();
+                const secretKey = (SYSTEM_CONFIG.tokoSecretKey || "").trim();
+                
+                if (!apiKey || !secretKey) {
+                    showToast("Please save your Tokocrypto API Keys in the System Config first.", "error");
+                    switchTab('view-config');
+                    return;
+                }
+                
+                const btn = document.getElementById('btn-sync-toko');
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                btn.disabled = true;
+                
+                try {
+                    // 1. Generate HMAC-SHA256 Signature using Web Crypto API
+                    const timestamp = new Date().getTime();
+                    const queryString = `timestamp=${timestamp}&recvWindow=10000`;
+                    
+                    const enc = new TextEncoder();
+                    const key = await crypto.subtle.importKey("raw", enc.encode(secretKey), { name: "HMAC", hash: { name: "SHA-256" } }, false, ["sign"]);
+                    const signatureBytes = await crypto.subtle.sign("HMAC", key, enc.encode(queryString));
+                    const signature = Array.from(new Uint8Array(signatureBytes)).map(b => b.toString(16).padStart(2, '0')).join('');
+                    
+                    const headers = { 'X-MBX-APIKEY': apiKey };
+                    
+                    const targetUrl = `https://www.tokocrypto.com/open/v1/account/spot?${queryString}&signature=${signature}`;
+                    let proxyUrl = '';
+                    
+                    // Tokocrypto IP Firewall Check
+                    if (window.location.protocol === 'https:' && window.location.hostname.includes('github.io')) {
+                        showToast("Tokocrypto Sync is only supported on your local laptop (localhost) due to strict API firewalls. Please use localhost:8080 for Toko Sync.", "error");
+                        // We still allow it to try in case they use a CORS unblocker extension!
+                        proxyUrl = targetUrl; // direct attempt
+                    } else {
+                        // 2. Fetch via LOCAL Proxy to bypass Tokocrypto CORS block and IP Region Block
+                        proxyUrl = `/proxy/${targetUrl}`;
+                    }
+                    
+                    let accRes = await fetch(proxyUrl, { headers }).catch(() => null);
+                    
+                    if (!accRes || !accRes.ok) {
+                        const errText = accRes ? await accRes.text() : "Network error";
+                        throw new Error(`API Error: ${errText}`);
+                    }
+                    
+                    const accData = await accRes.json();
+                    
+                    // Tokocrypto sometimes returns HTTP 200 OK even when there's an error (e.g. invalid signature/IP block)
+                    if (accData.code !== undefined && accData.code !== 0 && accData.code !== 200) {
+                        throw new Error(accData.msg || JSON.stringify(accData));
+                    }
+                    if (accData.status !== undefined && accData.status !== 0 && accData.status !== 200 && accData.status !== 'success') {
+                        throw new Error(accData.msg || JSON.stringify(accData));
+                    }
+                    
+                    let balances = accData.balances || (accData.data ? (accData.data.balances || accData.data.list || accData.data.accountAssets) : []) || [];
+                    
+                    // If balances is still empty, let's at least show what Tokocrypto returned
+                    if (!balances || balances.length === 0) {
+                         console.warn("Tokocrypto API returned 0 balances or unrecognized format:", accData);
+                         // Don't throw here, just proceed with empty balances so it doesn't crash
+                    }
+                    balances = balances.filter(b => {
+                        const asset = b.asset || b.coin;
+                        if (!asset) return false;
+                        const amt = (parseFloat(b.free) || 0) + (parseFloat(b.locked) || 0);
+                        return amt > 0.0000001; // Ignore dust
+                    });
+                    
+                    // 3. Fetch Market Prices via PUBLIC proxy to bypass Indonesian DNS block on Binance
+                    // Binance public API doesn't block corsproxy, and corsproxy isn't blocked by Internet Positif
+                    let prices = [];
+                    try {
+                        const priceRes = await fetch(`https://corsproxy.io/?${encodeURIComponent("https://api.binance.com/api/v3/ticker/price")}`);
+                        if (priceRes.ok) {
+                            prices = await priceRes.json();
+                        }
+                    } catch(e) { console.warn("Failed to fetch prices:", e); }
+                    
+                    const getPrice = (asset, targetCurrency) => {
+                        if (targetCurrency === 'IDR') {
+                            if (asset === 'BIDR' || asset === 'IDR') return 1;
+                            if (asset === 'USDT') {
+                                let usdtBidr = prices.find(x => x.symbol === 'USDTBIDR');
+                                return usdtBidr ? parseFloat(usdtBidr.lastPrice || usdtBidr.price) : (window.exchangeRate || 16000);
+                            }
+                            let p = prices.find(x => x.symbol === asset + 'BIDR');
+                            if (p) return parseFloat(p.lastPrice || p.price);
+                            
+                            p = prices.find(x => x.symbol === asset + 'USDT');
+                            if (p) {
+                                let usdtBidr = prices.find(x => x.symbol === 'USDTBIDR');
+                                let usdtPrice = usdtBidr ? parseFloat(usdtBidr.lastPrice || usdtBidr.price) : (window.exchangeRate || 16000);
+                                return parseFloat(p.lastPrice || p.price) * usdtPrice;
+                            }
+                        } else {
+                            // Target is USD
+                            if (asset === 'USDT' || asset === 'USD') return 1;
+                            
+                            let p = prices.find(x => x.symbol === asset + 'USDT');
+                            if (p) return parseFloat(p.lastPrice || p.price);
+                            
+                            p = prices.find(x => x.symbol === asset + 'BIDR');
+                            if (p) {
+                                let usdtBidr = prices.find(x => x.symbol === 'USDTBIDR');
+                                let usdtPrice = usdtBidr ? parseFloat(usdtBidr.lastPrice || usdtBidr.price) : (window.exchangeRate || 16000);
+                                return parseFloat(p.lastPrice || p.price) / usdtPrice;
+                            }
+                        }
+                        return 0;
+                    };
+                    
+                    // 4. Match with Portfolio
+                    let newPortfolio = [...(window.portfolioData || [])];
+                    let updatedCount = 0;
+                    
+                    balances.forEach(b => {
+                        const assetName = b.asset || b.coin;
+                        const assetAmount = (parseFloat(b.free) || 0) + (parseFloat(b.locked) || 0);
+                        
+                        const idx = newPortfolio.findIndex(a => 
+                            a.name.toLowerCase() === assetName.toLowerCase() && 
+                            a.platform.toLowerCase() === 'tokocrypto'
+                        );
+                        
+                        if (idx > -1) {
+                            const targetCurrency = newPortfolio[idx].currency;
+                            const price = getPrice(assetName, targetCurrency);
+                            if (price > 0) {
+                                newPortfolio[idx].currentValue = assetAmount * price;
+                                updatedCount++;
+                            }
+                        } else {
+                            const priceIDR = getPrice(assetName, 'IDR');
+                            const assetValueIDR = assetAmount * priceIDR;
+                            if (priceIDR > 0 && assetValueIDR > 1000) {
+                                // If it doesn't exist and value is > 1000 IDR, auto-add it!
+                                newPortfolio.push({
+                                    id: 'toko_' + Date.now() + Math.floor(Math.random() * 1000),
+                                    name: assetName,
+                                    platform: 'Tokocrypto',
+                                    currency: 'IDR',
+                                    invested: 0,
+                                    currentValue: assetValueIDR
+                                });
+                                updatedCount++;
+                            }
+                        }
+                    });
+                    
+                    if (updatedCount > 0) {
+                        const updateRes = await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'updatePortfolio', portfolio: newPortfolio })
+                        });
+                        const updateData = await updateRes.json();
+                        if (updateData.status === 'success') {
+                            showToast(`Synced! Updated ${updatedCount} assets from Tokocrypto.`, 'success');
+                            window.portfolioData = newPortfolio;
+                            renderAll();
+                        } else {
+                            throw new Error("Failed to save updated portfolio to Google Sheets.");
+                        }
+                    } else {
+                        showToast("Synced successfully, but no matching 'Tokocrypto' assets were found.", 'success');
+                    }
+                    
+                } catch(e) {
+                    showToast("Sync Error: " + e.message, 'error');
+                } finally {
+                    btn.innerHTML = origHtml;
+                    btn.disabled = false;
+                }
+            };
 
             window.toggleCurrency = (id, usdVal) => {
                 const el = document.getElementById(id);
@@ -1571,6 +1748,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('groq-api-key').value = localStorage.getItem('groqApiKey') || '';
                 const mmScanInp = document.getElementById('minimax-scan-key');
                 if (mmScanInp) mmScanInp.value = localStorage.getItem('mtracker_minimax_key') || '';
+                
+                const tokoApi = document.getElementById('config-toko-api');
+                const tokoSec = document.getElementById('config-toko-secret');
+                if (tokoApi) tokoApi.value = SYSTEM_CONFIG.tokoApiKey || '';
+                if (tokoSec) tokoSec.value = SYSTEM_CONFIG.tokoSecretKey || '';
+                
                 // Restore provider tab state
                 window.scanSelectProvider(scanProvider);
             });
@@ -1996,6 +2179,12 @@ Do not wrap in markdown or code blocks.`;
                 if (mmScanKeyEl && mmScanKeyEl.value.trim()) {
                     localStorage.setItem('mtracker_minimax_key', mmScanKeyEl.value.trim());
                 }
+                
+                // Add Tokocrypto Keys
+                const tokoApiEl = document.getElementById('config-toko-api');
+                const tokoSecEl = document.getElementById('config-toko-secret');
+                if (tokoApiEl) SYSTEM_CONFIG.tokoApiKey = tokoApiEl.value.trim();
+                if (tokoSecEl) SYSTEM_CONFIG.tokoSecretKey = tokoSecEl.value.trim();
 
                 btn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-t-transparent mx-auto"></div>';
                 btn.disabled = true;
