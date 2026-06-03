@@ -1064,7 +1064,175 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else throw new Error(d.message);
                 }).catch(e => showToast(e.message, 'error'));
             };
-            
+            // --- MAKMUR AI SYNC ---
+            document.getElementById('btn-sync-makmur').addEventListener('click', () => {
+                const key = scanProvider === 'groq' ? localStorage.getItem('groqApiKey') : localStorage.getItem('mtracker_minimax_key');
+                if (!key) {
+                    const label = scanProvider === 'groq' ? 'Groq' : 'MiniMax';
+                    showToast(`Please save your ${label} API Key in Config first`, 'error');
+                    window.switchTab('view-config');
+                    return;
+                }
+                document.getElementById('makmur-upload').click();
+            });
+
+            document.getElementById('makmur-upload').addEventListener('change', async (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    await processMakmurImage(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+
+            async function processMakmurImage(file) {
+                if (!file) return;
+
+                const btn = document.getElementById('btn-sync-makmur');
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                btn.disabled = true;
+
+                try {
+                    const base64Img = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let w = img.width, h = img.height;
+                                const maxD = 1024;
+                                if (w > h && w > maxD) { h *= maxD / w; w = maxD; }
+                                else if (h > maxD) { w *= maxD / h; h = maxD; }
+                                canvas.width = w; canvas.height = h;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, w, h);
+                                resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                            };
+                            img.onerror = reject;
+                            img.src = ev.target.result;
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+
+                    const prompt = `You are a financial data extractor. Analyze this screenshot from the Makmur mutual fund app.
+Extract a list of each mutual fund name and its exact current value in Rupiah.
+Ignore the total portfolio value or percentages, focus ONLY on the individual funds.
+Return ONLY a valid JSON array of objects with this exact structure:
+[
+  {"name": "KIM Fixed Income Fund Plus", "value": 12949611},
+  {"name": "Syailendra Balanced Opportunity Fund Kelas A", "value": 8116645}
+]
+Do not wrap in markdown or code blocks.`;
+
+                    let endpoint, model, apiKey, headers;
+                    if (scanProvider === 'minimax') {
+                        apiKey   = localStorage.getItem('mtracker_minimax_key');
+                        const mmModelEl = document.getElementById('scan-model-minimax');
+                        model    = mmModelEl ? mmModelEl.value : 'MiniMax-M2.5';
+                        endpoint = 'https://api.minimax.io/v1/chat/completions';
+                        headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+                    } else {
+                        apiKey   = localStorage.getItem('groqApiKey');
+                        // Use the default model for groq receipt scanner
+                        model    = 'meta-llama/llama-4-scout-17b-16e-instruct'; 
+                        endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+                        headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+                    }
+
+                    const body = JSON.stringify({
+                        model: model,
+                        messages: [{
+                            role: "user",
+                            content: [
+                                { type: "text", text: prompt },
+                                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Img}` } }
+                            ]
+                        }],
+                        temperature: 0.1,
+                        max_tokens: 1024
+                    });
+
+                    const res = await fetch(endpoint, { method: 'POST', headers, body });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error?.message || err.message || "API Error");
+                    }
+
+                    const data = await res.json();
+                    let responseText = data.choices[0].message.content.trim();
+                    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const parsedAssets = JSON.parse(responseText);
+                    
+                    if (!Array.isArray(parsedAssets) || parsedAssets.length === 0) {
+                        throw new Error("No assets found in the image.");
+                    }
+
+                    // Match with Portfolio
+                    let newPortfolio = [...(window.portfolioData || [])];
+                    let updatedCount = 0;
+                    let addedCount = 0;
+
+                    parsedAssets.forEach(aiAsset => {
+                        const assetName = aiAsset.name;
+                        const assetAmount = parseFloat(aiAsset.value);
+                        
+                        if (isNaN(assetAmount) || assetAmount <= 0) return;
+
+                        // Fuzzy match name (ignoring case and some spaces/punctuation)
+                        const cleanName = assetName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        
+                        const idx = newPortfolio.findIndex(a => {
+                            if (a.platform.toLowerCase() !== 'makmur') return false;
+                            const pName = a.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                            // If one string is fully contained in the other, treat it as a match (e.g. SBOF vs Syailendra Balanced Opportunity Fund)
+                            return pName.includes(cleanName) || cleanName.includes(pName) || 
+                                   (pName.startsWith('sbof') && cleanName.startsWith('syailendra')) ||
+                                   (cleanName.startsWith('sbof') && pName.startsWith('syailendra'));
+                        });
+                        
+                        if (idx > -1) {
+                            newPortfolio[idx].currentValue = assetAmount;
+                            updatedCount++;
+                        } else {
+                            // If doesn't exist, create it
+                            newPortfolio.push({
+                                id: 'makmur_' + Date.now() + Math.floor(Math.random() * 1000),
+                                name: assetName,
+                                platform: 'Makmur',
+                                currency: 'IDR',
+                                invested: 0,
+                                currentValue: assetAmount
+                            });
+                            addedCount++;
+                        }
+                    });
+
+                    if (updatedCount > 0 || addedCount > 0) {
+                        showToast(`Saving Makmur Sync...`, 'info');
+                        const updateRes = await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'updatePortfolio', portfolio: newPortfolio })
+                        });
+                        const updateData = await updateRes.json();
+                        if (updateData.status === 'success') {
+                            showToast(`Makmur Synced! Updated ${updatedCount}, Added ${addedCount}.`, 'success');
+                            window.portfolioData = newPortfolio;
+                            renderAll();
+                        } else {
+                            throw new Error(updateData.message || "Failed to save to Google Sheets.");
+                        }
+                    } else {
+                        showToast("No Makmur assets updated.", 'info');
+                    }
+
+                } catch (e) {
+                    showToast("Makmur Sync Error: " + e.message, 'error');
+                    console.error(e);
+                } finally {
+                    btn.innerHTML = '<i class="fas fa-camera"></i> Sync Makmur';
+                    btn.disabled = false;
+                }
+            }
             window.syncTokocrypto = async function() {
                 const apiKey = (SYSTEM_CONFIG.tokoApiKey || "").trim();
                 const secretKey = (SYSTEM_CONFIG.tokoSecretKey || "").trim();
