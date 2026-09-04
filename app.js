@@ -856,6 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const amtContainer = document.getElementById('trade-amount-container');
                 const valContainer = document.getElementById('trade-new-value-container');
+                const unitsContainer = document.getElementById('trade-units-container');
                 const infoTxt = document.getElementById('trade-info');
                 
                 // Reset styling
@@ -864,16 +865,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (type === 'buy') {
                     buyBtn.className = 'flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]';
                     amtContainer.classList.remove('hidden');
+                    if (unitsContainer) unitsContainer.classList.remove('hidden');
                     valContainer.classList.add('hidden');
                     infoTxt.innerHTML = 'This will automatically <strong>ADD</strong> the amount to your Invested Cost and Market Value.';
                 } else if (type === 'sell') {
                     sellBtn.className = 'flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]';
                     amtContainer.classList.remove('hidden');
+                    if (unitsContainer) unitsContainer.classList.remove('hidden');
                     valContainer.classList.add('hidden');
                     infoTxt.innerHTML = 'This will <strong>PROPORTIONALLY REDUCE</strong> your Invested Cost, and deduct the amount from your Market Value.';
                 } else {
                     updateBtn.className = 'flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]';
                     amtContainer.classList.add('hidden');
+                    if (unitsContainer) unitsContainer.classList.add('hidden');
                     valContainer.classList.remove('hidden');
                     infoTxt.innerHTML = 'This will <strong>ONLY UPDATE</strong> your Market Value. Your Invested Cost will not change. Use this to record profit/loss.';
                 }
@@ -901,6 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('portfolio-name').value = item.name;
                         document.getElementById('portfolio-platform').value = item.platform;
                         document.getElementById('portfolio-curr').value = item.currency;
+                        document.getElementById('portfolio-balance').value = item.balance || '';
                         document.getElementById('portfolio-invested').value = item.invested;
                         document.getElementById('portfolio-value').value = item.currentValue;
                         
@@ -921,6 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     title.innerHTML = '<i class="fas fa-layer-group text-purple-400"></i> Add Asset';
                     document.getElementById('portfolio-id').value = '';
                     document.getElementById('portfolio-name').value = '';
+                    document.getElementById('portfolio-balance').value = '';
                     document.getElementById('portfolio-invested').value = '';
                     document.getElementById('portfolio-value').value = '';
                     const delBtn = document.getElementById('portfolio-del-btn');
@@ -946,6 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isTradeMode) {
                     const tradeType = document.getElementById('trade-type').value;
                     const tradeAmount = parseFloat(document.getElementById('trade-amount').value) || 0;
+                    const tradeUnits = parseFloat(document.getElementById('trade-units') ? document.getElementById('trade-units').value : 0) || 0;
                     const newMarketValueInput = parseFloat(document.getElementById('trade-new-value').value) || 0;
                     
                     if (tradeType !== 'update' && tradeAmount <= 0) return showToast('Trade Amount must be greater than 0', 'error');
@@ -954,16 +961,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const existingIdx = newPortfolio.findIndex(a => a.id === id);
                     if (existingIdx > -1) {
                         const oldAsset = newPortfolio[existingIdx];
+                        if (typeof oldAsset.balance === 'undefined') oldAsset.balance = 0;
                         
                         if (tradeType === 'buy') {
                             oldAsset.invested += tradeAmount;
                             oldAsset.currentValue += tradeAmount;
+                            oldAsset.balance += tradeUnits;
                         } else if (tradeType === 'sell') {
                             const sellRatio = oldAsset.currentValue > 0 ? (tradeAmount / oldAsset.currentValue) : 0;
                             const principalSold = oldAsset.invested * sellRatio;
                             
                             oldAsset.invested = Math.max(0, oldAsset.invested - principalSold);
                             oldAsset.currentValue = Math.max(0, oldAsset.currentValue - tradeAmount);
+                            oldAsset.balance = Math.max(0, oldAsset.balance - tradeUnits);
                             
                             realizedPnL = tradeAmount - principalSold;
                             sellPlatform = oldAsset.platform;
@@ -973,6 +983,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } else {
+                    const balance = parseFloat(document.getElementById('portfolio-balance').value) || 0;
                     const invested = parseFloat(document.getElementById('portfolio-invested').value) || 0;
                     const currentValue = parseFloat(document.getElementById('portfolio-value').value) || 0;
                     if (!name || !platform) return showToast('Name and Platform are required', 'error');
@@ -982,6 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const existingIdx = newPortfolio.findIndex(a => a.name.toLowerCase() === name.toLowerCase() && a.platform === platform && a.currency === currency);
                         if (existingIdx > -1) {
                             if (confirm(`You already have an asset named "${name}" in ${platform}.\n\nWould you like to MERGE this new amount into the existing one instead of creating a duplicate row?\n\nIf merged:\n- Your new Invested cost will be added to the old one.\n- The Current Market Value will also be ADDED to your old one.`)) {
+                                newPortfolio[existingIdx].balance += balance;
                                 newPortfolio[existingIdx].invested += invested;
                                 newPortfolio[existingIdx].currentValue += currentValue;
                                 executeSave(newPortfolio);
@@ -990,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    const asset = { id: id || Date.now().toString(), name, platform, currency, invested, currentValue };
+                    const asset = { id: id || Date.now().toString(), name, platform, currency, invested, currentValue, balance };
                     
                     if (id) {
                         const idx = newPortfolio.findIndex(a => a.id === id);
@@ -1233,6 +1245,93 @@ Do not wrap in markdown or code blocks.`;
                     btn.disabled = false;
                 }
             }
+            window.syncPluang = async function() {
+                const btn = document.getElementById('btn-sync-pluang');
+                if (!btn) return;
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                btn.disabled = true;
+
+                try {
+                    let newPortfolio = [...(window.portfolioData || [])];
+                    let updatedCount = 0;
+                    
+                    const pluangAssets = newPortfolio.filter(a => a.platform.toLowerCase().includes('pluang'));
+                    if (pluangAssets.length === 0) {
+                        showToast('No Pluang assets found in your portfolio', 'info');
+                        return;
+                    }
+
+                    for (const asset of pluangAssets) {
+                        if (!asset.balance || asset.balance <= 0) continue;
+
+                        try {
+                            // Try Yahoo Finance API for price
+                            let priceUrl;
+                            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                                priceUrl = `/proxy/https://query1.finance.yahoo.com/v8/finance/chart/${asset.name}?interval=1d`;
+                            } else {
+                                priceUrl = `https://corsproxy.io/?${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + asset.name + '?interval=1d')}`;
+                            }
+
+                            const res = await fetch(priceUrl);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta) {
+                                    const meta = data.chart.result[0].meta;
+                                    const price = meta.regularMarketPrice;
+                                    if (price > 0) {
+                                        let assetValue = asset.balance * price;
+                                        
+                                        // Pluang US Stocks typically show value in USD, and we might convert to IDR if user chose IDR as currency.
+                                        // But usually MTracker portfolio stores currency setting.
+                                        // If Yahoo returns USD and asset currency is IDR, we use exchangeRate.
+                                        const yfCurrency = (meta.currency || 'USD').toUpperCase();
+                                        const userCurrency = (asset.currency || 'USD').toUpperCase();
+                                        
+                                        if (yfCurrency === 'USD' && userCurrency === 'IDR') {
+                                            assetValue = assetValue * exchangeRate;
+                                        } else if (yfCurrency === 'IDR' && userCurrency === 'USD') {
+                                            assetValue = assetValue / exchangeRate;
+                                        }
+                                        
+                                        asset.currentValue = assetValue;
+                                        updatedCount++;
+                                    }
+                                }
+                            } else {
+                                console.warn(`Pluang Sync: Failed to fetch Yahoo Finance for ${asset.name} - Status ${res.status}`);
+                            }
+                        } catch (e) {
+                            console.log(`Failed to sync price for ${asset.name}:`, e);
+                        }
+                    }
+
+                    if (updatedCount > 0) {
+                        const updateRes = await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'updatePortfolio', portfolio: newPortfolio })
+                        });
+                        const updateData = await updateRes.json();
+                        
+                        if (updateData.status === 'success') {
+                            showToast(`Successfully synced prices for ${updatedCount} Pluang assets`, 'success');
+                            if (typeof fetchData === 'function') fetchData(); // Reload UI
+                        } else {
+                            throw new Error(updateData.message || 'Failed to update Google Sheet');
+                        }
+                    } else {
+                        showToast('Could not fetch new prices for Pluang assets (ensure asset names match Yahoo tickers like VTI, AAPL)', 'warning');
+                    }
+                } catch (error) {
+                    console.error("Pluang Sync Error:", error);
+                    showToast(error.message || 'Failed to sync Pluang', 'error');
+                } finally {
+                    btn.innerHTML = origHtml;
+                    btn.disabled = false;
+                }
+            };
+
             window.syncTokocrypto = async function() {
                 const apiKey = (SYSTEM_CONFIG.tokoApiKey || "").trim();
                 const secretKey = (SYSTEM_CONFIG.tokoSecretKey || "").trim();
@@ -1304,11 +1403,18 @@ Do not wrap in markdown or code blocks.`;
                         return amt > 0.0000001; // Ignore dust
                     });
                     
-                    // 3. Fetch Market Prices via PUBLIC proxy to bypass Indonesian DNS block on Binance
-                    // Binance public API doesn't block corsproxy, and corsproxy isn't blocked by Internet Positif
+                    // 3. Fetch Market Prices - use Binance Vision data API (not IP-blocked in Indonesia)
                     let prices = [];
                     try {
-                        const priceRes = await fetch(`https://corsproxy.io/?${encodeURIComponent("https://api.binance.com/api/v3/ticker/price")}`);
+                        let priceUrl;
+                        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                            // On localhost: use local proxy to bypass DNS block + SSL issues
+                            priceUrl = `/proxy/https://data-api.binance.vision/api/v3/ticker/price`;
+                        } else {
+                            // On GitHub Pages: use corsproxy with vision API as fallback
+                            priceUrl = `https://corsproxy.io/?${encodeURIComponent("https://data-api.binance.vision/api/v3/ticker/price")}`;
+                        }
+                        const priceRes = await fetch(priceUrl);
                         if (priceRes.ok) {
                             prices = await priceRes.json();
                         }
@@ -1361,12 +1467,14 @@ Do not wrap in markdown or code blocks.`;
                         );
                         
                         if (idx > -1) {
+                            // Always update balance from API
+                            newPortfolio[idx].balance = assetAmount;
                             const targetCurrency = newPortfolio[idx].currency;
                             const price = getPrice(assetName, targetCurrency);
                             if (price > 0) {
                                 newPortfolio[idx].currentValue = assetAmount * price;
-                                updatedCount++;
                             }
+                            updatedCount++;
                         } else {
                             const priceIDR = getPrice(assetName, 'IDR');
                             const assetValueIDR = assetAmount * priceIDR;
@@ -1378,7 +1486,8 @@ Do not wrap in markdown or code blocks.`;
                                     platform: 'Tokocrypto',
                                     currency: 'IDR',
                                     invested: 0,
-                                    currentValue: assetValueIDR
+                                    currentValue: assetValueIDR,
+                                    balance: assetAmount
                                 });
                                 updatedCount++;
                             }
