@@ -3169,3 +3169,82 @@ ${instructions}
         
         }); // end DOMContentLoaded for AI module
 
+// --- PULL TO REFRESH LOGIC ---
+document.addEventListener('DOMContentLoaded', () => {
+    let touchStartY = 0;
+    let touchMoveY = 0;
+    let isPulling = false;
+    let isRefreshing = false;
+    const ptrIndicator = document.getElementById('ptr-indicator');
+    if (!ptrIndicator) return;
+    
+    const ptrIcon = document.getElementById('ptr-icon');
+    const ptrText = document.getElementById('ptr-text');
+    const PULL_THRESHOLD = 80;
+
+    document.addEventListener('touchstart', (e) => {
+        if (window.scrollY <= 0 && !isRefreshing) {
+            touchStartY = e.touches[0].clientY;
+            isPulling = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isPulling || isRefreshing) return;
+        
+        touchMoveY = e.touches[0].clientY;
+        const pullDistance = touchMoveY - touchStartY;
+        
+        if (pullDistance > 0 && window.scrollY <= 0) {
+            // Check if we can prevent default to stop browser native refresh
+            if (e.cancelable) e.preventDefault(); 
+            
+            // Visual feedback
+            const visualDist = Math.min(pullDistance * 0.4, 100);
+            ptrIndicator.style.transform = `translateY(${visualDist - 64}px)`; 
+            
+            if (pullDistance > PULL_THRESHOLD) {
+                ptrIcon.classList.replace('fa-arrow-down', 'fa-spinner');
+                ptrIcon.classList.add('fa-spin');
+                ptrText.textContent = 'Release to refresh';
+            } else {
+                ptrIcon.classList.replace('fa-spinner', 'fa-arrow-down');
+                ptrIcon.classList.remove('fa-spin');
+                ptrText.textContent = 'Pull to refresh';
+            }
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+        if (!isPulling || isRefreshing) return;
+        isPulling = false;
+        
+        const pullDistance = touchMoveY - touchStartY;
+        
+        if (pullDistance > PULL_THRESHOLD && window.scrollY <= 0) {
+            isRefreshing = true;
+            ptrIndicator.style.transform = `translateY(16px)`;
+            ptrText.textContent = 'Refreshing...';
+            
+            // Try to find the local fetchData function by cheating and using the global reference if possible, 
+            // otherwise just fallback to location.reload()
+            location.reload(); 
+            // Note: Since fetchData is deeply scoped in app.js, the safest easiest way 
+            // to refresh all state in a simple app is just reloading the page.
+            // If they are offline, it will just reload from cache.
+        } else {
+            resetPtr();
+        }
+    });
+
+    function resetPtr() {
+        ptrIndicator.style.transform = 'translateY(-100%)';
+        setTimeout(() => {
+            if (isRefreshing) return;
+            ptrIcon.classList.replace('fa-spinner', 'fa-arrow-down');
+            ptrIcon.classList.remove('fa-spin');
+            ptrText.textContent = 'Pull to refresh';
+        }, 300);
+    }
+});
+
