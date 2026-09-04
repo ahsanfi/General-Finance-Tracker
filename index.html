@@ -47,6 +47,14 @@
     <div class="blob-1 fixed"></div>
     <div class="blob-2 fixed"></div>
 
+    <!-- Pull to refresh indicator -->
+    <div id="ptr-indicator" class="fixed top-0 left-0 right-0 h-16 flex items-center justify-center z-[70] transition-transform duration-300 transform -translate-y-full pointer-events-none">
+        <div class="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg flex items-center gap-3">
+            <i id="ptr-icon" class="fas fa-arrow-down text-emerald-400 transition-transform duration-300"></i>
+            <span id="ptr-text" class="text-xs font-bold text-slate-200 uppercase tracking-wider">Pull to refresh</span>
+        </div>
+    </div>
+
     <div id="init-loader" class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-theme-bg text-white">
         <div class="loader mb-4"></div>
         <p class="text-sm text-theme-primaryLight animate-pulse font-medium">Loading FinTracker...</p>
