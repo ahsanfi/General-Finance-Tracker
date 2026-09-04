@@ -899,6 +899,10 @@
                                     class="text-xs bg-black/30 hover:bg-black/50 text-slate-300 px-3 py-2 rounded-xl font-bold transition border border-white/5 flex items-center gap-2">
                                     <i class="fas fa-sync-alt"></i> Sync Toko
                                 </button>
+                                <button onclick="syncPluang()" id="btn-sync-pluang"
+                                    class="text-xs bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 px-3 py-2 rounded-xl font-bold transition border border-blue-500/20 flex items-center gap-2">
+                                    <i class="fas fa-sync-alt"></i> Sync Pluang
+                                </button>
                                 <button onclick="openPortfolioModal()"
                                     class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl font-bold transition shadow-md flex items-center gap-2">
                                     <i class="fas fa-plus"></i> Add Asset
@@ -1227,6 +1231,15 @@
                             placeholder="0" inputmode="decimal">
                     </div>
 
+                    <div id="trade-units-container">
+                        <label id="trade-units-label"
+                            class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Trade
+                            Units (Balance)</label>
+                        <input type="text" id="trade-units"
+                            class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                            placeholder="0" inputmode="decimal">
+                    </div>
+
                     <div id="trade-new-value-container" class="hidden">
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">New Total
                             Market Value</label>
@@ -1269,6 +1282,13 @@
                                 <option value="IDR">IDR</option>
                                 <option value="USD">USD</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Balance
+                                (Units)</label>
+                            <input type="text" id="portfolio-balance"
+                                class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                                placeholder="0" inputmode="decimal">
                         </div>
                     </div>
 
