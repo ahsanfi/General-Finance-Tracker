@@ -3185,6 +3185,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchstart', (e) => {
         if (window.scrollY <= 0 && !isRefreshing) {
             touchStartY = e.touches[0].clientY;
+            touchMoveY = touchStartY; // Reset touchMoveY to avoid old values triggering refresh on tap
             isPulling = true;
         }
     }, { passive: true });
