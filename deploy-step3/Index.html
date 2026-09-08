@@ -1540,6 +1540,7 @@ body .preset-btn {
   color: var(--text);
 }
 .auth-card {
+  color: var(--text);
   max-width: 440px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3456,7 +3457,7 @@ body[data-busy="true"] .outlook-metrics dd {
             <div class="relative z-10 flex flex-col items-center gap-4">
                 <div id="g_id_onload"
                     data-client_id="312080738109-q7us1rao5m3h801ro8ll394ie6mcl0cb.apps.googleusercontent.com"
-                    data-callback="handleGoogleSignIn" data-auto_prompt="false">
+                    data-auto_prompt="false">
                 </div>
                 <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_blue"
                     data-text="sign_in_with" data-size="large" data-logo_alignment="left">
@@ -4443,6 +4444,74 @@ body[data-busy="true"] .outlook-metrics dd {
     </div>
 
     <script>
+// Public deployment settings only. Never put API keys or secrets here.
+window.FinTrackerConfig = Object.freeze({
+  apiUrl: "https://script.google.com/macros/s/AKfycbykb1FGpRDzDwi-lVSa8bwt3fL6ZNrnttOr2_pztItGobZge9sfaut-NZP0WghJEQg6/exec",
+  googleClientId: "312080738109-q7us1rao5m3h801ro8ll394ie6mcl0cb.apps.googleusercontent.com",
+});
+
+</script>
+    <script>
+window.FinTracker = window.FinTracker || {};
+(() => {
+  let token, expiresAt = 0, signingIn, identityScript;
+  function loadIdentity() {
+    if (window.google?.accounts?.id) return Promise.resolve();
+    if (!identityScript) identityScript = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.onload = resolve;
+      script.onerror = () => { identityScript = null; reject(new Error("Google sign-in could not load. Check your connection and reload.")); };
+      document.head.append(script);
+    });
+    return identityScript;
+  }
+  function clear() { token = null; expiresAt = 0; }
+  async function credential() {
+    if (token && Date.now() < expiresAt) return token;
+    if (signingIn) return signingIn;
+    signingIn = (async () => {
+      const clientId = window.FinTrackerConfig?.googleClientId;
+      if (!clientId) throw new Error("Set googleClientId in config.js before signing in.");
+      const modal = document.getElementById("pin-modal");
+      document.getElementById("init-loader")?.classList.add("hidden");
+      modal.classList.remove("hidden");
+      modal.replaceChildren();
+      const card = document.createElement("div");
+      card.className = "auth-card";
+      const title = document.createElement("h2");
+      title.textContent = "Sign in to FinTracker";
+      const message = document.createElement("p");
+      message.textContent = "Use an account approved by the workspace owner.";
+      message.setAttribute("role", "status");
+      const button = document.createElement("div");
+      card.append(title, message, button);
+      modal.append(card);
+      try {
+        await loadIdentity();
+        return await new Promise(resolve => {
+          google.accounts.id.initialize({ client_id: clientId, auto_select: false,
+            callback: response => {
+              if (!response.credential) return;
+              token = response.credential;
+              // Server checks the actual expiry and identity; this is only a renewal timer.
+              expiresAt = Date.now() + 45 * 60 * 1000;
+              sessionStorage.removeItem("fintracker.locked");
+              modal.classList.add("hidden");
+              resolve(token);
+            },
+          });
+          google.accounts.id.renderButton(button, { type: "standard", size: "large", theme: "outline", text: "signin_with" });
+        });
+      } catch (error) { message.textContent = error.message; throw error; }
+    })().finally(() => { signingIn = null; });
+    return signingIn;
+  }
+  FinTracker.auth = { credential, clear };
+})();
+
+</script>
+    <script>
 /* Shared runtime: observable state, native RPC, read deduplication and compatibility adapters. */
 window.FinTracker = window.FinTracker || {};
 (() => {
@@ -4501,10 +4570,28 @@ window.FinTracker = window.FinTracker || {};
               )
               .financeApi({ action, ...payload }),
           );
-        else
-          throw new Error(
-            "Open the deployed Apps Script web app, or the local preview.",
-          );
+        else {
+          const url = window.FinTrackerConfig?.apiUrl || "";
+          if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url))
+            throw new Error("Set your Apps Script deployment /exec URL in config.js.");
+          const credential = await FinTracker.auth.credential();
+          let response;
+          try {
+            response = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              credentials: "omit",
+              redirect: "follow",
+              body: JSON.stringify({ ...payload, action, credential }),
+            });
+          } catch (_) {
+            throw new Error("Connection interrupted. Verify the result before retrying a save. Check the Apps Script deployment allows Anyone access.");
+          }
+          if (!response.ok) throw new Error("The Apps Script API is unavailable. Check its deployment settings.");
+          try { result = await response.json(); }
+          catch (_) { throw new Error("The API did not return JSON. Check the /exec URL and deploy the updated code.gs as Me, with Anyone access."); }
+          if (result?.code === "AUTH_REQUIRED") FinTracker.auth.clear();
+        }
         if (!result || result.status !== "success")
           throw new Error(
             result?.message || "The server returned an invalid response.",
@@ -4871,7 +4958,7 @@ window.FinTracker = window.FinTracker || {};
 </script>
     <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const WEB_APP_URL = ""; // Compatibility argument; requests use google.script.run.
+  const WEB_APP_URL = window.FinTrackerConfig?.apiUrl || "";
 
   let SYSTEM_CONFIG = {
     exp: [],
@@ -5093,6 +5180,7 @@ document.addEventListener("DOMContentLoaded", () => {
       loader.classList.add("hidden");
       checkAuth();
     } catch (error) {
+      loader.classList.remove("hidden");
       loader.replaceChildren();
       const message = document.createElement("p");
       message.className = "load-error";
@@ -5203,32 +5291,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- GOOGLE AUTH LOGIC ---
-  window.handleGoogleSignIn = function (response) {
-    const payload = JSON.parse(atob(response.credential.split(".")[1]));
-    const email = payload.email;
-    const allowed = SYSTEM_CONFIG.allowedEmails || [];
-    if (
-      allowed.length === 0 ||
-      allowed.map((e) => e.toLowerCase()).includes(email.toLowerCase())
-    ) {
-      localStorage.setItem(
-        "auth",
-        JSON.stringify({ email, name: payload.name, picture: payload.picture }),
-      );
-      document.getElementById("pin-modal").classList.add("hidden");
-      document.getElementById("main-content").classList.remove("hidden");
-      document.getElementById("mobile-nav").classList.remove("hidden");
-      document.getElementById("ai-chat-btn").classList.remove("hidden");
-      fetchData();
-      loadBudgetsFromSheets();
-      handleUrlParams();
-    } else {
-      document.getElementById("pin-error").textContent =
-        `Access denied for ${email}. Contact the app owner.`;
-    }
-  };
-
+  // Access is granted only after the authenticated backend bootstrap succeeds.
   function checkAuth() {
     if (
       SYSTEM_CONFIG.authenticated &&

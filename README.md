@@ -14,16 +14,19 @@ npm run dev
 
 Open http://127.0.0.1:3000/preview.html. This is an isolated sample preview: edits reset on reload and external integrations are blocked. Theme preferences persist. CDN assets require internet access.
 
-## Deploy to Google Apps Script
+## Deploy: GitHub Pages frontend + Apps Script API + existing spreadsheet
 
-1. Run `npm run build`.
-2. Open your existing spreadsheet, then **Extensions > Apps Script**. Copy your separately maintained local `code.gs` into that existing project manually. Backend source is intentionally not included in this repository.
-3. In the same Apps Script project, update the HTML file named **Index** with `deploy-step3/Index.html`. If needed, update the existing manifest using `deploy-step3/appsscript.json`.
-4. Keep the existing spreadsheet and Script Properties. For first-time setup of the refactored backend, verify SPREADSHEET_ID, run `setup_` as the owner, and authorize the required scopes. Subsequent frontend updates do not require rerunning setup.
-5. Choose **Deploy > Manage deployments > Edit > New version > Deploy** to update the existing web app deployment. The refactored backend expects execution as **User accessing the web app**; users need spreadsheet access and OAuth authorization as well as inclusion in the backend access list.
-6. Reload the existing deployment URL. No new spreadsheet or repository-hosted backend is required.
+1. Copy the contents of this folder into your existing Git repository, preserving its hidden `.git` directory. Commit and push the frontend files. Do not copy `code.gs` into the repository.
+2. In repository **Settings > Pages**, select **Deploy from a branch**, your publishing branch, and **/ (root)**. The site starts at `index.html`; relative asset paths support a project URL such as `https://USERNAME.github.io/General-Finance-Tracker/`.
+3. Check `config.js`: `apiUrl` must be your existing Apps Script `/exec` deployment URL, and `googleClientId` your Google OAuth **Web application** client ID. The values supplied are from the existing project; verify they still belong to your deployment. These two identifiers are public, not secrets.
+4. In that OAuth client's **Authorized JavaScript origins**, add your Pages origin, for example `https://USERNAME.github.io` (no repository path). Add your custom domain origin if applicable. Keep the consent screen/test-user settings compatible with your permitted users.
+5. Open your existing spreadsheet, **Extensions > Apps Script**. Manually replace `code.gs` using the separately supplied updated backend. Keep the same spreadsheet and credentials. Verify `SPREADSHEET_ID` and `OWNER_EMAIL` in Script Properties; run `setup_` once as the owner if these have not been initialized. Set `GOOGLE_CLIENT_ID` to exactly the same client ID as `config.js`.
+6. Update the existing web app using **Deploy > Manage deployments > Edit > New version > Deploy**. For Pages, set **Execute as: Me** and **Who has access: Anyone**. Google sign-in tokens are checked by the backend on every POST, then checked against `OWNER_EMAIL` and the existing System allowed-email column. Requests without valid credentials are rejected, even though the HTTP endpoint is public. Your spreadsheet can remain private to the owner.
+7. Open your **GitHub Pages URL**, sign in, and verify loading plus a transaction save. Frontend changes are published through GitHub; backend changes require copying `code.gs` and updating the existing Apps Script deployment. There is no need to copy `Index.html` into Apps Script for Pages hosting.
 
-GitHub stores the source. GitHub Pages cannot provide the native google.script.run connection; use Apps Script hosting for the live application.
+The API sends JSON in a `text/plain` POST to avoid a cross-origin preflight and follows Apps Script's ContentService redirect. It does not use `no-cors`, embed a shared secret, or trust a browser-supplied email. Native `google.script.run` remains available for optional Apps Script HTML hosting and the sample preview stays isolated.
+
+Google ID tokens stay in memory and require sign-in again after reloading or expiry. The Apps Script-only verifier uses Google's `tokeninfo` endpoint and checks audience, issuer, expiry and verified email. This adds a Google network request per API call and can fail when that service is unavailable or throttled. Google recommends a JWT verification library for production-scale services; this implementation does not claim that scale. See [Google token verification guidance](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
 
 ## Backend and data compatibility
 
@@ -45,7 +48,7 @@ Choose **Export for AI review** on the dashboard or through More. Select a month
 
 ## Project files
 
-- `index.html`, `app.js`, `style.css`, `shell.*`: active app and retained feature controllers.
+- `index.html`, `config.js`, `app.js`, `style.css`, `shell.*`: Pages entry, public connection settings, and app controllers.
 - `modules/`: API/state, accounting, themes, forecasts, command/quick-add, mobile ergonomics, exports and Groq scanning.
 - `appsscript.json`: manifest reference for the existing Apps Script project. Backend code is maintained outside this repository.
 - `scripts/`: build and isolated preview server.

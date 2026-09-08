@@ -1000,6 +1000,7 @@ body .preset-btn {
   color: var(--text);
 }
 .auth-card {
+  color: var(--text);
   max-width: 440px;
   background: var(--surface);
   border: 1px solid var(--border);
