@@ -1,0 +1,367 @@
+        #screenshot-card-stage {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #screenshot-card-stage.active {
+            left: 0;
+            z-index: 9999;
+        }
+
+        .share-card {
+            width: 1080px;
+            min-height: 1350px;
+            padding: 56px;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 16% 4%, rgba(99, 102, 241, 0.48), transparent 34%),
+                radial-gradient(circle at 88% 18%, rgba(6, 182, 212, 0.34), transparent 32%),
+                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.18), transparent 38%),
+                linear-gradient(145deg, #020617 0%, #08111f 48%, #020617 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+
+
+        .share-card::after {
+            content: none;
+        }
+
+        .share-card-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .share-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 34px;
+        }
+
+        .share-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .share-logo {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            box-shadow: 0 18px 45px rgba(79, 70, 229, .34);
+        }
+
+        .share-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .share-date {
+            font: 800 14px 'JetBrains Mono', monospace;
+            color: #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, .58);
+            border: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        .share-hero {
+            padding: 38px;
+            border-radius: 36px;
+            background:
+                radial-gradient(circle at 92% 18%, rgba(34, 211, 238, .48), transparent 42%),
+                linear-gradient(135deg, rgba(79, 70, 229, .96), rgba(14, 165, 233, .58));
+            border: 1px solid rgba(255, 255, 255, .14);
+            box-shadow: 0 28px 80px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .14);
+            margin-bottom: 22px;
+        }
+
+        .share-label {
+            color: rgba(226, 232, 240, .82);
+            text-transform: uppercase;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: .16em;
+        }
+
+        .share-networth {
+            margin-top: 14px;
+            font: 900 56px 'JetBrains Mono', monospace;
+            letter-spacing: -0.065em;
+            line-height: 1.06;
+            text-shadow: 0 12px 34px rgba(2, 6, 23, .35);
+        }
+
+        .share-rate {
+            margin-top: 18px;
+            display: inline-flex;
+            padding: 10px 14px;
+            border-radius: 16px;
+            background: rgba(2, 6, 23, .34);
+            color: #dbeafe;
+            font: 800 14px 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        .share-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .share-stat,
+        .share-panel {
+            background: linear-gradient(180deg, rgba(30, 41, 59, .72), rgba(15, 23, 42, .64));
+            border: 1px solid rgba(148, 163, 184, .09);
+            border-radius: 28px;
+            box-shadow: 0 18px 48px rgba(0, 0, 0, .22);
+        }
+
+        .share-stat {
+            padding: 22px;
+        }
+
+        .share-stat-value {
+            margin-top: 10px;
+            font: 900 23px 'JetBrains Mono', monospace;
+            letter-spacing: -0.045em;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
+
+        .share-green { color: #34d399; }
+        .share-red { color: #fb7185; }
+        .share-blue { color: #a5b4fc; }
+
+        .share-grid {
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            gap: 18px;
+        }
+
+        .share-panel {
+            padding: 26px;
+            min-height: 330px;
+        }
+
+        .share-panel h3 {
+            font-size: 18px;
+            font-weight: 900;
+            margin-bottom: 18px;
+            color: #fff;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .share-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .share-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px 14px;
+            align-items: center;
+            padding: 15px 16px;
+            border-radius: 18px;
+            background: rgba(2, 6, 23, .34);
+            border: 0;
+        }
+
+        .share-row-main { min-width: 0; }
+
+        .share-row-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 430px;
+            line-height: 1.4;
+            padding-bottom: 2px;
+        }
+
+        .share-row-sub {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+
+        .share-row-amt {
+            white-space: nowrap;
+            font: 900 15px 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        .share-footer {
+            margin-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .share-card.mobile-card {
+            width: 430px;
+            min-height: 932px;
+            padding: 18px;
+            background:
+                radial-gradient(circle at 15% 0%, rgba(99, 102, 241, .42), transparent 32%),
+                radial-gradient(circle at 100% 18%, rgba(6, 182, 212, .28), transparent 36%),
+                linear-gradient(160deg, #020617 0%, #07111f 55%, #020617 100%);
+        }
+
+        .mobile-card::after {
+            content: none;
+        }
+
+        .mobile-card .share-header {
+            margin-bottom: 16px;
+        }
+
+        .mobile-card .share-brand {
+            gap: 10px;
+        }
+
+        .mobile-card .share-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 13px;
+        }
+
+        .mobile-card .share-title {
+            font-size: 18px;
+        }
+
+        .mobile-card .share-label {
+            font-size: 9px;
+            letter-spacing: .18em;
+        }
+
+        .mobile-card .share-date {
+            font-size: 8px;
+            padding: 7px 9px;
+        }
+
+        .mobile-card .share-hero {
+            padding: 22px 18px;
+            border-radius: 24px;
+            margin-bottom: 12px;
+        }
+
+        .mobile-card .share-networth {
+            font-size: 24px;
+            letter-spacing: -0.08em;
+            white-space: nowrap;
+        }
+
+        .mobile-card .share-rate {
+            margin-top: 10px;
+            font-size: 10px;
+            padding: 8px 10px;
+        }
+
+        .mobile-card .share-stats {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .mobile-card .share-stat {
+            padding: 14px;
+            border-radius: 20px;
+        }
+
+        .mobile-card .share-stat:nth-child(3) {
+            grid-column: 1 / -1;
+        }
+
+        .mobile-card .share-stat-value {
+            font-size: 12px;
+            line-height: 1.25;
+            letter-spacing: -0.065em;
+            white-space: nowrap;
+        }
+
+        .mobile-card .share-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .mobile-card .share-panel {
+            padding: 16px;
+            min-height: auto;
+            border-radius: 22px;
+        }
+
+        .mobile-card .share-panel h3 {
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .mobile-card .share-list {
+            gap: 8px;
+        }
+
+        .mobile-card .share-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 7px;
+            padding: 11px 12px;
+            border-radius: 14px;
+            background: rgba(2, 6, 23, .30);
+        }
+
+        .mobile-card .share-row-title {
+            max-width: 100%;
+            font-size: 11px;
+            line-height: 1.35;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .mobile-card .share-row-sub {
+            font-size: 8px;
+            margin-top: 3px;
+        }
+
+        .mobile-card .share-row-amt {
+            justify-self: start;
+            width: max-content;
+            max-width: 100%;
+            margin-top: 2px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, .72);
+            font-size: 9px;
+            letter-spacing: -0.035em;
+            overflow: visible;
+        }
+
+        .mobile-card .share-footer {
+            font-size: 8px;
+            margin-top: 14px;
+        }

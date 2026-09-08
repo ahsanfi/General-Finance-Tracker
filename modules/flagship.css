@@ -1,0 +1,709 @@
+/* Graphite and jade: cash is the focal point; depth is reserved for cards and overlays. */
+:root,
+[data-theme="light"] {
+  --background: #f2f3f1;
+  --surface: #fff;
+  --surface-raised: #fff;
+  --surface-muted: #ecefea;
+  --glass: rgba(255, 255, 255, 0.94);
+  --text: #171e1b;
+  --text-muted: #4f6057;
+  --text-faint: #56675e;
+  --border: #d4ddd7;
+  --accent: #006b4d;
+  --accent-hover: #00553d;
+  --accent-soft: #e0f3e9;
+  --positive: #006b4d;
+  --positive-soft: #e0f3e9;
+  --negative: #a22b44;
+  --negative-soft: #fbe8ee;
+  --shadow: 0 2px 3px #132d1d05, 0 12px 30px -12px #18352626;
+  --shadow-hover: 0 5px 8px #132d1d08, 0 20px 38px -15px #18352636;
+  --hero-start: #143f31;
+  --hero-end: #09271e;
+  --skeleton: #e1e8e2;
+  --skeleton-shine: #f7faf8;
+}
+.dashboard-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 4px 0 22px;
+}
+.export-notes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  min-height: 44px;
+}
+#ai-export-context {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font: inherit;
+  resize: vertical;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .dashboard-actions {
+    margin: 0 0 16px;
+    justify-content: stretch;
+  }
+  .dashboard-actions .primary-button {
+    display: none;
+  }
+  .dashboard-actions .secondary-button {
+    width: 100%;
+  }
+}
+[data-theme="dark"] {
+  --background: #000;
+  --surface: #0b0e0c;
+  --surface-raised: #151b17;
+  --surface-muted: #101612;
+  --glass: rgba(13, 20, 16, 0.94);
+  --text: #f0f6f2;
+  --text-muted: #b0c0b6;
+  --text-faint: #9aada1;
+  --border: #2c3931;
+  --accent: #88efb3;
+  --accent-hover: #bcffd7;
+  --accent-soft: #163223;
+  --positive: #88efb3;
+  --positive-soft: #163223;
+  --negative: #ff9db2;
+  --negative-soft: #361922;
+  --shadow: 0 1px 0 #ffffff08;
+  --shadow-hover: 0 0 24px -12px #88efb360;
+  --hero-start: #143426;
+  --hero-end: #071a10;
+  --skeleton: #18261d;
+  --skeleton-shine: #243c2d;
+}
+body,
+body.modern-shell,
+.font-mono,
+.spending-legend .font-mono {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+body.modern-shell {
+  font-size: 15px;
+}
+.glass,
+.glass-card,
+.surface {
+  backdrop-filter: none;
+  background: var(--surface);
+}
+.modern-shell .app-header {
+  background: var(--surface);
+  backdrop-filter: none;
+}
+body button,
+body a,
+body select,
+body input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]) {
+  min-height: 44px !important;
+}
+body button,
+body a {
+  min-width: 44px !important;
+  touch-action: manipulation;
+}
+body .action-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.primary-button,
+.entry-submit,
+.shell-brand-mark,
+.app-header .brand-mark {
+  background: var(--accent) !important;
+  color: var(--surface) !important;
+  border-color: var(--accent) !important;
+  box-shadow: none;
+}
+.primary-button:hover {
+  background: var(--accent-hover) !important;
+}
+[data-theme="dark"] .primary-button,
+[data-theme="dark"] .quick-add-launch {
+  color: #071b10 !important;
+  box-shadow: 0 0 22px -8px #88efb360;
+}
+.metric-featured {
+  background: linear-gradient(120deg, var(--hero-start), var(--hero-end));
+  color: #f0fff6;
+}
+.metric-featured .metric-title,
+.metric-featured .metric-note,
+.rate-pill {
+  color: #cce8d7;
+}
+.summary-layout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.metric-card {
+  min-height: 180px;
+  padding: 24px;
+  border-radius: 18px;
+}
+.metric-title {
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+.metric-note,
+.rate-pill,
+.surface-footnote,
+.wallet-meta,
+.neutral-badge,
+.overview-caption,
+.intro-description,
+.surface-heading p:not(.eyebrow) {
+  font-size: 12px !important;
+  line-height: 1.6;
+}
+.eyebrow,
+.surface-heading .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.page-intro h2 {
+  font-size: clamp(30px, 3vw, 44px);
+  letter-spacing: -1.7px;
+  font-weight: 650;
+}
+.page-intro {
+  padding-bottom: 30px;
+}
+.page-intro h2 span {
+  color: var(--accent);
+}
+.shell-brand small {
+  font-size: 10px;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+.shell-nav-label,
+.shell-sidebar-bottom,
+.shell-sidebar-bottom small {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.shell-sidebar .desk-nav-btn,
+.shell-settings,
+.shell-breadcrumb,
+.wallet-name {
+  font-size: 14px;
+}
+.shell-sidebar-bottom {
+  padding-top: 24px;
+}
+.wallet-value {
+  font-size: 21px;
+}
+.metric-card .stat-value {
+  font-size: clamp(21px, 2vw, 31px);
+  letter-spacing: -1px;
+}
+.metric-featured .stat-value {
+  font-size: clamp(26px, 2.8vw, 42px);
+}
+.spending-legend > div,
+.spending-legend .font-mono,
+.activity-list .font-bold,
+.activity-list .font-mono,
+.top-category-list .font-mono {
+  font-size: 13px !important;
+}
+.activity-list .text-\[10px\] {
+  font-size: 12px !important;
+}
+.field > label,
+.group-label,
+.field small,
+.entry-segments span,
+.field input,
+.field select {
+  font-size: 14px;
+}
+.text-button,
+.secondary-button,
+.primary-button {
+  font-size: 14px;
+}
+.entry-segments span {
+  min-height: 44px;
+}
+.quick-actions {
+  flex-wrap: wrap;
+}
+.command-launch {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 14px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+kbd {
+  font: inherit;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.insight-workbench {
+  margin: 0 0 28px;
+  display: grid;
+  grid-template-columns: 1fr;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.outlook-main {
+  padding: 28px;
+}
+.outlook-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.outlook-heading h3 {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.outlook-month {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.outlook-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 28px;
+}
+.outlook-metrics dt {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.outlook-metrics dd {
+  font-size: clamp(22px, 2.2vw, 32px);
+  font-weight: 650;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.outlook-metrics dd.projected {
+  color: var(--accent);
+}
+.outlook-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-top: 20px;
+  max-width: 72ch;
+}
+.scenario-panel {
+  padding: 26px;
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border);
+}
+.scenario-panel h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.scenario-panel label {
+  font-size: 13px;
+  display: block;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.scenario-panel input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.scenario-panel input[type="number"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+}
+.scenario-result {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.workspace-dialog {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--glass);
+  color: var(--text);
+  box-shadow: 0 30px 100px #00000050;
+  backdrop-filter: blur(20px);
+  overflow: auto;
+}
+.workspace-dialog::backdrop {
+  background: #05100bb0;
+  backdrop-filter: blur(5px);
+}
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.dialog-heading h2 {
+  font-size: 20px;
+  letter-spacing: -0.6px;
+}
+.dialog-close {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  background: var(--surface);
+}
+.command-field {
+  display: flex;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.command-field input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 18px;
+  outline-offset: 4px;
+}
+.command-results {
+  padding: 8px;
+  max-height: 50dvh;
+  overflow: auto;
+}
+.command-result {
+  min-height: 52px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  padding: 12px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--text);
+}
+.command-result small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.command-result:hover,
+.command-result[aria-selected="true"] {
+  background: var(--accent-soft);
+  border-color: var(--border);
+}
+.command-footer {
+  padding: 12px 22px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+.quick-form {
+  padding: 22px;
+}
+.quick-form .field {
+  margin-bottom: 16px;
+}
+.quick-form .field input,
+.quick-form .field select {
+  font-size: 16px;
+}
+.workspace-feedback {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--negative);
+  padding: 10px 0;
+}
+.quick-add-launch {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 48;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 22px;
+  background: var(--accent);
+  color: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px #04281830;
+  font-weight: 600;
+}
+/* Keep the retained assistant separately reachable above the quick-add action. */
+#ai-chat-btn {
+  background: var(--surface-raised) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  bottom: 100px !important;
+}
+.saved-views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+}
+.saved-view {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+.saved-view button {
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13px;
+}
+.saved-view button + button {
+  border-left: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.saved-views .workspace-feedback {
+  width: 100%;
+}
+body .receipt-surface .eyebrow,
+body .entry-footer,
+body .entry-tip {
+  font-size: 12px;
+}
+.app-header .brand-mark i {
+  color: var(--surface);
+}
+.quick-form button[type="submit"] {
+  margin-right: 12px;
+}
+#ai-panel {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+#ai-provider-badge {
+  color: var(--text-muted) !important;
+}
+#ai-input {
+  background: var(--surface-muted) !important;
+}
+body
+  .tab-view
+  button:is([class*="bg-gradient"], .bg-indigo-600, .bg-theme-primary),
+body .entry-form #submit-btn {
+  background: var(--accent) !important;
+  color: var(--surface) !important;
+  box-shadow: none !important;
+  font-size: 14px;
+}
+body
+  .tab-view
+  button:is([class*="bg-gradient"], .bg-indigo-600, .bg-theme-primary)
+  i {
+  color: inherit !important;
+}
+#view-config :is([class*="text-[10px]"], [class*="text-[9px]"]) {
+  font-size: 12px;
+}
+#view-config a {
+  color: var(--accent) !important;
+  display: inline-flex;
+  align-items: center;
+}
+#view-config [class*="text-purple-"],
+#view-config [class*="text-cyan-"],
+#view-config [class*="text-blue-"],
+#view-config [class*="text-amber-"] {
+  color: var(--text-muted);
+}
+#scan-tab-groq,
+#scan-tab-minimax {
+  background: var(--surface) !important;
+  color: var(--text-muted) !important;
+}
+#scan-tab-groq[aria-pressed="true"],
+#scan-tab-minimax[aria-pressed="true"] {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+.modern-shell #mobile-nav .bg-gradient-to-tr {
+  background: var(--accent) !important;
+}
+.modern-shell #mobile-nav .bg-gradient-to-tr i {
+  color: var(--surface) !important;
+}
+.workspace-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 12px;
+  min-height: 20px;
+}
+body[data-busy="true"] .outlook-metrics dd {
+  background: linear-gradient(
+    100deg,
+    var(--skeleton),
+    var(--skeleton-shine),
+    var(--skeleton)
+  );
+  background-size: 220% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.5s infinite;
+  color: transparent;
+}
+@media (min-width: 1150px) {
+  .summary-layout {
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  }
+  .insight-workbench {
+    grid-template-columns: 1.6fr 1fr;
+  }
+  .scenario-panel {
+    border-top: 0;
+    border-left: 1px solid var(--border);
+  }
+}
+@media (max-width: 899px) {
+  .quick-add-launch {
+    bottom: calc(96px + env(safe-area-inset-bottom));
+    right: 16px;
+    padding: 0 18px;
+  }
+  .command-launch kbd {
+    display: none;
+  }
+  #tab-content {
+    padding-bottom: 110px;
+  }
+  #ai-chat-btn {
+    bottom: 170px !important;
+  }
+  .command-launch {
+    min-width: 44px;
+  }
+  .metric-card {
+    padding: 18px;
+  }
+  .shell-breadcrumb {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .command-launch .command-label {
+    display: none;
+  }
+  .quick-actions {
+    gap: 4px;
+  }
+  .modern-shell .app-header {
+    gap: 10px;
+    padding: 12px;
+  }
+  .outlook-main,
+  .scenario-panel {
+    padding: 20px;
+  }
+  .outlook-metrics {
+    gap: 16px;
+  }
+  .outlook-metrics dd {
+    font-size: 23px;
+  }
+  .metric-card .stat-value {
+    font-size: 21px;
+  }
+  .metric-featured .stat-value {
+    font-size: 24px;
+  }
+  .metric-title {
+    font-size: 13px;
+  }
+  .metric-note {
+    font-size: 12px !important;
+  }
+  .summary-layout {
+    gap: 10px;
+  }
+  .wallet-layout {
+    grid-template-columns: 1fr;
+  }
+  .workspace-dialog {
+    width: calc(100vw - 16px);
+  }
+  .page-intro h2 {
+    font-size: 32px;
+  }
+  .intro-actions {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-dialog[open] {
+    animation: dialog-enter 0.16s ease-out;
+  }
+  .tab-view:not(.hidden) {
+    animation: view-enter 0.16s ease-out;
+  }
+  @keyframes dialog-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes view-enter {
+    from {
+      opacity: 0.4;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
