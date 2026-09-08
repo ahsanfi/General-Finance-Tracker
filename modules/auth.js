@@ -50,13 +50,17 @@ window.FinTracker = window.FinTracker || {};
       modal.replaceChildren();
       const card = document.createElement("div");
       card.className = "auth-card";
+      const brand = document.createElement("span");
+      brand.className = "auth-brand";
+      brand.textContent = "FinTracker";
       const title = document.createElement("h2");
-      title.textContent = "Sign in to FinTracker";
+      title.textContent = "Welcome back";
       const message = document.createElement("p");
-      message.textContent = "Use an account approved by the workspace owner.";
+      message.textContent = "Sign in to open your finances.";
       message.setAttribute("role", "status");
       const button = document.createElement("div");
-      card.append(title, message, button);
+      button.className = "auth-google-button";
+      card.append(brand, title, message, button);
       modal.append(card);
       try {
         await loadIdentity();
@@ -76,7 +80,11 @@ window.FinTracker = window.FinTracker || {};
               resolve(token);
             },
           });
-          google.accounts.id.renderButton(button, { type: "standard", size: "large", theme: "outline", text: "signin_with" });
+          google.accounts.id.renderButton(button, {
+            type: "standard", size: "large", shape: "rectangular",
+            theme: document.documentElement?.getAttribute("data-theme") === "dark" ? "filled_black" : "outline",
+            text: "continue_with", width: Math.min(320, button.clientWidth || 280),
+          });
         });
       } catch (error) { message.textContent = error.message; throw error; }
     })().finally(() => { signingIn = null; });

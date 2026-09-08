@@ -637,6 +637,84 @@
     flex-wrap: wrap;
   }
 }
+.transaction-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+}
+.transaction-detail, .transaction-meta, .transaction-footer { min-width: 0; }
+.transaction-description {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  margin-bottom: 8px;
+}
+.transaction-meta > span { max-width: 100%; overflow-wrap: anywhere; }
+.transaction-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.transaction-amount {
+  min-width: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.transaction-footer > div { margin-left: auto; flex-shrink: 0; }
+.transaction-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.transaction-filters > div { min-width: 0; }
+.transaction-filters input, .transaction-filters select {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+.transaction-filters input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 44px;
+}
+.transaction-filters input::-webkit-date-and-time-value { text-align: left; min-width: 0; }
+@media (min-width: 1024px) {
+  .transaction-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+#pin-modal .auth-card {
+  width: min(100%, 420px);
+  padding: 40px 32px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, .16);
+}
+.auth-brand {
+  display: block;
+  margin-bottom: 28px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 650;
+}
+#pin-modal .auth-card h2 { font-size: 30px; line-height: 1.2; letter-spacing: -.8px; margin: 0 0 12px; }
+#pin-modal .auth-card p { font-size: 15px; margin: 0 0 28px; }
+.auth-google-button { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.auth-google-button > div { max-width: 100%; }
+@media (max-width: 768px) {
+  #pin-modal .auth-card { padding: 16px 24px calc(32px + var(--safe-bottom)) !important; }
+  #pin-modal .auth-card::before { margin: 0 auto 28px; }
+  .transaction-filters { padding: 12px; gap: 12px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .workspace-dialog[open],
   #copy-month-modal > div,
