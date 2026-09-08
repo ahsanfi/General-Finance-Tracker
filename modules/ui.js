@@ -11,13 +11,15 @@ document.addEventListener("DOMContentLoaded", () => {
   for (const input of document.querySelectorAll(
     "input[id],select[id],textarea[id]",
   )) {
+    if (["file", "hidden"].includes(input.type)) continue;
     if (
       document.querySelector(`label[for="${input.id}"]`) ||
       input.getAttribute("aria-label")
     )
       continue;
-    const label = input.closest("div")?.querySelector("label");
-    if (label) {
+    const parent = input.parentElement;
+    const label = parent?.querySelector("label:not([for])");
+    if (label && parent.querySelectorAll("input,select,textarea").length === 1) {
       label.htmlFor = input.id;
     } else input.setAttribute("aria-label", input.id.replaceAll("-", " "));
   }

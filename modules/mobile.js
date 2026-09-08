@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
     root.style.setProperty("--phone-height", `${v ? v.height : innerHeight}px`);
     root.style.setProperty(
       "--keyboard-offset",
-      phone.matches && v
+      phone.matches && v && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) && document.activeElement?.inputMode !== "none"
         ? `${Math.max(0, innerHeight - v.height - v.offsetTop)}px`
         : "0px",
     );
@@ -137,6 +137,16 @@ document.addEventListener("DOMContentLoaded", () => {
     viewport();
   }
   phone.addEventListener("change", adapt);
+  document.addEventListener("focusin", viewport);
+  document.addEventListener("focusout", () => requestAnimationFrame(viewport));
+  const viewportMeta = document.querySelector('meta[name="viewport"]');
+  const zoomPolicy = () => {
+    viewportMeta.content = "width=device-width, initial-scale=1.0, viewport-fit=cover" + (phone.matches ? ", maximum-scale=1, user-scalable=no" : "");
+    root.classList.toggle("phone-no-zoom", phone.matches);
+  };
+  phone.addEventListener("change", zoomPolicy);
+  zoomPolicy();
+  document.addEventListener("gesturestart", event => { if (phone.matches) event.preventDefault(); }, {passive:false});
   window.visualViewport?.addEventListener("resize", viewport);
   window.visualViewport?.addEventListener("scroll", viewport);
   window.addEventListener("resize", viewport);

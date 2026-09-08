@@ -59,6 +59,7 @@ window.FinTracker = window.FinTracker || {};
   function updateCharts() {
     if (!window.Chart) return;
     Object.values(Chart.instances).forEach((chart) => {
+      chart.stop();
       colorChart(chart);
       chart.update("none");
     });
@@ -78,9 +79,11 @@ window.FinTracker = window.FinTracker || {};
   };
   FinTracker.charts = {
     create: (context, options) => {
+      options.options.animation = matchMedia("(prefers-reduced-motion: reduce)").matches ? false : {duration:220};
       const canvas = context.canvas || context;
       const old = Chart.getChart(canvas);
       if (old && old.config.type === options.type) {
+        old.stop();
         old.data = options.data;
         old.options = options.options;
         colorChart(old);
