@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const http=require('node:http');
 const path=require('node:path');
-const routes=new Set(['index.html','preview.html','app.js','style.css','shell.js','shell.css','preview/fixtures.js',...fs.readdirSync('modules').map(file=>'modules/'+file)]);
+const routes=new Set(['index.html','preview.html','config.js','app.js','style.css','shell.js','shell.css','preview/fixtures.js',...fs.readdirSync('modules').map(file=>'modules/'+file)]);
 (async()=>{
   const server=http.createServer((req,res)=>{
     const file=new URL(req.url,'http://localhost').pathname.slice(1);
@@ -141,8 +141,61 @@ const routes=new Set(['index.html','preview.html','app.js','style.css','shell.js
     for(const theme of ['light','dark']){await touch.evaluate(theme=>{FinTracker.theme.set(theme);scrollTo(0,0);},theme);await touch.screenshot({path:`artifacts/phone-refined-${theme}.png`});}
     await touch.locator('#mobile-nav [data-target="view-add"]').click();await touch.waitForSelector('#mobile-entry-sheet[open]');await touch.screenshot({path:'artifacts/phone-refined-editor.png'});await touch.locator('.mobile-entry-close').click();
     await touchContext.close();
+    const pagesContext = await browser.newContext({viewport:{width:390,height:844}});
+    await pagesContext.addInitScript({content: `
+      const originalNetwork = window.fetch;
+      ${fs.readFileSync('preview/fixtures.js','utf8')}
+      window.PagesTestBackend = window.FinTrackerPreview;
+      delete window.FinTrackerPreview;
+      window.fetch = originalNetwork;
+      window.google = {accounts:{id:{
+        initialize(options) { this.options = options; },
+        renderButton(container) {
+          const button = document.createElement('button');
+          button.textContent = 'Test Google sign-in';
+          button.onclick = () => this.options.callback({credential:'browser-test-token'});
+          container.append(button);
+        }
+      }}};
+    `});
+    const pages = await pagesContext.newPage();
+    pages.on('pageerror',error=>errors.push(error.message));
+    const requests = [];
+    let denyPagesLogin = false;
+    await pages.route('https://script.google.com/macros/s/**/exec', async route => {
+      const payload = route.request().postDataJSON();
+      requests.push(payload);
+      assert.equal(payload.credential,'browser-test-token');
+      const result = denyPagesLogin ? {status:'error',code:'AUTH_REQUIRED',message:'Google sign-in was rejected.'} : await pages.evaluate(payload=>PagesTestBackend.request(payload),payload);
+      await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(result)});
+    });
+    await pages.goto(url.replace('preview.html','index.html'));
+    await pages.getByText('Test Google sign-in',{exact:true}).waitFor();
+    await pages.screenshot({path:'artifacts/pages-mobile-signin.png'});
+    await pages.getByText('Test Google sign-in',{exact:true}).click();
+    await pages.waitForFunction(()=>window.masterData?.length===11);
+    assert.deepEqual(requests.map(request=>request.action),['getBootstrap']);
+    assert.equal(await pages.evaluate(()=>FinTracker.api.isNative()),false);
+    await pages.locator('#mobile-nav [data-target="view-add"]').click();
+    await pages.locator('#entry-desc').fill('Pages POST check');
+    await pages.locator('#entry-amt-source').fill('123');
+    await pages.locator('#submit-btn').click();
+    await pages.waitForFunction(()=>window.masterData?.length===12);
+    assert.ok(requests.some(request=>request.action==='add'));
+    await pages.screenshot({path:'artifacts/pages-mobile-connected.png'});
+    denyPagesLogin = true;
+    await pages.reload();
+    await pages.getByText('Test Google sign-in',{exact:true}).click();
+    await pages.locator('#init-loader .load-error').waitFor();
+    assert.ok(await pages.locator('#init-loader').isVisible(),'rejected login displays a visible error');
+    assert.equal(await pages.locator('#init-loader .load-error').textContent(),'Google sign-in was rejected.');
+    denyPagesLogin = false;
+    await pages.getByRole('button',{name:'Try again',exact:true}).click();
+    await pages.getByText('Test Google sign-in',{exact:true}).click();
+    await pages.waitForFunction(()=>window.masterData?.length===11);
+    await pagesContext.close();
     assert.deepEqual(errors,[]);
-    console.log('PASS: legacy regression, command keyboard/search, quick-add failure/success, saved views persistence, scenario planner, themes, CSV, 320–1440px layout and 44px targets in internal views.');
+    console.log('PASS: core workflows, command search, quick-add, scenarios, themes, exports, responsive layouts, mobile gestures, and Pages sign-in/POST save/rejected-login recovery with mocked Google services.');
   }catch(error){console.error('Browser failure:',error);throw error;}
   finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

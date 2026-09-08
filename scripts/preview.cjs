@@ -4,7 +4,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const files = new Map([
-  ['/', 'preview.html'], ['/index.html', 'index.html'],
+  ['/', 'preview.html'], ['/index.html', 'index.html'], ['/config.js', 'config.js'], ['/modules/auth.js', 'modules/auth.js'],
   ['/style.css', 'style.css'], ['/app.js', 'app.js'],
   ['/preview.html', 'preview.html'], ['/preview/fixtures.js', 'preview/fixtures.js'], ['/shell.css', 'shell.css'], ['/shell.js', 'shell.js']
 ]);

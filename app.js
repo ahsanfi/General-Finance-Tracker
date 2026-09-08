@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const WEB_APP_URL = ""; // Compatibility argument; requests use google.script.run.
+  const WEB_APP_URL = window.FinTrackerConfig?.apiUrl || "";
 
   let SYSTEM_CONFIG = {
     exp: [],
@@ -221,6 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
       loader.classList.add("hidden");
       checkAuth();
     } catch (error) {
+      loader.classList.remove("hidden");
       loader.replaceChildren();
       const message = document.createElement("p");
       message.className = "load-error";
@@ -331,32 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- GOOGLE AUTH LOGIC ---
-  window.handleGoogleSignIn = function (response) {
-    const payload = JSON.parse(atob(response.credential.split(".")[1]));
-    const email = payload.email;
-    const allowed = SYSTEM_CONFIG.allowedEmails || [];
-    if (
-      allowed.length === 0 ||
-      allowed.map((e) => e.toLowerCase()).includes(email.toLowerCase())
-    ) {
-      localStorage.setItem(
-        "auth",
-        JSON.stringify({ email, name: payload.name, picture: payload.picture }),
-      );
-      document.getElementById("pin-modal").classList.add("hidden");
-      document.getElementById("main-content").classList.remove("hidden");
-      document.getElementById("mobile-nav").classList.remove("hidden");
-      document.getElementById("ai-chat-btn").classList.remove("hidden");
-      fetchData();
-      loadBudgetsFromSheets();
-      handleUrlParams();
-    } else {
-      document.getElementById("pin-error").textContent =
-        `Access denied for ${email}. Contact the app owner.`;
-    }
-  };
-
+  // Access is granted only after the authenticated backend bootstrap succeeds.
   function checkAuth() {
     if (
       SYSTEM_CONFIG.authenticated &&

@@ -56,10 +56,28 @@ window.FinTracker = window.FinTracker || {};
               )
               .financeApi({ action, ...payload }),
           );
-        else
-          throw new Error(
-            "Open the deployed Apps Script web app, or the local preview.",
-          );
+        else {
+          const url = window.FinTrackerConfig?.apiUrl || "";
+          if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url))
+            throw new Error("Set your Apps Script deployment /exec URL in config.js.");
+          const credential = await FinTracker.auth.credential();
+          let response;
+          try {
+            response = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              credentials: "omit",
+              redirect: "follow",
+              body: JSON.stringify({ ...payload, action, credential }),
+            });
+          } catch (_) {
+            throw new Error("Connection interrupted. Verify the result before retrying a save. Check the Apps Script deployment allows Anyone access.");
+          }
+          if (!response.ok) throw new Error("The Apps Script API is unavailable. Check its deployment settings.");
+          try { result = await response.json(); }
+          catch (_) { throw new Error("The API did not return JSON. Check the /exec URL and deploy the updated code.gs as Me, with Anyone access."); }
+          if (result?.code === "AUTH_REQUIRED") FinTracker.auth.clear();
+        }
         if (!result || result.status !== "success")
           throw new Error(
             result?.message || "The server returned an invalid response.",
