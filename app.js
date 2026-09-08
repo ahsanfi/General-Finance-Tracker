@@ -726,16 +726,16 @@ document.addEventListener("DOMContentLoaded", () => {
       mobileFiltered
         .map(
           (d) => `
-                <div class="glass p-4 rounded-2xl flex justify-between items-center active:scale-[0.98] transition-transform">
-                    <div class="flex flex-col max-w-[60%] space-y-1.5">
-                        <span class="text-sm font-bold text-slate-100 truncate">${d.desc}</span>
-                        <div class="flex flex-wrap items-center gap-2 text-[10px] font-medium text-slate-400">
+                <div class="glass transaction-card p-4 rounded-2xl transition-transform">
+                    <div class="transaction-detail">
+                        <span class="transaction-description">${FinTracker.escape(d.desc)}</span>
+                        <div class="transaction-meta flex flex-wrap items-center gap-2 text-[10px] font-medium text-slate-400">
                             <span class="bg-black/30 px-2 py-1 rounded-md border border-white/5">${d.date.slice(5)}</span>
-                            <span class="bg-theme-primary/10 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/20 uppercase tracking-wider">${d.acc}</span>
+                            <span class="bg-theme-primary/10 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/20">${FinTracker.escape(d.acc)}</span>
                         </div>
                     </div>
-                    <div class="flex flex-col items-end gap-2">
-                        <span class="font-bold font-mono text-sm ${d.type === "income" ? "text-emerald-400" : "text-rose-400"}">${d.type === "income" ? "+" : "-"} ${fmt(d.amt, d.curr)}</span>
+                    <div class="transaction-footer">
+                        <span class="transaction-amount ${d.type === "income" ? "text-emerald-400" : "text-rose-400"}">${d.type === "income" ? "+" : "-"} ${fmt(d.amt, d.curr)}</span>
                         <div class="flex gap-2">
                             <button class="bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 w-8 h-8 flex items-center justify-center transition edit-btn" data-item='${toDataAttr(d)}'><i class="fas fa-pen text-xs"></i></button>
                             <button class="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-lg p-1.5 w-8 h-8 flex items-center justify-center transition del-btn" data-item='${toDataAttr(d)}'><i class="fas fa-trash text-xs"></i></button>
