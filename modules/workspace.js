@@ -99,6 +99,8 @@ document.addEventListener("DOMContentLoaded", () => {
   quickForm.id = "quick-add-form";
   quickForm.innerHTML = `<div class="field-row"><div class="field"><label for="quick-type">Type</label><select id="quick-type"><option value="expense">Expense</option><option value="income">Income</option></select></div><div class="field"><label for="quick-currency">Currency</label><select id="quick-currency"><option>IDR</option><option>USD</option></select></div></div><div class="field"><label for="quick-amount">Amount</label><input id="quick-amount" inputmode="decimal" placeholder="0 or 25 + 15" required maxlength="200"></div><div class="field"><label for="quick-note">Description</label><input id="quick-note" placeholder="What was this for?" required maxlength="500"></div><div class="field-row"><div class="field"><label for="quick-account">Account</label><select id="quick-account" required></select></div><div class="field"><label for="quick-category">Category</label><select id="quick-category" required></select></div></div><div class="field"><label for="quick-date">Date</label><input id="quick-date" type="date" required></div><p id="quick-feedback" class="workspace-feedback" role="status"></p><button id="quick-save" class="primary-button" type="submit">Save transaction</button><button id="quick-transfer" class="text-button" type="button">Open transfer form</button>`;
   const quick = dialog("quick-add-dialog", "Quick add", quickForm);
+  $("quick-amount").setAttribute("data-calculator", "");
+  FinTracker.attachCalculator($("quick-amount"));
   function options(id, values) {
     const select = $(id),
       previous = select.value;

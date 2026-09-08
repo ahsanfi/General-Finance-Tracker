@@ -17,6 +17,30 @@ document.addEventListener("DOMContentLoaded", () => {
   window.exchangeRate = exchangeRate;
   const displayDate = value => new Date(String(value).slice(0,10) + "T12:00:00").toLocaleDateString("en-GB", {day:"numeric",month:"short"});
   const allocationColors = ["#087f68", "#3484a1", "#b58431", "#b76269", "#6e74a4", "#648a4c", "#87938e"];
+  for (const id of ["expense-details", "portfolio-chart-legend"]) {
+    const legend = document.getElementById(id);
+    let button = document.querySelector(`[data-allocation-target="${id}"]`);
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "allocation-toggle text-button";
+      button.dataset.allocationTarget = id;
+      legend.after(button);
+    }
+    button.setAttribute("aria-controls", id);
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", () => {
+      const expanded = legend.dataset.expanded !== "true";
+      legend.dataset.expanded = String(expanded);
+      button.setAttribute("aria-expanded", String(expanded));
+      button.textContent = expanded ? "Show fewer" : `Show all ${legend.children.length} allocations`;
+    });
+  }
+  function updateAllocationToggle(id, count) {
+    const button = document.querySelector(`[data-allocation-target="${id}"]`);
+    button.hidden = count <= 6;
+    button.textContent = document.getElementById(id).dataset.expanded === "true" ? "Show fewer" : `Show all ${count} allocations`;
+  }
   let isEditing = false,
     editItem = null;
   window.isBalancesHidden = localStorage.getItem("hideBalances") === "true";
@@ -53,21 +77,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ── Desktop: type "10+60=" to auto-calculate ──────────────────────
   function attachDesktopCalc(el) {
-    if (!el) return;
-    let t = null;
+    if (!el || el.dataset.calculatorReady) return;
+    el.dataset.calculatorReady = "true";
     el.addEventListener("input", function () {
       const raw = this.value;
       if (!raw.endsWith("=")) return;
       const expr = raw.slice(0, -1);
       const result = calcEval(expr);
       if (result === null) return;
-      this.value = expr + " = " + result.toLocaleString("id-ID");
-      this.style.color = "#34d399";
-      clearTimeout(t);
-      t = setTimeout(() => {
-        this.value = result;
-        this.style.color = "";
-      }, 1500);
+      flashResult(this, result);
     });
   }
 
@@ -1034,6 +1052,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const legendEl = document.getElementById("portfolio-chart-legend");
     if (legendEl) legendEl.innerHTML = legendHtml;
+    updateAllocationToggle("portfolio-chart-legend", chartItems.length);
 
     portfolioChart = FinTracker.charts.create(ctx, {
       type: "doughnut",
@@ -1893,6 +1912,7 @@ Do not wrap in markdown or code blocks.`;
       )
       .join("");
     if (!ordered.length) document.getElementById("expense-details").textContent = "No expenses recorded in " + curr + ".";
+    updateAllocationToggle("expense-details", ordered.length);
   }
 
   let trendChart;
