@@ -77,6 +77,7 @@ window.FinTracker = window.FinTracker || {};
               } catch (_) { /* Storage-disabled browsers keep the current in-memory session. */ }
               sessionStorage.removeItem("fintracker.locked");
               modal.classList.add("hidden");
+              document.getElementById("init-loader")?.classList.remove("hidden");
               resolve(token);
             },
           });

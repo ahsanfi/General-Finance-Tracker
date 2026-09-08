@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
     exchangeRate = 16000;
   window.masterData = masterData; // exposed for AI assistant
   window.exchangeRate = exchangeRate;
+  const displayDate = value => new Date(String(value).slice(0,10) + "T12:00:00").toLocaleDateString("en-GB", {day:"numeric",month:"short"});
+  const allocationColors = ["#087f68", "#3484a1", "#b58431", "#b76269", "#6e74a4", "#648a4c", "#87938e"];
   let isEditing = false,
     editItem = null;
   window.isBalancesHidden = localStorage.getItem("hideBalances") === "true";
@@ -42,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function flashResult(el, result) {
     el.value = result;
+    el.dispatchEvent(new Event("input", {bubbles:true}));
     el.style.color = "#34d399";
     setTimeout(() => {
       el.style.color = "";
@@ -75,35 +78,45 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearBtn = document.getElementById("calc-clear");
   let activeEl = null;
   let expr = "";
+  let keypadTimer;
+  let keypadHost;
+  const calculatorField = el => el?.matches?.('[data-calculator], #'+CALC_IDS.join(', #'));
 
   function kpShow(inputEl) {
+    clearTimeout(keypadTimer);
     const host = inputEl.closest("dialog");
+    keypadHost?.style.removeProperty("padding-bottom");
+    keypadHost = host || inputEl.closest("#reconcile-modal")?.firstElementChild;
     (host || document.body).append(keypad);
-    if (host) host.style.paddingBottom = "320px";
+    if (keypadHost) keypadHost.style.paddingBottom = "320px";
     activeEl = inputEl;
     // Seed expression from current value (numbers only)
     const cur = (inputEl.value || "").trim();
     expr = /^[\d\+\-\*\/\.\s]+$/.test(cur) ? cur : "";
     exprEl.textContent = expr || "0";
     keypad.style.display = "block";
+    document.documentElement.classList.add("keypad-open");
+    document.documentElement.style.setProperty("--keyboard-offset", "0px");
     document.body.style.paddingBottom = "320px"; // Make room for keypad
     requestAnimationFrame(() => {
       keypad.style.transform = "translateY(0)";
     });
     // Scroll the input into view above the keypad
     setTimeout(
-      () => inputEl.scrollIntoView({ behavior: "smooth", block: "center" }),
+      () => { if (activeEl === inputEl) inputEl.scrollIntoView({ behavior: "smooth", block: "center" }); },
       260,
     );
   }
 
   function kpHide() {
-    const host = keypad.closest("dialog");
-    if (host) host.style.removeProperty("padding-bottom");
+    clearTimeout(keypadTimer);
+    keypadHost?.style.removeProperty("padding-bottom");
+    keypadHost = null;
     keypad.style.transform = "translateY(100%)";
     document.body.style.paddingBottom = ""; // Remove padding
-    setTimeout(() => {
+    keypadTimer = setTimeout(() => {
       keypad.style.display = "none";
+      document.documentElement.classList.remove("keypad-open");
     }, 260);
     activeEl = null;
   }
@@ -118,9 +131,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (isTouchDevice && keypad) {
     // Suppress native keyboard on amount inputs
-    CALC_IDS.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
+    function attachMobileCalc(el) {
+      if (!el || el.dataset.calculatorReady) return;
+      el.dataset.calculatorReady = "true";
       el.setAttribute("inputmode", "none");
       el.setAttribute("autocomplete", "off");
       el.addEventListener("focus", () => kpShow(el));
@@ -133,7 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         { passive: false },
       );
-    });
+    }
+    CALC_IDS.forEach(id => attachMobileCalc(document.getElementById(id)));
+    FinTracker.attachCalculator = attachMobileCalc;
+    document.addEventListener("close", kpHide, true);
 
     // Keypad button handler
     keypad.querySelectorAll("[data-k]").forEach((btn) => {
@@ -156,6 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
               ? expr + " = " + result.toLocaleString("id-ID")
               : expr || "0";
           activeEl.value = expr;
+          activeEl.dispatchEvent(new Event("input", {bubbles:true}));
         },
         { passive: false },
       );
@@ -182,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
           expr = "";
           exprEl.textContent = "0";
           activeEl.value = "";
+          activeEl.dispatchEvent(new Event("input", {bubbles:true}));
         },
         { passive: false },
       );
@@ -191,13 +209,14 @@ document.addEventListener("DOMContentLoaded", () => {
       "touchstart",
       (e) => {
         if (!activeEl) return;
-        if (!keypad.contains(e.target) && !CALC_IDS.includes(e.target.id)) {
+        if (!keypad.contains(e.target) && !calculatorField(e.target)) {
           kpCommit(true);
         }
       },
       { passive: true },
     );
   } else {
+    FinTracker.attachCalculator = attachDesktopCalc;
     // Desktop: keyboard typing calculator
     CALC_IDS.forEach((id) => attachDesktopCalc(document.getElementById(id)));
   }
@@ -218,8 +237,8 @@ document.addEventListener("DOMContentLoaded", () => {
       updateWalletOptions("IDR", "entry-acc-source");
       updateWalletOptions("IDR", "entry-acc-target");
       updateCategoryOptions("expense");
+      await checkAuth();
       loader.classList.add("hidden");
-      checkAuth();
     } catch (error) {
       loader.classList.remove("hidden");
       loader.replaceChildren();
@@ -333,7 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Access is granted only after the authenticated backend bootstrap succeeds.
-  function checkAuth() {
+  async function checkAuth() {
     if (
       SYSTEM_CONFIG.authenticated &&
       sessionStorage.getItem("fintracker.locked") !== "true"
@@ -342,8 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("main-content").classList.remove("hidden");
       document.getElementById("mobile-nav").classList.remove("hidden");
       document.getElementById("ai-chat-btn").classList.remove("hidden");
-      fetchData();
-      loadBudgetsFromSheets();
+      await Promise.all([fetchData(), loadBudgetsFromSheets()]);
       handleUrlParams();
     } else {
       const modal = document.getElementById("pin-modal");
@@ -688,7 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fmt,
     );
 
-    const s = document.getElementById("filter-search").value.toLowerCase(),
+    const s = document.getElementById("filter-search").value.trim().toLowerCase(),
       start = document.getElementById("filter-start").value,
       end = document.getElementById("filter-end").value,
       fCat = document.getElementById("filter-cat").value,
@@ -721,7 +739,12 @@ document.addEventListener("DOMContentLoaded", () => {
         .replace(/>/g, "&gt;");
 
     const isCompactList = window.matchMedia("(max-width: 1023px)").matches;
-    const mobileFiltered = isCompactList ? filtered.slice(0, 80) : filtered;
+    const hasFilter = Boolean(s || start || end || (fCat && fCat !== "all") || (fAcc && fAcc !== "all"));
+    const desktopRows = hasFilter ? filtered : filtered.slice(0, 30);
+    const mobileFiltered = isCompactList ? filtered.slice(0, 80) : [];
+    const listStatus = document.getElementById("transaction-list-status");
+    listStatus.hidden = isCompactList || hasFilter || filtered.length <= 30;
+    listStatus.textContent = `Showing 30 of ${filtered.length} transactions. Apply a filter to see all matching entries.`;
     document.getElementById("mobile-trans-list").innerHTML =
       mobileFiltered
         .map(
@@ -730,7 +753,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="transaction-detail">
                         <span class="transaction-description">${FinTracker.escape(d.desc)}</span>
                         <div class="transaction-meta flex flex-wrap items-center gap-2 text-[10px] font-medium text-slate-400">
-                            <span class="bg-black/30 px-2 py-1 rounded-md border border-white/5">${d.date.slice(5)}</span>
+                            <time class="transaction-date" datetime="${d.date}">${displayDate(d.date)}</time>
                             <span class="bg-theme-primary/10 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/20">${FinTracker.escape(d.acc)}</span>
                         </div>
                     </div>
@@ -748,12 +771,12 @@ document.addEventListener("DOMContentLoaded", () => {
       (isCompactList && filtered.length > mobileFiltered.length
         ? `<div class="text-center text-slate-500 py-3 text-xs font-medium">Showing latest ${mobileFiltered.length} of ${filtered.length} transactions. Use filters to narrow the list.</div>`
         : "");
-    if (filtered.length === 0)
+    if (isCompactList && filtered.length === 0)
       document.getElementById("mobile-trans-list").innerHTML =
         '<div class="text-center text-slate-500 py-10 text-sm italic glass rounded-2xl">No transactions found</div>';
 
     if (!isCompactList) {
-      document.getElementById("data-body").innerHTML = filtered
+      document.getElementById("data-body").innerHTML = desktopRows
         .map(
           (d) => `
                 <tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0 group">
@@ -775,7 +798,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (filtered.length === 0)
         document.getElementById("data-body").innerHTML =
           '<tr><td colspan="6" class="text-center py-10 text-slate-500 text-sm italic">No data found</td></tr>';
-    }
+    } else document.getElementById("data-body").replaceChildren();
 
     renderDaily(masterData);
     renderCalendar(masterData);
@@ -787,6 +810,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let portfolioChart = null;
+  window.matchMedia("(max-width: 1023px)").addEventListener("change", () => renderAll());
 
   function renderInvestments(bals) {
     const invAccs = SYSTEM_CONFIG.investmentAccounts || [];
@@ -954,18 +978,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById("portfolio-donut-chart");
     if (!ctx) return;
 
-    if (portfolioChart) portfolioChart.destroy();
 
-    const bgColorsSource = [
-      "#8b5cf6",
-      "#ec4899",
-      "#3b82f6",
-      "#10b981",
-      "#f59e0b",
-      "#ef4444",
-      "#6366f1",
-      "#14b8a6",
-    ];
+    const bgColorsSource = allocationColors;
 
     let chartItems = [];
     pList.forEach((a) => {
@@ -1009,12 +1023,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const pct =
           totalChartValue > 0 ? ((val / totalChartValue) * 100).toFixed(1) : 0;
         legendHtml += `
-                        <div class="flex items-center justify-between text-xs p-2 rounded-lg bg-black/20 border border-white/5 hover:bg-black/40 transition">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${bg}; box-shadow: 0 0 8px ${bg}80"></div>
-                                <span class="text-slate-300 font-medium truncate max-w-[70px] md:max-w-[85px]" title="${label}">${label}</span>
-                            </div>
-                            <span class="font-bold font-mono text-white text-[10px]">${pct}%</span>
+                        <div class="allocation-row">
+                            <span class="allocation-swatch" style="background:${bg}"></span>
+                            <span class="allocation-name">${FinTracker.escape(label)}</span>
+                            <span class="allocation-value">${fmt(val, "IDR")}<small>${pct}%</small></span>
                         </div>
                         `;
       });
@@ -1028,13 +1040,13 @@ document.addEventListener("DOMContentLoaded", () => {
       data: {
         labels,
         datasets: [
-          { data, backgroundColor: bgColors, borderWidth: 0, hoverOffset: 4 },
+          { data, backgroundColor: bgColors, borderWidth: 2, hoverOffset: 3 },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: "75%",
+        cutout: "68%",
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -1610,101 +1622,9 @@ Do not wrap in markdown or code blocks.`;
     btn.disabled = true;
 
     try {
-      let newPortfolio = (window.portfolioData || []).map((asset) => ({
-        ...asset,
-      }));
-      let updatedCount = 0;
-
-      const pluangAssets = newPortfolio.filter((a) =>
-        a.platform.toLowerCase().includes("pluang"),
-      );
-      if (pluangAssets.length === 0) {
-        showToast("No Pluang assets found in your portfolio", "info");
-        return;
-      }
-
-      for (const asset of pluangAssets) {
-        if (!asset.balance || asset.balance <= 0) continue;
-
-        try {
-          // Try Yahoo Finance API for price
-          let priceUrl;
-          if (
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1"
-          ) {
-            priceUrl = `/proxy/https://query1.finance.yahoo.com/v8/finance/chart/${asset.name}?interval=1d`;
-          } else {
-            priceUrl = `https://corsproxy.io/?${encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + asset.name + "?interval=1d")}`;
-          }
-
-          const res = await fetch(priceUrl);
-          if (res.ok) {
-            const data = await res.json();
-            if (
-              data.chart &&
-              data.chart.result &&
-              data.chart.result[0] &&
-              data.chart.result[0].meta
-            ) {
-              const meta = data.chart.result[0].meta;
-              const price = meta.regularMarketPrice;
-              if (price > 0) {
-                let assetValue = asset.balance * price;
-
-                // Pluang US Stocks typically show value in USD, and we might convert to IDR if user chose IDR as currency.
-                // But usually MTracker portfolio stores currency setting.
-                // If Yahoo returns USD and asset currency is IDR, we use exchangeRate.
-                const yfCurrency = (meta.currency || "USD").toUpperCase();
-                const userCurrency = (asset.currency || "USD").toUpperCase();
-
-                if (yfCurrency === "USD" && userCurrency === "IDR") {
-                  assetValue = assetValue * exchangeRate;
-                } else if (yfCurrency === "IDR" && userCurrency === "USD") {
-                  assetValue = assetValue / exchangeRate;
-                }
-
-                asset.currentValue = assetValue;
-                updatedCount++;
-              }
-            }
-          } else {
-            console.warn(
-              `Pluang Sync: Failed to fetch Yahoo Finance for ${asset.name} - Status ${res.status}`,
-            );
-          }
-        } catch (e) {
-          console.log(`Failed to sync price for ${asset.name}:`, e);
-        }
-      }
-
-      if (updatedCount > 0) {
-        const updateRes = await FinTracker.api.fetch(WEB_APP_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "updatePortfolio",
-            portfolio: newPortfolio,
-          }),
-        });
-        const updateData = await updateRes.json();
-
-        if (updateData.status === "success") {
-          showToast(
-            `Successfully synced prices for ${updatedCount} Pluang assets`,
-            "success",
-          );
-          if (typeof fetchData === "function") fetchData(); // Reload UI
-        } else {
-          throw new Error(
-            updateData.message || "Failed to update Google Sheet",
-          );
-        }
-      } else {
-        showToast(
-          "Could not fetch new prices for Pluang assets (ensure asset names match Yahoo tickers like VTI, AAPL)",
-          "warning",
-        );
-      }
+      const result = await FinTracker.api.request("syncPluang");
+      showToast([result.message, ...(result.warnings || [])].join(" "), result.warnings?.length ? "warning" : "success");
+      if (result.updated) await fetchData();
     } catch (error) {
       console.error("Pluang Sync Error:", error);
       showToast(error.message || "Failed to sync Pluang", "error");
@@ -1810,13 +1730,13 @@ Do not wrap in markdown or code blocks.`;
       });
 
     // Sort by total IDR amount descending
-    const sortedKeys = Object.keys(mon).sort((a, b) => mon[b].idr - mon[a].idr);
+    const sortedKeys = Object.keys(mon).sort((a, b) => (mon[b].idr + mon[b].usd * exchangeRate) - (mon[a].idr + mon[a].usd * exchangeRate));
 
     document.getElementById("monthly-body").innerHTML = sortedKeys
       .map((k) => {
         const m = mon[k];
-        return `<tr onclick="showMonthlyDetails('${m.cat}', '${currentMonthKey}')" class="cursor-pointer hover:bg-white/10 transition border-b border-white/5 last:border-0 group">
-                        <td class="px-6 py-4 text-sm"><span class="bg-black/30 border border-white/5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 group-hover:text-white transition">${m.cat}</span></td>
+        return `<tr data-category="${FinTracker.escape(m.cat)}" tabindex="0" class="cursor-pointer hover:bg-white/10 transition border-b border-white/5 last:border-0 group">
+                        <td class="px-6 py-4 text-sm">${FinTracker.escape(m.cat)}</td>
                         <td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${m.idr > 0 ? fmt(m.idr, "IDR") : "-"}</td>
                         <td class="px-6 py-4 text-sm text-right text-rose-400 font-mono">${m.usd > 0 ? fmt(m.usd, "USD") : "-"}</td>
                     </tr>`;
@@ -1825,6 +1745,10 @@ Do not wrap in markdown or code blocks.`;
     if (sortedKeys.length === 0)
       document.getElementById("monthly-body").innerHTML =
         '<tr><td colspan="3" class="text-center py-10 text-slate-500 text-sm italic">No data found for this month</td></tr>';
+    document.querySelectorAll("#monthly-body [data-category]").forEach(row=>{
+      row.onclick=()=>showMonthlyDetails(row.dataset.category,currentMonthKey);
+      row.onkeydown=event=>{if(event.key==="Enter" || event.key===" "){event.preventDefault();row.click();}};
+    });
   }
 
   document.getElementById("prev-monthly").addEventListener("click", () => {
@@ -1921,28 +1845,19 @@ Do not wrap in markdown or code blocks.`;
     );
     const totals = {};
     exps.forEach((d) => (totals[d.cat] = (totals[d.cat] || 0) + d.amt));
+    const ordered = Object.entries(totals).sort((a,b) => b[1]-a[1]);
     const ctx = document.getElementById("expense-pie-chart").getContext("2d");
 
     // Premium color palette for pie chart
-    const chartColors = [
-      "#4F46E5",
-      "#0EA5E9",
-      "#10B981",
-      "#F59E0B",
-      "#F43F5E",
-      "#8B5CF6",
-      "#EC4899",
-      "#14B8A6",
-      "#6366F1",
-    ];
+    const chartColors = allocationColors;
 
     myChart = FinTracker.charts.create(ctx, {
       type: "doughnut",
       data: {
-        labels: Object.keys(totals),
+        labels: ordered.map(([name])=>name),
         datasets: [
           {
-            data: Object.values(totals),
+            data: ordered.map(([,value])=>value),
             backgroundColor: chartColors,
             borderWidth: 2,
             borderColor: "#0B1325",
@@ -1964,21 +1879,20 @@ Do not wrap in markdown or code blocks.`;
             displayColors: true,
           },
         },
-        cutout: "75%",
+        cutout: "68%",
         responsive: true,
         maintainAspectRatio: false,
       },
     });
 
-    document.getElementById("expense-details").innerHTML = Object.entries(
-      totals,
-    )
-      .sort((a, b) => b[1] - a[1])
+    const total = ordered.reduce((sum,[,value])=>sum+value,0);
+    document.getElementById("expense-details").innerHTML = ordered
       .map(
         ([k, v], i) =>
-          `<div class="flex justify-between items-center text-xs py-2 border-b border-white/5 last:border-0"><div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" style="background-color: ${chartColors[i % chartColors.length]}"></div><span class="text-slate-300 font-medium">${k}</span></div><span class="font-mono text-white font-bold bg-white/5 px-2 py-0.5 rounded-md">${fmt(v, curr)}</span></div>`,
+          `<div class="allocation-row"><span class="allocation-swatch" style="background:${chartColors[i % chartColors.length]}"></span><span class="allocation-name">${FinTracker.escape(k)}</span><span class="allocation-value">${fmt(v, curr)}<small>${total ? (v / total * 100).toFixed(1) : 0}%</small></span></div>`,
       )
       .join("");
+    if (!ordered.length) document.getElementById("expense-details").textContent = "No expenses recorded in " + curr + ".";
   }
 
   let trendChart;
@@ -2307,7 +2221,12 @@ Do not wrap in markdown or code blocks.`;
   function showToast(m, type) {
     const t = document.getElementById("toast");
     t.className = `fixed top-5 left-1/2 transform -translate-x-1/2 glass text-white px-6 py-4 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] border z-[90] flex items-center gap-3 min-w-[250px] justify-center transition-all duration-300 translate-y-0 opacity-100 ${type === "error" ? "border-rose-500/30 bg-rose-950/80" : "border-emerald-500/30 bg-emerald-950/80"}`;
-    t.innerHTML = `${type === "error" ? '<div class="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400"><i class="fas fa-exclamation-circle text-lg"></i></div>' : '<div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400"><i class="fas fa-check text-lg"></i></div>'} <span class="font-medium text-sm tracking-wide">${m}</span>`;
+    const icon = document.createElement("i");
+    icon.className = "fas " + (type === "error" ? "fa-circle-exclamation" : type === "warning" ? "fa-triangle-exclamation" : type === "info" ? "fa-circle-info" : "fa-check");
+    const message = document.createElement("span");
+    message.textContent = m;
+    t.replaceChildren(icon,message);
+    t.dataset.kind = type;
     t.classList.remove("hidden");
     setTimeout(() => {
       t.classList.add("translate-y-[-100px]", "opacity-0");
@@ -2531,17 +2450,15 @@ Do not wrap in markdown or code blocks.`;
     document.getElementById("dash-recent-list").innerHTML = recent
       .map(
         (d) => `
-                <div class="bg-black/20 p-3 rounded-2xl flex justify-between items-center border border-white/5 hover:border-white/10 transition">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm ${d.type === "income" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}">
+                <div class="recent-row">
+                        <div class="recent-icon ${d.type === "income" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}">
                             <i class="fas ${d.type === "income" ? "fa-arrow-down" : "fa-arrow-up"}"></i>
                         </div>
-                        <div>
-                            <div class="text-sm font-bold text-slate-200 truncate max-w-[150px] sm:max-w-[200px]">${d.desc}</div>
-                            <div class="text-[10px] text-slate-500 uppercase tracking-wider font-bold mt-0.5">${d.date} • ${d.cat}</div>
+                        <div class="recent-detail">
+                            <div class="recent-description">${FinTracker.escape(d.desc)}</div>
+                            <div class="recent-meta">${displayDate(d.date)} · ${FinTracker.escape(d.cat)}</div>
                         </div>
-                    </div>
-                    <div class="font-mono text-sm font-bold ${d.type === "income" ? "text-emerald-400" : "text-rose-400"}">
+                    <div class="recent-amount ${d.type === "income" ? "text-emerald-400" : "text-rose-400"}">
                         ${d.type === "income" ? "+" : "-"} ${fmt(d.amt, d.curr)}
                     </div>
                 </div>
@@ -2573,7 +2490,7 @@ Do not wrap in markdown or code blocks.`;
     const topCats = Object.entries(catTotals)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 4);
-    const chartColors = ["#4F46E5", "#0EA5E9", "#10B981", "#F59E0B", "#F43F5E"];
+    const chartColors = allocationColors;
 
     document.getElementById("dash-top-cat-list").innerHTML = topCats
       .map((c, i) => {
@@ -2581,12 +2498,12 @@ Do not wrap in markdown or code blocks.`;
           totalThisMonth > 0 ? (c[1] / totalThisMonth) * 100 : 0;
         return `
                 <div class="space-y-1.5">
-                    <div class="flex justify-between items-end">
-                        <span class="text-xs font-bold text-slate-300">${c[0]}</span>
-                        <span class="font-mono text-xs text-white bg-white/5 px-2 py-0.5 rounded-md border border-white/5">${fmt(c[1], "IDR")}</span>
+                    <div class="category-summary">
+                        <span>${FinTracker.escape(c[0])}</span>
+                        <span class="category-value">${fmt(c[1], "IDR")}</span>
                     </div>
-                    <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                        <div class="h-full rounded-full" style="width: ${percentage}%; background-color: ${chartColors[i % chartColors.length]}; box-shadow: 0 0 10px ${chartColors[i % chartColors.length]}80;"></div>
+                    <div class="category-meter">
+                        <div style="width: ${percentage}%; background-color: ${chartColors[i % chartColors.length]};"></div>
                     </div>
                 </div>`;
       })
@@ -2933,23 +2850,23 @@ Do not wrap in markdown or code blocks.`;
     });
 
     const listEl = document.getElementById("reconcile-list");
-    listEl.innerHTML = Object.values(bals)
-      .sort((a, b) => a.n.localeCompare(b.n))
+    const accounts = Object.values(bals).sort((a,b)=>a.n.localeCompare(b.n));
+    listEl.innerHTML = accounts
       .map((b, idx) => {
         return `
                     <div class="bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div class="flex-shrink-0">
-                            <div class="font-bold text-slate-200">${b.n}</div>
+                            <div class="font-bold text-slate-200">${FinTracker.escape(b.n)}</div>
                             <div class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">App: ${fmt(b.v, b.c)}</div>
                         </div>
                         <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
                             <div class="relative flex-grow sm:flex-grow-0">
                                 <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 font-bold text-xs">${b.c}</span>
-                                <input type="number" id="rec-real-${idx}" placeholder="Real Balance" class="input-glow rounded-xl pl-12 pr-4 py-2 w-full sm:w-[160px] text-sm text-white font-mono" oninput="updateReconcileDiff(${idx}, ${b.v}, '${b.c}', '${b.n}')">
+                                <input type="text" inputmode="decimal" data-calculator id="rec-real-${idx}" aria-label="Actual balance for ${FinTracker.escape(b.n)}" placeholder="Real Balance" class="input-glow rounded-xl pl-12 pr-4 py-2 w-full sm:w-[160px] text-sm text-white">
                             </div>
                             <div id="rec-diff-container-${idx}" class="hidden flex items-center justify-between sm:justify-start gap-3 mt-2 sm:mt-0 bg-black/40 sm:bg-transparent p-2 sm:p-0 rounded-lg">
                                 <span id="rec-diff-${idx}" class="font-bold text-sm font-mono whitespace-nowrap min-w-[80px] text-right"></span>
-                                <button id="rec-btn-${idx}" class="hidden bg-theme-primary/20 hover:bg-theme-primary/40 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wider transition" onclick="createAdjustment(${idx}, '${b.n}', '${b.c}')">Adjust</button>
+                                <button id="rec-btn-${idx}" type="button" class="hidden bg-theme-primary/20 hover:bg-theme-primary/40 text-theme-primaryLight border border-theme-primary/30 px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wider transition">Adjust</button>
                             </div>
                         </div>
                     </div>
@@ -2957,6 +2874,12 @@ Do not wrap in markdown or code blocks.`;
       })
       .join("");
 
+    accounts.forEach((account,idx)=>{
+      const field=document.getElementById(`rec-real-${idx}`);
+      FinTracker.attachCalculator(field);
+      field.addEventListener("input",()=>updateReconcileDiff(idx,account.v,account.c,account.n));
+      document.getElementById(`rec-btn-${idx}`).onclick=()=>createAdjustment(idx,account.n,account.c);
+    });
     document.getElementById("reconcile-modal").classList.remove("hidden");
   };
 
@@ -2971,7 +2894,8 @@ Do not wrap in markdown or code blocks.`;
       return;
     }
 
-    const realVal = parseFloat(realInput);
+    const realVal = FinTracker.domain.calculate(realInput);
+    if (realVal === null) { container.classList.add("hidden"); return; }
     const diff = realVal - appVal;
 
     container.classList.remove("hidden");
