@@ -1,0 +1,13 @@
+node_modules/
+*.gs
+.npm-cache/
+artifacts/
+test-results/
+playwright-report/
+.clasp.json
+.clasprc.json
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
