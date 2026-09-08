@@ -2,6 +2,52 @@
 document.addEventListener("DOMContentLoaded", () => {
   const phone = matchMedia("(max-width: 768px)"),
     root = document.documentElement;
+  function prepareSheets() {
+    document.querySelectorAll('.workspace-dialog, #copy-month-modal, #calendar-detail-modal, #reconcile-modal, #portfolio-modal').forEach(panel => {
+      if (panel.dataset.dragReady) return;
+      panel.dataset.dragReady = "true";
+      const native = panel.tagName === "DIALOG";
+      const surface = native ? panel : panel.firstElementChild;
+      if (!surface) return;
+      const grip = document.createElement("button");
+      grip.type = "button";
+      grip.className = "sheet-grip";
+      grip.setAttribute("aria-label", "Close panel; drag down to dismiss");
+      surface.prepend(grip);
+      const dismiss = () => {
+        if (!phone.matches) return;
+        if (native) {
+          if (panel.dispatchEvent(new Event("cancel", {cancelable: true}))) panel.close();
+        } else {
+          const closeButton = panel.querySelector('#copy-month-close, #cal-close, button[onclick*="portfolio-modal"], button[onclick*="reconcile-modal"]');
+          if (closeButton) closeButton.click();
+          else panel.classList.add("hidden");
+        }
+      };
+      grip.onclick = dismiss;
+      let start, distance = 0;
+      grip.addEventListener("pointerdown", event => {
+        if (!phone.matches) return;
+        start = event.clientY; distance = 0;
+        grip.setPointerCapture(event.pointerId);
+      });
+      grip.addEventListener("pointermove", event => {
+        if (start === undefined) return;
+        distance = Math.max(0, event.clientY - start);
+        surface.style.setProperty("translate", `0 ${distance}px`);
+      });
+      const release = event => {
+        if (start === undefined) return;
+        start = undefined;
+        surface.style.removeProperty("translate");
+        if (event.type !== "pointercancel" && distance > 72) dismiss();
+      };
+      grip.addEventListener("pointerup", release);
+      grip.addEventListener("pointercancel", release);
+    });
+  }
+  new MutationObserver(prepareSheets).observe(document.body, {childList: true, subtree: true});
+  prepareSheets();
   FinTracker.confirm = (message) => {
     if (!phone.matches) return Promise.resolve(window.confirm(message));
     return new Promise((resolve) => {
@@ -63,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function syncEntry() {
     if (!phone.matches) return;
     if (!entry.classList.contains("hidden")) {
-      if (!sheet.open) sheet.showModal();
+      if (!sheet.open) { sheet.showModal(); sheet.scrollTop = 0; }
     } else if (sheet.open) sheet.close();
   }
   sheet.addEventListener("close", () => {

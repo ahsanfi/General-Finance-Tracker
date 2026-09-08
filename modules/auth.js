@@ -15,7 +15,7 @@ window.FinTracker = window.FinTracker || {};
       if (sessionStorage.getItem("fintracker.locked") === "true") { clear(); return; }
       const saved = JSON.parse(localStorage.getItem(storageKey));
       if (!saved) return;
-      const end = expiry(saved.credential);
+      const end = /^fts_[a-f0-9]{64}$/.test(saved.credential) ? Number(saved.expiresAt) || 0 : expiry(saved.credential);
       if (saved.scope !== scope() || end <= Date.now() + 60000) { clear(); return; }
       token = saved.credential;
       expiresAt = end;
@@ -91,5 +91,15 @@ window.FinTracker = window.FinTracker || {};
     })().finally(() => { signingIn = null; });
     return signingIn;
   }
-  FinTracker.auth = { credential, clear };
+  function acceptSession(session) {
+    if (!/^fts_[a-f0-9]{64}$/.test(session?.credential) || !Number.isFinite(session.expiresAt) || session.expiresAt <= Date.now()) return;
+    token = session.credential;
+    expiresAt = session.expiresAt;
+    try { localStorage.setItem(storageKey, JSON.stringify({ credential: token, expiresAt, scope: scope() })); } catch (_) {}
+  }
+  async function signOut() {
+    try { if (token?.startsWith("fts_")) await FinTracker.api.request("revokeSession"); }
+    finally { clear(); }
+  }
+  FinTracker.auth = { credential, clear, acceptSession, signOut };
 })();
