@@ -82,6 +82,7 @@ window.FinTracker = window.FinTracker || {};
           throw new Error(
             result?.message || "The server returned an invalid response.",
           );
+        if (result.session) FinTracker.auth?.acceptSession?.(result.session);
         if (!read) {
           initialData = null;
           initialBudgets = null;

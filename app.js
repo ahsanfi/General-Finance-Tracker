@@ -167,7 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     CALC_IDS.forEach(id => attachMobileCalc(document.getElementById(id)));
     FinTracker.attachCalculator = attachMobileCalc;
-    document.addEventListener("close", kpHide, true);
+    document.addEventListener("close", event => {
+      if (event.target === keypadHost || (activeEl && event.target.contains(activeEl))) kpHide();
+    }, true);
 
     // Keypad button handler
     keypad.querySelectorAll("[data-k]").forEach((btn) => {
@@ -395,8 +397,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   document.getElementById("logout-btn").title = "Lock workspace";
-  document.getElementById("logout-btn").addEventListener("click", () => {
-    FinTracker.auth.clear();
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    try { await FinTracker.auth.signOut(); } catch (_) { FinTracker.auth.clear(); }
     localStorage.removeItem("auth");
     sessionStorage.setItem("fintracker.locked", "true");
     location.reload();
@@ -1663,7 +1665,7 @@ Do not wrap in markdown or code blocks.`;
       const result = await FinTracker.api.request("syncTokocrypto");
       window.portfolioData = result.portfolio;
       renderAll();
-      showToast(result.message, "success");
+      showToast(result.message, result.warnings?.length ? "warning" : "success");
     } catch (error) {
       showToast(error.message, "error");
     } finally {
@@ -1990,6 +1992,9 @@ Do not wrap in markdown or code blocks.`;
           x: {
             grid: { display: false },
             ticks: {
+              maxTicksLimit: 6,
+              maxRotation: 0,
+              minRotation: 0,
               color: "#64748b",
               font: { size: 10, family: "'Inter', sans-serif" },
             },
