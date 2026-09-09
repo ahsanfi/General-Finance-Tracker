@@ -1568,7 +1568,12 @@ Do not wrap in markdown or code blocks.`;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = "Open Tokocrypto support";
-        notice.append(message, link);
+        const localButton = document.createElement("button");
+        localButton.type = "button";
+        localButton.className = "secondary-button small";
+        localButton.textContent = "Try local sync on this computer";
+        localButton.onclick = () => document.getElementById("btn-sync-toko-local").click();
+        notice.append(message, link, localButton);
         notice.classList.remove("hidden");
         showToast("Toko sync blocked (451). See details above your holdings.", "error");
       } else showToast(error.message, "error");
@@ -1703,57 +1708,13 @@ Do not wrap in markdown or code blocks.`;
     document.getElementById("calendar-detail-modal").classList.remove("hidden");
   };
 
-  function renderCalendar(data) {
-    const safeData = Array.isArray(data) ? data : [];
-    const g = document.getElementById("calendar-grid");
-    g.innerHTML = "";
-    const y = calendarDate.getFullYear(),
-      m = calendarDate.getMonth();
-    document.getElementById("calendar-header").textContent =
-      calendarDate.toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
-    for (let i = 0; i < new Date(y, m, 1).getDay(); i++)
-      g.appendChild(document.createElement("div"));
-    for (let d = 1; d <= new Date(y, m + 1, 0).getDate(); d++) {
-      const dateStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-        items = safeData.filter((i) => i.date === dateStr),
-        el = document.createElement("div");
-      el.className =
-        "calendar-day bg-black/20 border border-white/5 rounded-2xl p-2 flex flex-col items-center justify-start cursor-pointer relative overflow-hidden group";
-      el.innerHTML = `<span class="text-xs text-slate-400 mb-1 font-bold z-10 group-hover:text-white transition">${d}</span>`;
-      if (items.length > 0) {
-        el.innerHTML += `<div class="flex gap-1.5 mt-auto pb-1 z-10">${items.some((x) => x.type === "income") ? '<div class="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></div>' : ""}${items.some((x) => x.type === "expense") ? '<div class="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(225,29,72,0.8)]"></div>' : ""}</div>`;
-        el.onclick = () => {
-          document.getElementById("cal-detail-title").textContent = new Date(
-            dateStr,
-          ).toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          });
-          document.getElementById("cal-detail-content").innerHTML = items
-            .map(
-              (x) =>
-                `<div class="flex justify-between items-center p-4 bg-black/30 rounded-2xl border border-white/5 mb-2 hover:bg-black/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full ${x.type === "income" ? "bg-emerald-500" : "bg-rose-500"}"></div><div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">${x.cat} • ${x.acc}</div></div></div><div class="${x.type === "income" ? "text-emerald-400" : "text-rose-400"} font-mono text-sm font-bold bg-white/5 px-2 py-1 rounded-lg">${fmt(x.amt, x.curr)}</div></div>`,
-            )
-            .join("");
-          document
-            .getElementById("calendar-detail-modal")
-            .classList.remove("hidden");
-        };
-      }
-      g.appendChild(el);
-    }
-  }
+  function renderCalendar(data) { FinTracker.calendar.render(Array.isArray(data) ? data : [], calendarDate, fmt); }
   document.getElementById("prev-month").addEventListener("click", () => {
-    calendarDate.setMonth(calendarDate.getMonth() - 1);
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
     renderCalendar(masterData);
   });
   document.getElementById("next-month").addEventListener("click", () => {
-    calendarDate.setMonth(calendarDate.getMonth() + 1);
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
     renderCalendar(masterData);
   });
   document
@@ -1776,17 +1737,24 @@ Do not wrap in markdown or code blocks.`;
     FinTracker.visualizations.spending([...totals].map(([name,value])=>({name,value})).filter(item=>item.value>0).sort((a,b)=>b.value-a.value), currency, comparison);
   }
   let trendChart;
+  let trendTimeframe = "30";
+  document.getElementById("trend-timeframe").addEventListener("change", event => {
+    trendTimeframe = event.target.value; updateTrendChart(masterData);
+  });
   function updateTrendChart(data) {
     const ctx = document.getElementById("trend-line-chart").getContext("2d");
 
-    const trend = FinTracker.visualizations.trendData(data, exchangeRate);
+    const trend = FinTracker.visualizations.trendData(data, exchangeRate, new Date(), trendTimeframe);
+    document.getElementById('trend-line-chart').setAttribute('aria-label', `Daily expense trend for the last ${trend.count} days`);
+    document.getElementById("trend-period-label").textContent = `Spent in ${trend.count} days`;
+    document.getElementById("trend-period-note").textContent = `${trend.count} calendar days through today · IDR equivalent · Transfers excluded`;
     const sortedDates = trend.dates, values = trend.values;
     document.getElementById('trend-total').textContent = fmt(trend.total, 'IDR');
     document.getElementById('trend-average').textContent = fmt(trend.average, 'IDR');
     document.getElementById('trend-peak').textContent = fmt(trend.peak, 'IDR');
     document.getElementById('trend-comparison').textContent = trend.previous > 0
-      ? `${trend.total >= trend.previous ? '+' : ''}${((trend.total-trend.previous)/trend.previous*100).toFixed(1)}% vs previous 30 days`
-      : 'No spending recorded in the previous 30 days';    const labels = sortedDates.map((d) => {
+      ? `${trend.total >= trend.previous ? '+' : ''}${((trend.total-trend.previous)/trend.previous*100).toFixed(1)}% vs previous ${trend.count} days`
+      : `No spending recorded in the previous ${trend.count} days`;    const labels = sortedDates.map((d) => {
       const dateObj = new Date(d + "T12:00:00");
       return dateObj.toLocaleDateString("en-US", {
         month: "short",
@@ -2363,7 +2331,7 @@ Do not wrap in markdown or code blocks.`;
 
     const topCats = Object.entries(catTotals)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 4);
+      .slice(0, 5);
     const chartColors = allocationColors;
 
     document.getElementById("dash-top-cat-list").innerHTML = topCats
@@ -3432,6 +3400,8 @@ Do not wrap in markdown or code blocks.`;
       b.addEventListener("click", onBudgetTabOpen);
   });
 });
+
+
 
 
 
