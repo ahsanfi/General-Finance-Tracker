@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -211,7 +211,7 @@
   </section>
   <div class="analytics-layout" id="dashboard-charts-grid">
     <section class="surface spending-surface"><div class="surface-heading"><div><p class="eyebrow">SPENDING INSIGHTS</p><h3>Where your money goes</h3></div><label class="currency-pill"><span class="sr-only">Chart currency</span><select id="chart-currency-toggle"><option>IDR</option><option>USD</option></select></label></div><div id="spending-visualization"></div><p class="surface-footnote">All recorded expenses, excluding transfers.</p></section>
-    <section class="surface trend-surface"><div class="surface-heading"><div><p class="eyebrow">THE BIGGER PICTURE</p><h3>Spending over time</h3></div><span class="neutral-badge">Last 30 days</span></div><div class="trend-container"><canvas id="trend-line-chart" role="img" aria-label="Daily expense trend for the last 30 days"></canvas></div></section>
+    <section class="surface trend-surface"><div class="surface-heading"><div><p class="eyebrow">THE BIGGER PICTURE</p><h3>Spending over time</h3></div><span class="neutral-badge">Last 30 days</span></div><div class="trend-summary"><div><span>Spent in 30 days</span><strong id="trend-total">—</strong></div><p id="trend-comparison"></p></div><div class="trend-container"><canvas id="trend-line-chart" role="img" aria-label="Daily expense trend for the last 30 days"></canvas></div><div class="trend-facts"><div><span>Daily average</span><strong id="trend-average">—</strong></div><div><span>Highest spending day</span><strong id="trend-peak">—</strong></div></div><p class="surface-footnote">30 calendar days through today · IDR equivalent · Transfers excluded</p></section>
   </div>
   <section class="surface wallets-surface"><div class="surface-heading"><div><h3>Your accounts</h3><p>Every wallet. One connected view.</p></div><button class="secondary-button small" onclick="openReconcileModal()"><i class="fas fa-balance-scale" aria-hidden="true"></i> Reconcile</button></div><div id="account-balances-container" class="wallet-layout"></div></section>
   <div class="activity-layout"><section class="surface"><div class="surface-heading"><div><h3>Recent activity</h3><p>The latest ins and outs.</p></div><button class="text-button" onclick="document.getElementById('desk-tab-transactions').click()">View all <i class="fas fa-arrow-right" aria-hidden="true"></i></button></div><div id="dash-recent-list" class="activity-list"></div></section><section class="surface"><div class="surface-heading"><div><h3>Top categories</h3><p>Your spending this month.</p></div><i class="fas fa-chart-simple" aria-hidden="true"></i></div><div id="dash-top-cat-list" class="top-category-list"></div></section></div>
@@ -644,6 +644,7 @@
                                 </button>
                             </div>
                         </div>
+                        <div id="toko-sync-notice" class="toko-sync-notice hidden" role="status"></div>
                         <div id="portfolio-assets-list" class="space-y-3">
                             <!-- Populated by JS -->
                         </div>
@@ -1320,5 +1321,6 @@
 </body>
 
 </html>
+
 
 

@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   const WEB_APP_URL = window.FinTrackerConfig?.apiUrl || "";
 
   let SYSTEM_CONFIG = {
@@ -1553,11 +1553,25 @@ Do not wrap in markdown or code blocks.`;
     button.textContent = "Syncing account…";
     try {
       const result = await FinTracker.api.request("syncTokocrypto");
+      document.getElementById("toko-sync-notice").classList.add("hidden");
       window.portfolioData = result.portfolio;
       renderAll();
       showToast(result.message, result.warnings?.length ? "warning" : "success");
     } catch (error) {
-      showToast(error.message, "error");
+      if (/HTTP 451/.test(error.message)) {
+        const notice = document.getElementById("toko-sync-notice");
+        notice.replaceChildren();
+        const message = document.createElement("p");
+        message.textContent = "Account sync is blocked: Tokocrypto returned HTTP 451 to Google Apps Script. Your holdings are unchanged. Ask Tokocrypto support whether account API access from Google Apps Script is supported; you can edit holdings manually meanwhile.";
+        const link = document.createElement("a");
+        link.href = "https://support.tokocrypto.com/";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open Tokocrypto support";
+        notice.append(message, link);
+        notice.classList.remove("hidden");
+        showToast("Toko sync blocked (451). See details above your holdings.", "error");
+      } else showToast(error.message, "error");
     } finally {
       button.disabled = false;
       button.innerHTML = original;
@@ -1765,24 +1779,15 @@ Do not wrap in markdown or code blocks.`;
   function updateTrendChart(data) {
     const ctx = document.getElementById("trend-line-chart").getContext("2d");
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const rawData = data.filter(
-      (d) =>
-        d.type === "expense" &&
-        d.cat !== "Transfer" &&
-        new Date(d.date) >= thirtyDaysAgo,
-    );
-    const dailyTotals = {};
-    rawData.forEach((d) => {
-      const date = d.date;
-      const amountIDR = d.curr === "USD" ? d.amt * exchangeRate : d.amt;
-      dailyTotals[date] = (dailyTotals[date] || 0) + amountIDR;
-    });
-    const sortedDates = Object.keys(dailyTotals).sort();
-    const values = sortedDates.map((date) => dailyTotals[date]);
-    const labels = sortedDates.map((d) => {
-      const dateObj = new Date(d);
+    const trend = FinTracker.visualizations.trendData(data, exchangeRate);
+    const sortedDates = trend.dates, values = trend.values;
+    document.getElementById('trend-total').textContent = fmt(trend.total, 'IDR');
+    document.getElementById('trend-average').textContent = fmt(trend.average, 'IDR');
+    document.getElementById('trend-peak').textContent = fmt(trend.peak, 'IDR');
+    document.getElementById('trend-comparison').textContent = trend.previous > 0
+      ? `${trend.total >= trend.previous ? '+' : ''}${((trend.total-trend.previous)/trend.previous*100).toFixed(1)}% vs previous 30 days`
+      : 'No spending recorded in the previous 30 days';    const labels = sortedDates.map((d) => {
+      const dateObj = new Date(d + "T12:00:00");
       return dateObj.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -3427,6 +3432,7 @@ Do not wrap in markdown or code blocks.`;
       b.addEventListener("click", onBudgetTabOpen);
   });
 });
+
 
 
 
