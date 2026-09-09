@@ -20,16 +20,25 @@
   if(launchToken) history.replaceState(null,'',location.pathname+location.search);
   document.addEventListener('DOMContentLoaded',()=>{
     const button=document.getElementById('btn-sync-toko-local');
-    button.onclick=()=>{
+    button.onclick=()=>openSyncDialog();
+    function openSyncDialog(token){
       const dialog=document.createElement('dialog');dialog.className='workspace-dialog';dialog.setAttribute('aria-label','Local Tokocrypto sync');
       dialog.innerHTML='<div class="dialog-heading"><h2>Sync Toko locally</h2><button class="dialog-close" type="button">Close</button></div><form class="quick-form"><p>Start local-sync/toko.cjs on this computer, then paste its pairing token. Your browser may ask permission to connect to your local network.</p><label for="toko-local-token">Pairing token</label><input id="toko-local-token" type="password" autocomplete="off" required><p role="status" id="toko-local-status"></p><button class="primary-button" type="submit">Sync from this computer</button></form>';
       dialog.querySelector('.dialog-close').onclick=()=>{if(!busy)dialog.close();};
       const input=dialog.querySelector('input'),status=dialog.querySelector('[role="status"]'),form=dialog.querySelector('form');
+      const submit=form.querySelector('button');
+      // The BAT has already paired this browser. Only manual launches need a token field.
+      if(token){
+        input.type='hidden';input.value=token;
+        form.querySelector('label').hidden=true;
+        form.querySelector('p').textContent='Connected through the local launcher. Keep its window open until sync finishes.';
+        submit.hidden=true;submit.textContent='Retry sync';
+      }
       let busy=false;
       dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
       dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
       form.onsubmit=async event=>{
-        event.preventDefault();if(busy)return;busy=true;form.querySelector('button').disabled=true;status.textContent='Reading local account balances…';
+        event.preventDefault();if(busy)return;busy=true;submit.disabled=true;if(token)submit.hidden=true;status.textContent='Reading local account balances…';
         try{
           const [original,ledger]=await Promise.all([FinTracker.api.request('getPortfolio'),FinTracker.api.request('getData')]);
           let response;
@@ -45,16 +54,15 @@
           await window.refreshFinTracker();
           document.getElementById('toko-sync-notice').classList.add('hidden');
           status.textContent=merged.warnings.length?'Saved balances. Kept previous values where prices were unavailable: '+merged.warnings.join(', '):'Local sync saved to your spreadsheet.';
-        }catch(error){status.textContent=error.message;}
+        }catch(error){status.textContent=error.message;submit.hidden=false;}
         finally{busy=false;form.querySelector('button').disabled=false;}
       };
-    };
+      if(token)form.requestSubmit();
+    }
     function startLaunch(token){
       // Wait for authenticated bootstrap so Google sign-in remains the access gate.
       FinTracker.api.bootstrap().then(()=>{
-        button.click();
-        document.getElementById('toko-local-token').value=token;
-        document.getElementById('toko-local-token').form.requestSubmit();
+        openSyncDialog(token);
       }).catch(()=>{ /* The existing login/retry screen reports bootstrap failures. */ });
     }
     if(launchToken){const token=launchToken;launchToken=null;startLaunch(token);}
