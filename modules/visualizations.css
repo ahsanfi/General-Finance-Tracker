@@ -11,6 +11,7 @@
 .spending-segment:focus .segment-name { text-decoration: underline; }
 .spending-comparison { color: var(--text-muted); font-size: 12px; margin: 0 0 8px; }
 .spending-mobile { display: none; }
+.portfolio-mobile-values { display: none; }
 .allocation-breakdown { margin-top: 10px; }
 .allocation-breakdown summary { width: fit-content; min-height: 44px; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--accent); font-size: 13px; }
 .allocation-breakdown summary::before { content: '+'; font-size: 18px; }
@@ -50,6 +51,8 @@
 }
 @media (max-width: 768px) {
   .spending-arcs { display: none; }
+  .mobile-spending-chart { display: block; width: min(100%, 280px); margin: 0 auto 20px; overflow: hidden; }
+  .mobile-spending-chart .segment-connector, .mobile-spending-chart .segment-name, .mobile-spending-chart .segment-value { display: none; }
   .spending-mobile { display: block; }
   .visual-caption { color: var(--text-muted); font-size: 12px; }
   .mobile-spending-total { display: block; font-size: 28px; margin: 4px 0 20px; }
@@ -64,10 +67,14 @@
   .portfolio-summary > .flex { margin: 0; }
   .portfolio-summary > .flex > div { padding: 0 12px 0 0; }
   .allocation-title { flex-direction: column; gap: 4px; }
-  .holding-treemap { height: auto; display: grid; gap: 8px; }
-  .holding-tile { position: relative; left: auto !important; top: auto !important; width: 100% !important; height: auto !important; min-height: 115px; border: 0; border-left: 4px solid var(--holding-color); }
-  .allocation-title > span { font-size: 0; }
-  .allocation-title > span::after { content: 'Current value, allocation and P&L · IDR'; font-size: 12px; }
+  .holding-treemap { height: 340px; }
+  .holding-tile { min-width: 0 !important; padding: 8px; justify-content: center; }
+  .holding-tile .holding-name { font-size: 11px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .holding-tile strong, .holding-tile .holding-performance { display: none; }
+  .holding-weight { font-size: 11px; }
+  .portfolio-mobile-values { display: block; margin-top: 16px; }
+  .portfolio-mobile-values .data-allocation-row { grid-template-columns: minmax(0,1fr) auto; gap: 6px 12px; }
+  .portfolio-mobile-values .data-allocation-row > :nth-child(3) { text-align: left; color: var(--text-muted); }
   .with-performance .data-allocation-row { grid-template-columns: minmax(0,1fr) auto; }
   #portfolio-assets-list { grid-template-columns: minmax(0,1fr); }
 }
