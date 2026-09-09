@@ -707,10 +707,10 @@
                                     style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
                                     <i class="fas fa-bolt mr-1"></i>Groq
                                 </button>
-                                <button id="scan-tab-minimax" onclick="scanSelectProvider('minimax')"
+                                <button id="scan-tab-gemini" onclick="scanSelectProvider('gemini')"
                                     class="flex-1 py-2 text-xs font-bold transition-all"
                                     style="background:rgba(255,255,255,0.05);color:#94a3b8">
-                                    <i class="fas fa-star mr-1"></i>MiniMax
+                                    <i class="fas fa-star mr-1"></i>Google AI Studio
                                 </button>
                             </div>
 
@@ -725,29 +725,29 @@
                                         target="_blank" class="text-violet-400 underline">console.groq.com</a></p>
                             </div>
 
-                            <!-- MiniMax section -->
-                            <div id="scan-setup-minimax" class="hidden">
+                            <!-- Google AI Studio section -->
+                            <div id="scan-setup-gemini" class="hidden">
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">MiniMax
+                                    class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Google AI Studio
                                     API Key</label>
-                                <input type="password" id="minimax-scan-key" placeholder="eyJ..."
+                                <input type="password" id="gemini-scan-key" placeholder="Google AI Studio API key"
                                     class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
                                 <div class="mt-2">
                                     <label
                                         class="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Model</label>
-                                    <select id="scan-model-minimax"
-                                        class="w-full bg-black/40 rounded-xl px-4 py-2.5 text-sm text-slate-100 border border-white/10 focus:border-cyan-500/40 focus:outline-none">
-                                        <option value="MiniMax-M2.5">MiniMax-M2.5 (Recommended)</option>
-                                        <option value="MiniMax-M2.5-highspeed">MiniMax-M2.5 Highspeed</option>
-                                        <option value="MiniMax-M2.7">MiniMax-M2.7</option>
-                                        <option value="MiniMax-M2.7-highspeed">MiniMax-M2.7 Highspeed</option>
-                                        <option value="MiniMax-M2.1">MiniMax-M2.1</option>
-                                        <option value="MiniMax-M2">MiniMax-M2</option>
+                                    <select id="scan-model-gemini"
+                                        class="w-full bg-black/40 rounded-xl px-4 py-2.5 text-sm text-slate-100 border border-white/10 focus:border-cyan-500/40 focus:outline-none"><option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
                                     </select>
                                 </div>
-                                <p class="text-[10px] text-slate-500 mt-2">Uses your MiniMax key &bull; <a
-                                        href="https://platform.minimax.io" target="_blank"
-                                        class="text-cyan-400 underline">platform.minimax.io</a></p>
+                                <p class="text-[10px] text-slate-500 mt-2">Uses your Google AI Studio key &bull; <a
+                                        href="https://aistudio.google.com/apikey" target="_blank"
+                                        class="text-cyan-400 underline">aistudio.google.com/apikey</a></p>
                             </div>
 
                         </div>
@@ -1062,7 +1062,7 @@
     <script src="modules/auth.js"></script>
     <script src="modules/core.js"></script>
     <script src="modules/domain.js"></script>
-    <script src="modules/groq-vision.js"></script>
+    <script src="modules/groq-vision.js"></script><script src="modules/gemini.js"></script>
     <script src="modules/dashboard.js"></script>
     <script src="modules/visualizations.js"></script><script src="app.js"></script>
     <script src="modules/assistant.js"></script>
@@ -1119,10 +1119,10 @@
                     style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
                     <i class="fas fa-bolt mr-1"></i>Groq
                 </button>
-                <button id="ai-tab-minimax" onclick="aiSelectProvider('minimax')"
+                <button id="ai-tab-gemini" onclick="aiSelectProvider('gemini')"
                     class="flex-1 py-2.5 text-xs font-bold transition-all"
                     style="background:rgba(255,255,255,0.05);color:#94a3b8">
-                    <i class="fas fa-star mr-1"></i>MiniMax
+                    <i class="fas fa-star mr-1"></i>Google AI Studio
                 </button>
             </div>
 
@@ -1143,30 +1143,30 @@
                     free</p>
             </div>
 
-            <!-- MiniMax setup -->
-            <div id="ai-setup-minimax" class="hidden flex-col gap-3">
+            <!-- Google AI Studio setup -->
+            <div id="ai-setup-gemini" class="hidden flex-col gap-3">
                 <div class="text-center">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-cyan-400 text-xl mx-auto mb-2"
                         style="background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3)"><i
                             class="fas fa-star"></i></div>
-                    <h3 class="text-white font-bold text-sm mb-1">MiniMax API Key</h3>
-                    <p class="text-slate-500 text-xs">Get key at <a href="https://www.minimax.io/platform"
-                            target="_blank" class="text-cyan-400 hover:underline">minimax.io/platform</a></p>
+                    <h3 class="text-white font-bold text-sm mb-1">Google AI Studio API Key</h3>
+                    <p class="text-slate-500 text-xs">Get key at <a href="https://aistudio.google.com/apikey"
+                            target="_blank" class="text-cyan-400 hover:underline">aistudio.google.com/apikey</a></p>
                 </div>
-                <input id="ai-key-minimax" type="password" placeholder="eyJ..."
+                <input id="ai-key-gemini" type="password" placeholder="Google AI Studio API key"
                     class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-cyan-500/30 focus:border-cyan-500/60 focus:outline-none"
                     style="background:rgba(0,0,0,0.4)">
-                <select id="ai-model-minimax"
+                <select id="ai-model-gemini"
                     class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-cyan-500/30 focus:border-cyan-500/60 focus:outline-none"
-                    style="background:rgba(0,0,0,0.5)">
-                    <option value="MiniMax-M2.5">MiniMax-M2.5 &mdash; Peak Performance (60 tps)</option>
-                    <option value="MiniMax-M2.5-highspeed">MiniMax-M2.5 Highspeed (100 tps)</option>
-                    <option value="MiniMax-M2.7">MiniMax-M2.7 &mdash; Self-improving (60 tps)</option>
-                    <option value="MiniMax-M2.7-highspeed">MiniMax-M2.7 Highspeed (100 tps)</option>
-                    <option value="MiniMax-M2.1">MiniMax-M2.1 &mdash; Multi-language (60 tps)</option>
-                    <option value="MiniMax-M2.1-highspeed">MiniMax-M2.1 Highspeed (100 tps)</option>
-                    <option value="MiniMax-M2">MiniMax-M2 &mdash; Agentic Reasoning</option>
-                    <option value="MiniMax-Text-01">MiniMax-Text-01 (legacy)</option>
+                    style="background:rgba(0,0,0,0.5)"><option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
                 </select>
             </div>
 
@@ -1320,4 +1320,5 @@
 </body>
 
 </html>
+
 

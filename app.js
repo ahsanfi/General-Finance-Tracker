@@ -288,9 +288,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const key =
             scanProvider === "groq"
               ? localStorage.getItem("groqApiKey")
-              : localStorage.getItem("mtracker_minimax_key");
+              : localStorage.getItem("mtracker_gemini_key");
           if (!key) {
-            const label = scanProvider === "groq" ? "Groq" : "MiniMax";
+            const label = scanProvider === "groq" ? "Groq" : "Google AI Studio";
             showToast(
               `Please save your ${label} API Key in Config first`,
               "error",
@@ -1319,9 +1319,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const key =
       scanProvider === "groq"
         ? localStorage.getItem("groqApiKey")
-        : localStorage.getItem("mtracker_minimax_key");
+        : localStorage.getItem("mtracker_gemini_key");
     if (!key) {
-      const label = scanProvider === "groq" ? "Groq" : "MiniMax";
+      const label = scanProvider === "groq" ? "Groq" : "Google AI Studio";
       showToast(`Please save your ${label} API Key in Config first`, "error");
       window.switchTab("view-config");
       return;
@@ -1387,11 +1387,11 @@ Return ONLY a valid JSON array of objects with this exact structure:
 Do not wrap in markdown or code blocks.`;
 
       let endpoint, model, apiKey, headers;
-      if (scanProvider === "minimax") {
-        apiKey = localStorage.getItem("mtracker_minimax_key");
-        const mmModelEl = document.getElementById("scan-model-minimax");
-        model = mmModelEl ? mmModelEl.value : "MiniMax-M2.5";
-        endpoint = "https://api.minimax.io/v1/chat/completions";
+      if (scanProvider === "gemini") {
+        apiKey = localStorage.getItem("mtracker_gemini_key");
+        const mmModelEl = document.getElementById("scan-model-gemini");
+        model = mmModelEl ? mmModelEl.value : "gemini-3.8-flash";
+        endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
         headers = {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
@@ -1425,7 +1425,7 @@ Do not wrap in markdown or code blocks.`;
         max_tokens: 1024,
       });
 
-      const res = await FinTracker.groqVision.request(endpoint, {
+      const res = await (scanProvider === "gemini" ? FinTracker.gemini.request : FinTracker.groqVision.request)(endpoint, {
         method: "POST",
         headers,
         body,
@@ -2421,14 +2421,15 @@ Do not wrap in markdown or code blocks.`;
 
   // Settings & AI Receipt Scanner
   let scanProvider = localStorage.getItem("mtracker_scan_provider") || "groq";
+  if (scanProvider === "minimax") scanProvider = "gemini";
 
   window.scanSelectProvider = function (p) {
     scanProvider = p;
     localStorage.setItem("mtracker_scan_provider", p);
     const gTab = document.getElementById("scan-tab-groq");
-    const mmTab = document.getElementById("scan-tab-minimax");
+    const mmTab = document.getElementById("scan-tab-gemini");
     const gSetup = document.getElementById("scan-setup-groq");
-    const mmSetup = document.getElementById("scan-setup-minimax");
+    const mmSetup = document.getElementById("scan-setup-gemini");
     if (!gTab) return;
     gTab.setAttribute("aria-pressed", String(p === "groq"));
     mmTab.setAttribute("aria-pressed", String(p !== "groq"));
@@ -2452,9 +2453,9 @@ Do not wrap in markdown or code blocks.`;
   document.getElementById("config-btn").addEventListener("click", () => {
     document.getElementById("groq-api-key").value =
       localStorage.getItem("groqApiKey") || "";
-    const mmScanInp = document.getElementById("minimax-scan-key");
+    const mmScanInp = document.getElementById("gemini-scan-key");
     if (mmScanInp)
-      mmScanInp.value = localStorage.getItem("mtracker_minimax_key") || "";
+      mmScanInp.value = localStorage.getItem("mtracker_gemini_key") || "";
 
     const tokoApi = document.getElementById("config-toko-api");
     const tokoSec = document.getElementById("config-toko-secret");
@@ -2472,9 +2473,9 @@ Do not wrap in markdown or code blocks.`;
     const key =
       scanProvider === "groq"
         ? localStorage.getItem("groqApiKey")
-        : localStorage.getItem("mtracker_minimax_key");
+        : localStorage.getItem("mtracker_gemini_key");
     if (!key) {
-      const label = scanProvider === "groq" ? "Groq" : "MiniMax";
+      const label = scanProvider === "groq" ? "Groq" : "Google AI Studio";
       showToast(`Please save your ${label} API Key in Config first`, "error");
       window.switchTab("view-config");
       return;
@@ -2489,9 +2490,9 @@ Do not wrap in markdown or code blocks.`;
       const key =
         scanProvider === "groq"
           ? localStorage.getItem("groqApiKey")
-          : localStorage.getItem("mtracker_minimax_key");
+          : localStorage.getItem("mtracker_gemini_key");
       if (!key) {
-        const label = scanProvider === "groq" ? "Groq" : "MiniMax";
+        const label = scanProvider === "groq" ? "Groq" : "Google AI Studio";
         showToast(`Please save your ${label} API Key in Config first`, "error");
         window.switchTab("view-config");
         return;
@@ -2583,11 +2584,11 @@ Return ONLY a valid JSON object with this exact structure:
 Do not wrap in markdown or code blocks.`;
 
       let endpoint, model, apiKey, headers;
-      if (scanProvider === "minimax") {
-        apiKey = localStorage.getItem("mtracker_minimax_key");
-        const mmModelEl = document.getElementById("scan-model-minimax");
-        model = mmModelEl ? mmModelEl.value : "MiniMax-M2.5";
-        endpoint = "https://api.minimax.io/v1/chat/completions";
+      if (scanProvider === "gemini") {
+        apiKey = localStorage.getItem("mtracker_gemini_key");
+        const mmModelEl = document.getElementById("scan-model-gemini");
+        model = mmModelEl ? mmModelEl.value : "gemini-3.8-flash";
+        endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
         headers = {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
@@ -2602,7 +2603,7 @@ Do not wrap in markdown or code blocks.`;
         };
       }
 
-      const res = await FinTracker.groqVision.request(endpoint, {
+      const res = await (scanProvider === "gemini" ? FinTracker.gemini.request : FinTracker.groqVision.request)(endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -2665,7 +2666,7 @@ Do not wrap in markdown or code blocks.`;
           document.getElementById("entry-cat-other").value = parsed.category;
         }
       }
-      const label = scanProvider === "minimax" ? "MiniMax" : "Groq";
+      const label = scanProvider === "gemini" ? "Google AI Studio" : "Groq";
       showToast(`Receipt scanned via ${label}!`, "success");
     } catch (err) {
       console.error(err);
@@ -2691,9 +2692,9 @@ Do not wrap in markdown or code blocks.`;
           const key =
             scanProvider === "groq"
               ? localStorage.getItem("groqApiKey")
-              : localStorage.getItem("mtracker_minimax_key");
+              : localStorage.getItem("mtracker_gemini_key");
           if (!key) {
-            const label = scanProvider === "groq" ? "Groq" : "MiniMax";
+            const label = scanProvider === "groq" ? "Groq" : "Google AI Studio";
             showToast(
               `Please save your ${label} API Key in Config first`,
               "error",
@@ -2985,10 +2986,10 @@ Do not wrap in markdown or code blocks.`;
     const groqKey = document.getElementById("groq-api-key").value.trim();
     if (groqKey) localStorage.setItem("groqApiKey", groqKey);
 
-    // Also save MiniMax scan key if filled
-    const mmScanKeyEl = document.getElementById("minimax-scan-key");
+    // Also save Google AI Studio scan key if filled
+    const mmScanKeyEl = document.getElementById("gemini-scan-key");
     if (mmScanKeyEl && mmScanKeyEl.value.trim()) {
-      localStorage.setItem("mtracker_minimax_key", mmScanKeyEl.value.trim());
+      localStorage.setItem("mtracker_gemini_key", mmScanKeyEl.value.trim());
     }
 
     // Add Tokocrypto Keys
@@ -3426,5 +3427,7 @@ Do not wrap in markdown or code blocks.`;
       b.addEventListener("click", onBudgetTabOpen);
   });
 });
+
+
 
 
