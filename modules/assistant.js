@@ -4,11 +4,12 @@
 document.addEventListener("DOMContentLoaded", function () {
   (function () {
     const GROQ_KEY = "mtracker_groq_key";
-    const MINIMAX_KEY = "mtracker_minimax_key";
+    const GEMINI_KEY = "mtracker_gemini_key";
     const PROVIDER_KEY = "mtracker_ai_provider";
     let aiChatHistory = [];
     let currentProvider =
       localStorage.getItem("mtracker_ai_provider") || "groq";
+    if (currentProvider === "minimax") currentProvider = "gemini";
 
     const panel = document.getElementById("ai-panel");
     const backdrop = document.getElementById("ai-backdrop");
@@ -20,16 +21,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function getKey(p) {
       p = p || currentProvider;
-      return localStorage.getItem(p === "groq" ? GROQ_KEY : MINIMAX_KEY) || "";
+      return localStorage.getItem(p === "groq" ? GROQ_KEY : GEMINI_KEY) || "";
     }
 
     window.aiSelectProvider = function (p) {
       currentProvider = p;
       localStorage.setItem(PROVIDER_KEY, p);
       const groqTab = document.getElementById("ai-tab-groq");
-      const mmTab = document.getElementById("ai-tab-minimax");
+      const mmTab = document.getElementById("ai-tab-gemini");
       const groqSetup = document.getElementById("ai-setup-groq");
-      const mmSetup = document.getElementById("ai-setup-minimax");
+      const mmSetup = document.getElementById("ai-setup-gemini");
       if (!groqTab || !mmTab) return;
       if (p === "groq") {
         groqTab.style.cssText =
@@ -67,9 +68,9 @@ document.addEventListener("DOMContentLoaded", function () {
         badge.textContent = "Powered by Groq • Llama 3.3";
         badge.style.color = "rgba(167,139,250,.7)";
       } else {
-        const mmSel = document.getElementById("ai-model-minimax");
-        const mmName = mmSel ? mmSel.value : "MiniMax-M2.5";
-        badge.textContent = `Powered by MiniMax \u2022 ${mmName}`;
+        const mmSel = document.getElementById("ai-model-gemini");
+        const mmName = mmSel ? mmSel.value : "gemini-3.8-flash";
+        badge.textContent = `Powered by Google AI Studio \u2022 ${mmName}`;
         badge.style.color = "rgba(34,211,238,.7)";
       }
     }
@@ -114,12 +115,12 @@ document.addEventListener("DOMContentLoaded", function () {
     // API Key save
     document.getElementById("ai-key-save-btn").addEventListener("click", () => {
       const inputId =
-        currentProvider === "groq" ? "ai-key-groq" : "ai-key-minimax";
+        currentProvider === "groq" ? "ai-key-groq" : "ai-key-gemini";
       const keyInput = document.getElementById(inputId);
       const key = keyInput ? keyInput.value.trim() : "";
       if (!key) return;
       localStorage.setItem(
-        currentProvider === "groq" ? GROQ_KEY : MINIMAX_KEY,
+        currentProvider === "groq" ? GROQ_KEY : GEMINI_KEY,
         key,
       );
       keySetup.style.display = "none";
@@ -127,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
       messagesEl.classList.remove("hidden");
       suggestEl.classList.remove("hidden");
       updateProviderBadge();
-      const label = currentProvider === "groq" ? "Groq (Llama 3.3)" : "MiniMax";
+      const label = currentProvider === "groq" ? "Groq (Llama 3.3)" : "Google AI Studio";
       addMessage(
         "model",
         `Hi! I'm your AI Finance Assistant \U0001f44b Connected via **${label}**. Ask me anything about your spending, income, trends, or budgets!`,
@@ -139,9 +140,9 @@ document.addEventListener("DOMContentLoaded", function () {
       window.aiSelectProvider(currentProvider);
       // Pre-fill existing keys
       const gInp = document.getElementById("ai-key-groq");
-      const mInp = document.getElementById("ai-key-minimax");
+      const mInp = document.getElementById("ai-key-gemini");
       if (gInp) gInp.value = getKey("groq");
-      if (mInp) mInp.value = getKey("minimax");
+      if (mInp) mInp.value = getKey("gemini");
       keySetup.style.display = "flex";
       keySetup.classList.remove("hidden");
       messagesEl.classList.add("hidden");
@@ -246,8 +247,8 @@ Currency: Primary is IDR (Indonesian Rupiah).`;
 - "Last week" = Mon-Sun of the previous calendar week.
 - Be concise and friendly. Say honestly if data is unavailable.`;
 
-      if (currentProvider === "minimax") {
-        // MiniMax M2 has 204,800 token context — send ALL transactions
+      if (currentProvider === "gemini") {
+        // Include the ledger in Gemini context.
         const allTx =
           data
             .slice()
@@ -328,9 +329,9 @@ ${instructions}
         const isGroq = currentProvider === "groq";
         const endpoint = isGroq
           ? "https://api.groq.com/openai/v1/chat/completions"
-          : "https://api.minimax.io/v1/chat/completions";
-        const mmModelEl = document.getElementById("ai-model-minimax");
-        const mmModel = mmModelEl ? mmModelEl.value : "MiniMax-M2.5";
+          : "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+        const mmModelEl = document.getElementById("ai-model-gemini");
+        const mmModel = mmModelEl ? mmModelEl.value : "gemini-3.8-flash";
         const model = isGroq ? "llama-3.3-70b-versatile" : mmModel;
 
         const messages = [
@@ -341,7 +342,7 @@ ${instructions}
           })),
         ];
 
-        const res = await fetch(endpoint, {
+        const res = await (isGroq ? fetch : FinTracker.gemini.request)(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -364,7 +365,7 @@ ${instructions}
         const rawReply =
           data.choices?.[0]?.message?.content ||
           "Sorry, I couldn't generate a response.";
-        // Strip <think>...</think> reasoning blocks (MiniMax M2 series shows chain-of-thought)
+        // Omit provider reasoning blocks from the displayed reply.
         const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
         document.getElementById("ai-loading-bubble")?.remove();
@@ -482,3 +483,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
   }
 });
+
+
+

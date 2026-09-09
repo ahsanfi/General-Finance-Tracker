@@ -560,12 +560,12 @@ body
   color: var(--text-muted);
 }
 #scan-tab-groq,
-#scan-tab-minimax {
+#scan-tab-gemini {
   background: var(--surface) !important;
   color: var(--text-muted) !important;
 }
 #scan-tab-groq[aria-pressed="true"],
-#scan-tab-minimax[aria-pressed="true"] {
+#scan-tab-gemini[aria-pressed="true"] {
   background: var(--accent-soft) !important;
   color: var(--accent) !important;
 }
@@ -707,3 +707,4 @@ body[data-busy="true"] .outlook-metrics dd {
     }
   }
 }
+
