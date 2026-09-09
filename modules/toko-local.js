@@ -18,12 +18,14 @@
   root.FinTracker.tokoLocal={mergePortfolio};
   let launchToken = /^#toko-local=([a-f0-9]{64})$/.exec(location.hash)?.[1];
   if(launchToken) history.replaceState(null,'',location.pathname+location.search);
+  // Reopening sync in this tab reuses its pairing until the helper rejects it.
+  let pairedToken=null;
   document.addEventListener('DOMContentLoaded',()=>{
     const button=document.getElementById('btn-sync-toko-local');
-    button.onclick=()=>openSyncDialog();
+    button.onclick=()=>openSyncDialog(pairedToken);
     function openSyncDialog(token){
       const dialog=document.createElement('dialog');dialog.className='workspace-dialog';dialog.setAttribute('aria-label','Local Tokocrypto sync');
-      dialog.innerHTML='<div class="dialog-heading"><h2>Sync Toko locally</h2><button class="dialog-close" type="button">Close</button></div><form class="quick-form"><p>Start local-sync/toko.cjs on this computer, then paste its pairing token. Your browser may ask permission to connect to your local network.</p><label for="toko-local-token">Pairing token</label><input id="toko-local-token" type="password" autocomplete="off" required><p role="status" id="toko-local-status"></p><button class="primary-button" type="submit">Sync from this computer</button></form>';
+      dialog.innerHTML='<div class="dialog-heading"><h2>Sync Toko locally</h2><button class="dialog-close" type="button">Close</button></div><form class="quick-form"><p>Double-click Start_Toko_Sync.bat on this computer and use the page it opens. Pairing and sync start automatically. The field below is only for manual terminal setup; it is not your API key.</p><label for="toko-local-token">Manual pairing token</label><input id="toko-local-token" type="password" autocomplete="off" required><p role="status" id="toko-local-status"></p><button class="primary-button" type="submit">Sync from this computer</button></form>';
       dialog.querySelector('.dialog-close').onclick=()=>{if(!busy)dialog.close();};
       const input=dialog.querySelector('input'),status=dialog.querySelector('[role="status"]'),form=dialog.querySelector('form');
       const submit=form.querySelector('button');
@@ -34,7 +36,7 @@
         form.querySelector('p').textContent='Connected through the local launcher. Keep its window open until sync finishes.';
         submit.hidden=true;submit.textContent='Retry sync';
       }
-      let busy=false;
+      let busy=false,needsReconnect=false;
       dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
       dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
       form.onsubmit=async event=>{
@@ -43,7 +45,13 @@
           const [original,ledger]=await Promise.all([FinTracker.api.request('getPortfolio'),FinTracker.api.request('getData')]);
           let response;
           try{response=await fetch('http://127.0.0.1:8787/sync',{method:'POST',headers:{Authorization:'Bearer '+input.value.trim()},signal:AbortSignal.timeout(50000)});}catch(_){throw Error('Cannot reach the local helper. Start it on this computer and allow local-network access in the browser.');}
+          if(response.status===401){
+            pairedToken=null;
+            needsReconnect=true;
+            throw Error('This page is not paired with the running helper. Close the Toko helper window, double-click Start_Toko_Sync.bat, and use the page it opens. No API key or code needs to be pasted.');
+          }
           const result=await response.json();if(!response.ok)throw Error(result.error||'Local sync failed.');
+          pairedToken=input.value.trim();
           if(!Number.isFinite(result.receivedAt)||Math.abs(Date.now()-result.receivedAt)>120000)throw Error('Local response expired. Run sync again.');
           const rate=Number(ledger.rate);
           if(!Number.isFinite(rate)||rate<=0)throw Error('The spreadsheet exchange rate is unavailable. No changes were saved.');
@@ -54,7 +62,7 @@
           await window.refreshFinTracker();
           document.getElementById('toko-sync-notice').classList.add('hidden');
           status.textContent=merged.warnings.length?'Saved balances. Kept previous values where prices were unavailable: '+merged.warnings.join(', '):'Local sync saved to your spreadsheet.';
-        }catch(error){status.textContent=error.message;submit.hidden=false;}
+        }catch(error){status.textContent=error.message;submit.hidden=needsReconnect;}
         finally{busy=false;form.querySelector('button').disabled=false;}
       };
       if(token)form.requestSubmit();
@@ -62,6 +70,7 @@
     function startLaunch(token){
       // Wait for authenticated bootstrap so Google sign-in remains the access gate.
       FinTracker.api.bootstrap().then(()=>{
+        pairedToken=token;
         openSyncDialog(token);
       }).catch(()=>{ /* The existing login/retry screen reports bootstrap failures. */ });
     }
