@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="shell.css">
     <link rel="stylesheet" href="modules/flagship.css">
-    <link rel="stylesheet" href="modules/mobile.css">
+    <link rel="stylesheet" href="modules/mobile.css"><link rel="stylesheet" href="modules/visualizations.css">
 </head>
 
 <body
@@ -210,7 +210,7 @@
     <article id="summary-net" class="metric-card"><div class="metric-title"><span>Net cash flow</span><span class="metric-icon"><i class="fas fa-scale-balanced" aria-hidden="true"></i></span></div><strong class="stat-value amount-text">—</strong><div class="metric-note">Income minus expenses · All time</div></article>
   </section>
   <div class="analytics-layout" id="dashboard-charts-grid">
-    <section class="surface spending-surface"><div class="surface-heading"><div><p class="eyebrow">SPENDING INSIGHTS</p><h3>Where your money goes</h3></div><label class="currency-pill"><span class="sr-only">Chart currency</span><select id="chart-currency-toggle"><option>IDR</option><option>USD</option></select></label></div><div class="spending-layout"><div class="donut-container"><canvas id="expense-pie-chart" role="img" aria-label="Expenses by category; values listed alongside"></canvas></div><div id="expense-details" class="spending-legend custom-scroll"></div></div><p class="surface-footnote">All recorded expenses, excluding transfers.</p></section>
+    <section class="surface spending-surface"><div class="surface-heading"><div><p class="eyebrow">SPENDING INSIGHTS</p><h3>Where your money goes</h3></div><label class="currency-pill"><span class="sr-only">Chart currency</span><select id="chart-currency-toggle"><option>IDR</option><option>USD</option></select></label></div><div id="spending-visualization"></div><p class="surface-footnote">All recorded expenses, excluding transfers.</p></section>
     <section class="surface trend-surface"><div class="surface-heading"><div><p class="eyebrow">THE BIGGER PICTURE</p><h3>Spending over time</h3></div><span class="neutral-badge">Last 30 days</span></div><div class="trend-container"><canvas id="trend-line-chart" role="img" aria-label="Daily expense trend for the last 30 days"></canvas></div></section>
   </div>
   <section class="surface wallets-surface"><div class="surface-heading"><div><h3>Your accounts</h3><p>Every wallet. One connected view.</p></div><button class="secondary-button small" onclick="openReconcileModal()"><i class="fas fa-balance-scale" aria-hidden="true"></i> Reconcile</button></div><div id="account-balances-container" class="wallet-layout"></div></section>
@@ -599,18 +599,7 @@
                             </div>
                         </div>
 
-                        <!-- Chart & Allocation Legend -->
-                        <div class="portfolio-visual">
-                            <!-- Mini Chart -->
-                            <div class="portfolio-chart-frame">
-                                <canvas id="portfolio-donut-chart"></canvas>
-                            </div>
-                            <!-- Custom Legend -->
-                            <div id="portfolio-chart-legend" class="flex flex-col gap-2.5 w-full md:w-40 max-h-40 md:max-h-48 overflow-y-auto custom-scroll pr-2">
-                                <!-- Populated dynamically by app.js -->
-                            </div>
-                            <button type="button" class="allocation-toggle text-button" data-allocation-target="portfolio-chart-legend" aria-expanded="false" hidden>Show all allocations</button>
-                        </div>
+                        <div id="portfolio-visualization"></div>
                     </div>
 
                     <!-- Investment Accounts (Cash) -->
@@ -1075,7 +1064,7 @@
     <script src="modules/domain.js"></script>
     <script src="modules/groq-vision.js"></script>
     <script src="modules/dashboard.js"></script>
-    <script src="app.js"></script>
+    <script src="modules/visualizations.js"></script><script src="app.js"></script>
     <script src="modules/assistant.js"></script>
     <script src="modules/ui.js"></script>
     <script src="modules/insights.js"></script>
@@ -1331,3 +1320,4 @@
 </body>
 
 </html>
+
