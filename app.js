@@ -17,30 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.exchangeRate = exchangeRate;
   const displayDate = value => new Date(String(value).slice(0,10) + "T12:00:00").toLocaleDateString("en-GB", {day:"numeric",month:"short"});
   const allocationColors = ["#087f68", "#3484a1", "#b58431", "#b76269", "#6e74a4", "#648a4c", "#87938e"];
-  for (const id of ["expense-details", "portfolio-chart-legend"]) {
-    const legend = document.getElementById(id);
-    let button = document.querySelector(`[data-allocation-target="${id}"]`);
-    if (!button) {
-      button = document.createElement("button");
-      button.type = "button";
-      button.className = "allocation-toggle text-button";
-      button.dataset.allocationTarget = id;
-      legend.after(button);
-    }
-    button.setAttribute("aria-controls", id);
-    button.setAttribute("aria-expanded", "false");
-    button.addEventListener("click", () => {
-      const expanded = legend.dataset.expanded !== "true";
-      legend.dataset.expanded = String(expanded);
-      button.setAttribute("aria-expanded", String(expanded));
-      button.textContent = expanded ? "Show fewer" : `Show all ${legend.children.length} allocations`;
-    });
-  }
-  function updateAllocationToggle(id, count) {
-    const button = document.querySelector(`[data-allocation-target="${id}"]`);
-    button.hidden = count <= 6;
-    button.textContent = document.getElementById(id).dataset.expanded === "true" ? "Show fewer" : `Show all ${count} allocations`;
-  }
   let isEditing = false,
     editItem = null;
   window.isBalancesHidden = localStorage.getItem("hideBalances") === "true";
@@ -995,99 +971,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderPortfolioChart(pList, unallocatedCashIDR) {
-    const ctx = document.getElementById("portfolio-donut-chart");
-    if (!ctx) return;
-
-
-    const bgColorsSource = allocationColors;
-
-    let chartItems = [];
-    pList.forEach((a) => {
-      const val =
-        a.currency === "IDR" ? a.currentValue : a.currentValue * exchangeRate;
-      if (val > 0) chartItems.push({ label: a.name, val: val });
-    });
-
-    if (unallocatedCashIDR > 0)
-      chartItems.push({ label: "Cash", val: unallocatedCashIDR });
-
-    // Sort biggest items first
-    chartItems.sort((a, b) => b.val - a.val);
-
-    let labels = [];
-    let data = [];
-    let bgColors = [];
-
-    if (chartItems.length === 0) {
-      labels.push("Empty");
-      data.push(1);
-      bgColors.push("#334155");
-    } else {
-      chartItems.forEach((item, i) => {
-        labels.push(item.label);
-        data.push(item.val);
-        bgColors.push(bgColorsSource[i % bgColorsSource.length]);
-      });
-    }
-
-    let totalChartValue = data.reduce((a, b) => a + b, 0);
-
-    let legendHtml = "";
-    if (data.length === 1 && labels[0] === "Empty") {
-      legendHtml =
-        '<div class="text-xs text-slate-500 italic p-2 text-center">No assets</div>';
-    } else {
-      labels.forEach((label, i) => {
-        const val = data[i];
-        const bg = bgColors[i % bgColors.length];
-        const pct =
-          totalChartValue > 0 ? ((val / totalChartValue) * 100).toFixed(1) : 0;
-        legendHtml += `
-                        <div class="allocation-row">
-                            <span class="allocation-swatch" style="background:${bg}"></span>
-                            <span class="allocation-name">${FinTracker.escape(label)}</span>
-                            <span class="allocation-value">${fmt(val, "IDR")}<small>${pct}%</small></span>
-                        </div>
-                        `;
-      });
-    }
-
-    const legendEl = document.getElementById("portfolio-chart-legend");
-    if (legendEl) legendEl.innerHTML = legendHtml;
-    updateAllocationToggle("portfolio-chart-legend", chartItems.length);
-
-    portfolioChart = FinTracker.charts.create(ctx, {
-      type: "doughnut",
-      data: {
-        labels,
-        datasets: [
-          { data, backgroundColor: bgColors, borderWidth: 2, hoverOffset: 3 },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: "68%",
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                let val = context.raw;
-                if (data.length === 1 && labels[0] === "Empty") return "0 IDR";
-                return new Intl.NumberFormat("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  maximumFractionDigits: 0,
-                }).format(val);
-              },
-            },
-          },
-        },
-      },
-    });
+    const items = pList.map(asset => {
+      const rate = asset.currency === 'USD' ? exchangeRate : 1;
+      return {id: asset.id, name: asset.name, value: asset.currentValue * rate, pnl: (asset.currentValue - asset.invested) * rate};
+    }).filter(item => item.value > 0);
+    if (unallocatedCashIDR > 0) items.push({name: 'Cash', value: unallocatedCashIDR, pnl: 0, cash: true});
+    FinTracker.visualizations.portfolio(items.sort((a,b) => b.value-a.value));
   }
-
   window.switchPortfolioTab = (tab) => {
     const tradeBtn = document.getElementById("tab-trade");
     const editBtn = document.getElementById("tab-edit");
@@ -1858,65 +1748,19 @@ Do not wrap in markdown or code blocks.`;
       document.getElementById("calendar-detail-modal").classList.add("hidden"),
     );
 
-  let myChart;
   function updateChart(data) {
-    const curr = document.getElementById("chart-currency-toggle").value;
-    const exps = data.filter(
-      (d) => d.type === "expense" && d.curr === curr && d.cat !== "Transfer",
-    );
-    const totals = {};
-    exps.forEach((d) => (totals[d.cat] = (totals[d.cat] || 0) + d.amt));
-    const ordered = Object.entries(totals).sort((a,b) => b[1]-a[1]);
-    const ctx = document.getElementById("expense-pie-chart").getContext("2d");
-
-    // Premium color palette for pie chart
-    const chartColors = allocationColors;
-
-    myChart = FinTracker.charts.create(ctx, {
-      type: "doughnut",
-      data: {
-        labels: ordered.map(([name])=>name),
-        datasets: [
-          {
-            data: ordered.map(([,value])=>value),
-            backgroundColor: chartColors,
-            borderWidth: 2,
-            borderColor: "#0B1325",
-            hoverOffset: 6,
-          },
-        ],
-      },
-      options: {
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(11, 19, 37, 0.9)",
-            titleColor: "#fff",
-            bodyColor: "#cbd5e1",
-            borderColor: "rgba(255,255,255,0.1)",
-            borderWidth: 1,
-            padding: 12,
-            cornerRadius: 12,
-            displayColors: true,
-          },
-        },
-        cutout: "68%",
-        responsive: true,
-        maintainAspectRatio: false,
-      },
-    });
-
-    const total = ordered.reduce((sum,[,value])=>sum+value,0);
-    document.getElementById("expense-details").innerHTML = ordered
-      .map(
-        ([k, v], i) =>
-          `<div class="allocation-row"><span class="allocation-swatch" style="background:${chartColors[i % chartColors.length]}"></span><span class="allocation-name">${FinTracker.escape(k)}</span><span class="allocation-value">${fmt(v, curr)}<small>${total ? (v / total * 100).toFixed(1) : 0}%</small></span></div>`,
-      )
-      .join("");
-    if (!ordered.length) document.getElementById("expense-details").textContent = "No expenses recorded in " + curr + ".";
-    updateAllocationToggle("expense-details", ordered.length);
+    const currency = document.getElementById('chart-currency-toggle').value;
+    const expenses = data.filter(item => item.type === 'expense' && item.curr === currency && item.cat !== 'Transfer');
+    const totals = new Map();
+    expenses.forEach(item => totals.set(item.cat, (totals.get(item.cat) || 0) + item.amt));
+    const now = new Date(), thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    const last = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const lastMonth = last.getFullYear() + '-' + String(last.getMonth()+1).padStart(2,'0');
+    const sum = month => expenses.filter(item => String(item.date).startsWith(month)).reduce((total,item) => total+item.amt,0);
+    const prior = sum(lastMonth), current = sum(thisMonth);
+    const comparison = prior ? `This month so far vs full last month: ${current >= prior ? '+' : ''}${((current-prior)/prior*100).toFixed(1)}%` : 'Monthly comparison unavailable: no expenses recorded last month.';
+    FinTracker.visualizations.spending([...totals].map(([name,value])=>({name,value})).filter(item=>item.value>0).sort((a,b)=>b.value-a.value), currency, comparison);
   }
-
   let trendChart;
   function updateTrendChart(data) {
     const ctx = document.getElementById("trend-line-chart").getContext("2d");
@@ -1962,7 +1806,7 @@ Do not wrap in markdown or code blocks.`;
               return gradient;
             },
             borderWidth: 3,
-            tension: 0.4,
+            tension: 0.2,
             pointRadius: 0,
             pointHoverRadius: 6,
             pointBackgroundColor: "#4F46E5",
@@ -2004,7 +1848,7 @@ Do not wrap in markdown or code blocks.`;
             grid: { color: "rgba(255,255,255,0.05)", borderDash: [4, 4] },
             ticks: {
               color: "#64748b",
-              font: { size: 10, family: "'JetBrains Mono', monospace" },
+              font: { size: 10, family: "system-ui, sans-serif" }, maxTicksLimit: 5,
               callback: function (value) {
                 return value >= 1000000
                   ? (value / 1000000).toFixed(1) + "M"
@@ -3582,3 +3426,5 @@ Do not wrap in markdown or code blocks.`;
       b.addEventListener("click", onBudgetTabOpen);
   });
 });
+
+
