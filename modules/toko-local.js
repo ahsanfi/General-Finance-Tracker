@@ -3,15 +3,26 @@
     if(!Array.isArray(result.balances)||!Array.isArray(result.prices))throw Error('Invalid local sync response.');
     const next=original.map(item=>({...item})), prices=new Map(result.prices.map(item=>[item.symbol,Number(item.price)]));
     const warnings=[];
-    for(const balance of result.balances){
-      const asset=String(balance.asset||'').toUpperCase(), amount=Number(balance.free)+Number(balance.locked);
-      if(!/^[A-Z0-9]{1,30}$/.test(asset)||!Number.isFinite(amount)||amount<0)throw Error('Invalid account balance. Portfolio was not saved.');
+    let validBalances=0;
+    for(const [index,balance] of result.balances.entries()){
+      const asset=String(balance?.asset||'').trim().toUpperCase();
+      const validAsset=/^[A-Z0-9]{1,30}$/.test(asset);
+      const quantity=value=>(typeof value==='number'||typeof value==='string'&&value.trim()!=='')&&Number.isFinite(Number(value))&&Number(value)>=0;
+      // Do not turn missing or malformed quantities into zero and erase a saved holding.
+      // An unrelated bad row must not prevent valid holdings from synchronizing.
+      if(!validAsset||!quantity(balance?.free)||!quantity(balance?.locked)||!Number.isFinite(Number(balance.free)+Number(balance.locked))){
+        warnings.push(`${validAsset?asset:'Account row '+(index+1)} (invalid or missing balance; skipped)`);
+        continue;
+      }
+      const amount=Number(balance.free)+Number(balance.locked);
+      validBalances++;
       const existing=next.find(item=>item.platform.toLowerCase()==='tokocrypto'&&item.name.toUpperCase()===asset);
       const usd=['USD','USDT'].includes(asset)?1:['IDR','BIDR'].includes(asset)?1/rate:prices.get(asset+'USDT')||(prices.get(asset+'BIDR')||0)/rate||(prices.get(asset+'BTC')||0)*(prices.get('BTCUSDT')||0);
       if(existing){existing.balance=amount;if(amount===0)existing.currentValue=0;else if(Number.isFinite(usd)&&usd>0)existing.currentValue=amount*usd*(existing.currency==='USD'?1:rate);else warnings.push(asset);}
       else if(amount>0&&Number.isFinite(usd)&&usd>0&&amount*usd*rate>1000)next.push({id:uuid(),name:asset,platform:'Tokocrypto',currency:'IDR',invested:0,currentValue:amount*usd*rate,balance:amount});
       else if(amount>0&&!usd)warnings.push(asset);
     }
+    if(result.balances.length&&!validBalances)throw Error('No usable account balances were returned. Portfolio was not saved. '+warnings.join(', '));
     return {portfolio:next,warnings};
   }
   if(typeof module!=='undefined'&&module.exports){module.exports={mergePortfolio};return;}
@@ -61,7 +72,7 @@
           await FinTracker.api.request('updatePortfolio',{portfolio:merged.portfolio,expectedPortfolio:original.portfolio});
           await window.refreshFinTracker();
           document.getElementById('toko-sync-notice').classList.add('hidden');
-          status.textContent=merged.warnings.length?'Saved balances. Kept previous values where prices were unavailable: '+merged.warnings.join(', '):'Local sync saved to your spreadsheet.';
+          status.textContent=merged.warnings.length?'Saved valid balances. Existing holdings were retained for skipped balances or unavailable prices: '+merged.warnings.join(', '):'Local sync saved to your spreadsheet.';
         }catch(error){status.textContent=error.message;submit.hidden=needsReconnect;}
         finally{busy=false;form.querySelector('button').disabled=false;}
       };
