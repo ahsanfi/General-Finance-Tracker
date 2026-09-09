@@ -1,0 +1,80 @@
+#dashboard-charts-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; }
+#spending-visualization { padding: 0 20px 12px; }
+.spending-arcs { width: 100%; display: block; overflow: visible; }
+.segment-name { font: 600 14px system-ui, sans-serif; fill: var(--text); }
+.segment-value { font: 13px system-ui, sans-serif; fill: var(--text-muted); }
+.radial-caption { font: 10px system-ui, sans-serif; fill: var(--text-muted); letter-spacing: .4px; }
+.radial-total { font: 700 18px system-ui, sans-serif; fill: var(--text); letter-spacing: -.5px; }
+.segment-connector { opacity: .45; }
+.spending-segment:hover .segment-connector, .spending-segment:focus .segment-connector { stroke-width: 2; opacity: 1; }
+.spending-segment:focus { outline: none; }
+.spending-segment:focus .segment-name { text-decoration: underline; }
+.spending-comparison { color: var(--text-muted); font-size: 12px; margin: 0 0 8px; }
+.spending-mobile { display: none; }
+.allocation-breakdown { margin-top: 10px; }
+.allocation-breakdown summary { width: fit-content; min-height: 44px; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--accent); font-size: 13px; }
+.allocation-breakdown summary::before { content: '+'; font-size: 18px; }
+.allocation-breakdown[open] summary::before { content: '−'; }
+.allocation-data { border-top: 1px solid var(--border); }
+.data-allocation-row { display: grid; grid-template-columns: minmax(0,1fr) auto 52px; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: baseline; }
+.data-allocation-row > :first-child { overflow-wrap: anywhere; }
+.data-allocation-row > :not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+#portfolio-overview { display: block; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; }
+.portfolio-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border); text-align: left; }
+.portfolio-summary > :first-child { width: 100%; color: var(--text-muted) !important; font-size: 11px; }
+#portfolio-total-value { margin: 0; font-size: clamp(28px,3vw,40px); letter-spacing: -1px; }
+.portfolio-summary > .flex { margin: 0 0 0 auto; }
+.portfolio-summary > .flex > div { background: transparent !important; border: 0 !important; padding: 0 12px; }
+.allocation-title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.allocation-title h3 { font-size: 15px; font-weight: 600; }
+.allocation-title > span { color: var(--text-muted); font-size: 12px; }
+.holding-treemap { height: 310px; position: relative; }
+.holding-tile { position: absolute; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; padding: 14px; border: 3px solid var(--surface); border-radius: 10px; color: var(--text); text-align: left; background: rgba(40, 127, 150, .12); overflow: hidden; transition: background .15s; }
+.holding-tile:hover, .holding-tile:focus-visible { background: rgba(40, 127, 150, .22); outline: 2px solid var(--accent); outline-offset: -4px; }
+.holding-name { font-size: 13px; line-height: 1.35; font-weight: 600; overflow-wrap: anywhere; }
+.holding-tile strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+.holding-weight { font-size: 11px; color: var(--text-muted); }
+.holding-performance { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.holding-performance.loss { color: var(--negative); }
+.holding-performance.gain { color: var(--positive); }
+.with-performance .data-allocation-row { grid-template-columns: minmax(0,1fr) auto 52px minmax(120px,auto); }
+.visual-empty { color: var(--text-muted); padding: 32px 0; }
+#quick-add-launch { box-shadow: 0 4px 16px #0002; padding: 10px 16px; font-size: 13px; }
+#portfolio-assets-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+#portfolio-assets-list > div { margin: 0 !important; padding: 14px; }
+#portfolio-assets-list > div > div > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+#portfolio-assets-list .text-right { flex-shrink: 0; margin-left: auto; }
+@media (max-width: 1350px) {
+  #dashboard-charts-grid { grid-template-columns: minmax(0,1fr); }
+  .spending-arcs { max-width: 720px; margin: auto; }
+}
+@media (max-width: 768px) {
+  .spending-arcs { display: none; }
+  .spending-mobile { display: block; }
+  .visual-caption { color: var(--text-muted); font-size: 12px; }
+  .mobile-spending-total { display: block; font-size: 28px; margin: 4px 0 20px; }
+  .direct-category { display: grid; grid-template-columns: minmax(0,1fr) auto 42px; gap: 6px; font-size: 12px; margin-bottom: 16px; }
+  .direct-category-name { font-weight: 600; overflow-wrap: anywhere; }
+  .direct-category > strong { font-variant-numeric: tabular-nums; }
+  .direct-category > span:nth-child(3) { color: var(--text-muted); text-align: right; }
+  .direct-category-track { grid-column: 1/-1; height: 5px; background: var(--surface-muted); border-radius: 3px; overflow: hidden; }
+  .direct-category-track > span { display: block; height: 100%; }
+  #portfolio-overview { padding: 18px; }
+  .portfolio-summary { gap: 12px; }
+  .portfolio-summary > .flex { margin: 0; }
+  .portfolio-summary > .flex > div { padding: 0 12px 0 0; }
+  .allocation-title { flex-direction: column; gap: 4px; }
+  .holding-treemap { height: auto; display: grid; gap: 8px; }
+  .holding-tile { position: relative; left: auto !important; top: auto !important; width: 100% !important; height: auto !important; min-height: 115px; border: 0; border-left: 4px solid var(--holding-color); }
+  .allocation-title > span { font-size: 0; }
+  .allocation-title > span::after { content: 'Current value, allocation and P&L · IDR'; font-size: 12px; }
+  .with-performance .data-allocation-row { grid-template-columns: minmax(0,1fr) auto; }
+  #portfolio-assets-list { grid-template-columns: minmax(0,1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .holding-tile { transition: none; } }
+.holding-treemap.is-list { height: auto; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+.holding-treemap.is-list .holding-tile { position: relative; inset: auto !important; width: 100% !important; height: auto !important; min-height: 145px; }
+#subtab-budget-btn, #subtab-investments-btn { border-radius: 8px; box-shadow: none !important; }
+#subtab-budget-btn[aria-selected="true"], #subtab-investments-btn[aria-selected="true"] { background: var(--surface) !important; color: var(--accent) !important; }
+@media (max-width:768px) { .holding-treemap.is-list { grid-template-columns: minmax(0,1fr); } }
+
