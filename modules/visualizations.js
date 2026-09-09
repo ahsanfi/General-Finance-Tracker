@@ -72,14 +72,24 @@ window.FinTracker = window.FinTracker || {};
       else if(button.dataset.holding) window.openPortfolioModal(button.dataset.holding);
     });
   }
-  function trendData(data, rate, today = new Date()) {
+  function trendData(data, rate, today = new Date(), timeframe = '30') {
     const day = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-    const dates = Array.from({length:60},(_,i)=>day(new Date(today.getFullYear(),today.getMonth(),today.getDate()-59+i)));
+    // Calendar windows end today; comparison uses the same number of preceding days.
+    const end = new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    let count = timeframe === '7' ? 7 : 30;
+    if (timeframe === '3m' || timeframe === '1y') {
+      const months = timeframe === '3m' ? 3 : 12;
+      const monthStart = new Date(end.getFullYear(),end.getMonth()-months,1);
+      const lastDay = new Date(monthStart.getFullYear(),monthStart.getMonth()+1,0).getDate();
+      const start = new Date(monthStart.getFullYear(),monthStart.getMonth(),Math.min(end.getDate(),lastDay));
+      count = Math.round((Date.UTC(end.getFullYear(),end.getMonth(),end.getDate())-Date.UTC(start.getFullYear(),start.getMonth(),start.getDate()))/86400000);
+    }
+    const dates = Array.from({length:count*2},(_,i)=>day(new Date(end.getFullYear(),end.getMonth(),end.getDate()-count*2+1+i)));
     const totals = new Map(dates.map(date=>[date,0]));
     data.forEach(item=>{ const date=String(item.date).slice(0,10); if(item.type==='expense' && item.cat!=='Transfer' && totals.has(date)) totals.set(date,totals.get(date)+item.amt*(item.curr==='USD'?rate:1)); });
-    const values=dates.slice(30).map(date=>totals.get(date)), total=values.reduce((a,b)=>a+b,0);
-    const previous=dates.slice(0,30).reduce((sum,date)=>sum+totals.get(date),0);
-    return {dates:dates.slice(30),values,total,previous,average:total/30,peak:Math.max(...values)};
+    const values=dates.slice(count).map(date=>totals.get(date)), total=values.reduce((a,b)=>a+b,0);
+    const previous=dates.slice(0,count).reduce((sum,date)=>sum+totals.get(date),0);
+    return {dates:dates.slice(count),values,total,previous,average:total/count,peak:Math.max(...values),count};
   }
   FinTracker.visualizations={spending,portfolio,summarize,split,trendData};
   document.addEventListener('DOMContentLoaded',()=>{
