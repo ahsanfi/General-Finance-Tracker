@@ -16,6 +16,8 @@
   }
   if(typeof module!=='undefined'&&module.exports){module.exports={mergePortfolio};return;}
   root.FinTracker.tokoLocal={mergePortfolio};
+  let launchToken = /^#toko-local=([a-f0-9]{64})$/.exec(location.hash)?.[1];
+  if(launchToken) history.replaceState(null,'',location.pathname+location.search);
   document.addEventListener('DOMContentLoaded',()=>{
     const button=document.getElementById('btn-sync-toko-local');
     button.onclick=()=>{
@@ -29,12 +31,14 @@
       form.onsubmit=async event=>{
         event.preventDefault();if(busy)return;busy=true;form.querySelector('button').disabled=true;status.textContent='Reading local account balances…';
         try{
-          const original=await FinTracker.api.request('getPortfolio');
+          const [original,ledger]=await Promise.all([FinTracker.api.request('getPortfolio'),FinTracker.api.request('getData')]);
           let response;
           try{response=await fetch('http://127.0.0.1:8787/sync',{method:'POST',headers:{Authorization:'Bearer '+input.value.trim()},signal:AbortSignal.timeout(50000)});}catch(_){throw Error('Cannot reach the local helper. Start it on this computer and allow local-network access in the browser.');}
           const result=await response.json();if(!response.ok)throw Error(result.error||'Local sync failed.');
           if(!Number.isFinite(result.receivedAt)||Math.abs(Date.now()-result.receivedAt)>120000)throw Error('Local response expired. Run sync again.');
-          const merged=mergePortfolio(original.portfolio,result,window.exchangeRate,()=>crypto.randomUUID());
+          const rate=Number(ledger.rate);
+          if(!Number.isFinite(rate)||rate<=0)throw Error('The spreadsheet exchange rate is unavailable. No changes were saved.');
+          const merged=mergePortfolio(original.portfolio,result,rate,()=>crypto.randomUUID());
           // Optimistic revision checking prevents overwriting edits made during the request.
           status.textContent='Saving verified balances to your spreadsheet…';
           await FinTracker.api.request('updatePortfolio',{portfolio:merged.portfolio,expectedPortfolio:original.portfolio});
@@ -45,5 +49,21 @@
         finally{busy=false;form.querySelector('button').disabled=false;}
       };
     };
+    function startLaunch(token){
+      // Wait for authenticated bootstrap so Google sign-in remains the access gate.
+      FinTracker.api.bootstrap().then(()=>{
+        button.click();
+        document.getElementById('toko-local-token').value=token;
+        document.getElementById('toko-local-token').form.requestSubmit();
+      }).catch(()=>{ /* The existing login/retry screen reports bootstrap failures. */ });
+    }
+    if(launchToken){const token=launchToken;launchToken=null;startLaunch(token);}
+    // Browsers can reuse an already-open app tab instead of loading a new document.
+    window.addEventListener('hashchange',()=>{
+      const token=/^#toko-local=([a-f0-9]{64})$/.exec(location.hash)?.[1];
+      if(!token)return;
+      history.replaceState(null,'',location.pathname+location.search);
+      startLaunch(token);
+    });
   });
 })(globalThis);
