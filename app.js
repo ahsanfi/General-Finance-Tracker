@@ -1499,6 +1499,7 @@ Do not wrap in markdown or code blocks.`;
           body: JSON.stringify({
             action: "updatePortfolio",
             portfolio: newPortfolio,
+            syncPlatforms: ["Makmur"],
           }),
         });
         const updateData = await updateRes.json();
