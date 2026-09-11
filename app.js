@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const WEB_APP_URL = window.FinTrackerConfig?.apiUrl || "";
 
   let SYSTEM_CONFIG = {
@@ -636,6 +636,7 @@
 
       masterData = [];
       window.portfolioData = result.portfolio || [];
+      window.investmentSyncDates = result.syncDates || {};
       exchangeRate = result.rate || 16000;
 
       const parse = (rows, type) => {
@@ -851,12 +852,37 @@
               ? `<div class="text-[10px] text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded mt-1"><i class="fas fa-exclamation-triangle mr-1"></i>Invested exceeds transferred cash</div>`
               : "";
 
+            const syncRaw = (window.investmentSyncDates || {})[b.n];
+            let syncHtml = "";
+            if (syncRaw) {
+              const syncDate = new Date(syncRaw);
+              const isValidDate = !isNaN(syncDate.getTime());
+              if (isValidDate) {
+                const now = new Date();
+                const diffMs = now - syncDate;
+                const diffMin = Math.floor(diffMs / 60000);
+                const diffHr  = Math.floor(diffMs / 3600000);
+                const diffDay = Math.floor(diffMs / 86400000);
+                let ago;
+                if (diffMin < 1)        ago = "just now";
+                else if (diffMin < 60)  ago = `${diffMin}m ago`;
+                else if (diffHr < 24)   ago = `${diffHr}h ago`;
+                else if (diffDay < 30)  ago = `${diffDay}d ago`;
+                else                    ago = syncDate.toLocaleDateString();
+                const timeStr = syncDate.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+                syncHtml = `<div class="flex items-center gap-1 mt-1" title="Last synced: ${timeStr}">
+                  <i class="fas fa-rotate text-[8px] text-purple-400/70"></i>
+                  <span class="text-[9px] font-mono text-purple-400/70">Synced ${ago}</span>
+                </div>`;
+              }
+            }
             return `
                             <div class="flex items-center justify-between p-4 bg-black/20 rounded-2xl border ${isWarning ? "border-rose-500/30" : "border-white/5"} hover:bg-black/40 transition group">
                                 <div class="flex items-center gap-3">
                                     <div class="w-2.5 h-2.5 rounded-full ${isWarning ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" : "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]"}"></div>
                                     <div>
                                         <div class="font-bold text-slate-200 text-sm sm:text-base">${b.n}</div>
+                                        ${syncHtml}
                                         ${warningHtml}
                                     </div>
                                 </div>
@@ -1509,6 +1535,8 @@ Do not wrap in markdown or code blocks.`;
             "success",
           );
           window.portfolioData = newPortfolio;
+          if (!window.investmentSyncDates) window.investmentSyncDates = {};
+          window.investmentSyncDates["Makmur"] = new Date().toISOString();
           renderAll();
         } else {
           throw new Error(
@@ -1556,6 +1584,8 @@ Do not wrap in markdown or code blocks.`;
       const result = await FinTracker.api.request("syncTokocrypto");
       document.getElementById("toko-sync-notice").classList.add("hidden");
       window.portfolioData = result.portfolio;
+      if (!window.investmentSyncDates) window.investmentSyncDates = {};
+      window.investmentSyncDates["Tokocrypto"] = new Date().toISOString();
       renderAll();
       showToast(result.message, result.warnings?.length ? "warning" : "success");
     } catch (error) {
