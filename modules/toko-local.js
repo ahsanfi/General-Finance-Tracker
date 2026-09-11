@@ -69,7 +69,7 @@
           const merged=mergePortfolio(original.portfolio,result,rate,()=>crypto.randomUUID());
           // Optimistic revision checking prevents overwriting edits made during the request.
           status.textContent='Saving verified balances to your spreadsheet…';
-          await FinTracker.api.request('updatePortfolio',{portfolio:merged.portfolio,expectedPortfolio:original.portfolio});
+          await FinTracker.api.request('updatePortfolio',{portfolio:merged.portfolio,expectedPortfolio:original.portfolio,syncPlatforms:['Tokocrypto']});
           await window.refreshFinTracker();
           document.getElementById('toko-sync-notice').classList.add('hidden');
           status.textContent=merged.warnings.length?'Saved valid balances. Existing holdings were retained for skipped balances or unavailable prices: '+merged.warnings.join(', '):'Local sync saved to your spreadsheet.';
