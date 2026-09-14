@@ -175,6 +175,8 @@
     grid-template-columns: 1fr;
     gap: 16px;
   }
+  .outlook-metrics > .outlook-current-cash { grid-column: 1 / -1; flex-wrap: wrap; }
+  .outlook-current-cash small { flex-basis: 100%; margin-top: 0; }
   .outlook-metrics > div {
     display: flex;
     align-items: center;

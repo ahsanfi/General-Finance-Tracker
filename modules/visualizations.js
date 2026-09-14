@@ -2,14 +2,23 @@ window.FinTracker = window.FinTracker || {};
 (() => {
   const colors = ['#146a82', '#287f96', '#428fa2', '#5e9cac', '#79aab6', '#8c979f'];
   const escape = value => FinTracker.escape(String(value));
-  const money = (value, currency = 'IDR') => currency + ' ' + new Intl.NumberFormat('en-US', {maximumFractionDigits: currency === 'USD' ? 2 : 0}).format(value);
+  const money = (value, currency = 'IDR') => window.isBalancesHidden ? '***' : currency + ' ' + new Intl.NumberFormat('en-US', {maximumFractionDigits: currency === 'USD' ? 2 : 0}).format(value);
   const percent = (value, total) => total > 0 ? value / total * 100 : 0;
   function summarize(items) {
     if (items.length <= 6) return items;
     return [...items.slice(0, 5), {name: 'Other', value: items.slice(5).reduce((sum, item) => sum + item.value, 0), pnl: items.slice(5).reduce((sum, item) => sum + (item.pnl || 0), 0), other: true}];
   }
+  const pnlDisplay = (item) => {
+    if (item.cash) return 'Unallocated cash';
+    if (window.isBalancesHidden) {
+      const invested = item.value - item.pnl;
+      const pct = invested !== 0 ? (item.pnl / Math.abs(invested) * 100) : 0;
+      return `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}% P&L`;
+    }
+    return `${item.pnl >= 0 ? '+' : '-'}${money(Math.abs(item.pnl))} P&L`;
+  };
   function rows(items, total, currency, performance = false) {
-    return items.map(item => `<div class="data-allocation-row"><span>${escape(item.name)}</span><strong>${money(item.value, currency)}</strong><span>${percent(item.value, total).toFixed(1)}%</span>${performance ? `<span class="holding-performance ${item.pnl < 0 ? 'loss' : 'gain'}">${item.cash ? 'Cash' : `${item.pnl >= 0 ? '+' : '-'}${money(Math.abs(item.pnl))}`}</span>` : ''}</div>`).join('');
+    return items.map(item => `<div class="data-allocation-row"><span>${escape(item.name)}</span><strong>${money(item.value, currency)}</strong><span>${percent(item.value, total).toFixed(1)}%</span>${performance ? `<span class="holding-performance ${item.pnl < 0 ? 'loss' : 'gain'}">${item.cash ? 'Cash' : pnlDisplay(item)}</span>` : ''}</div>`).join('');
   }
   function details(items, total, currency, performance, previous) {
     return `<details class="allocation-breakdown" ${previous ? 'open' : ''}><summary>View all ${items.length} ${performance ? 'holdings' : 'categories'}</summary><div class="allocation-data ${performance ? 'with-performance' : ''}">${rows(items, total, currency, performance)}</div></details>`;
@@ -45,7 +54,8 @@ window.FinTracker = window.FinTracker || {};
       angle = end;
       return `<g class="spending-segment" tabindex="0" aria-label="${escape(item.name)}, ${money(item.value,currency)}, ${percent(item.value,total).toFixed(1)} percent"><title>${escape(item.name)}: ${money(item.value,currency)}</title><path d="${path}" fill="none" stroke="${colors[i]}" stroke-width="22"/><path class="segment-connector" d="M ${mx} ${my} L ${elbow} ${y+7} L ${slot.left?175:440} ${y+7}" fill="none" stroke="${colors[i]}" stroke-width="1"/><text x="${textX}" y="${y}" class="segment-name">${escape(item.name.length > 22 ? item.name.slice(0,21)+'...' : item.name)}</text><text x="${textX}" y="${y+21}" class="segment-value">${money(item.value,currency)}</text><text x="${textX}" y="${y+37}" class="segment-value">${percent(item.value,total).toFixed(1)}%</text></g>`;
     }).join('');
-    const center = `<text x="310" y="150" text-anchor="middle" class="radial-caption">TOTAL SPENDING</text><text x="310" y="177" text-anchor="middle" class="radial-total">${money(total,currency)}</text><text x="310" y="199" text-anchor="middle" class="radial-caption">All recorded expenses</text>`;
+    const totalDisplay = window.isBalancesHidden ? '***' : money(total, currency);
+    const center = `<text x="310" y="150" text-anchor="middle" class="radial-caption">TOTAL SPENDING</text><text x="310" y="177" text-anchor="middle" class="radial-total">${totalDisplay}</text><text x="310" y="199" text-anchor="middle" class="radial-caption">All recorded expenses</text>`;
     // Reuse the same arcs; the phone view crops out desktop callouts and labels them below.
     host.innerHTML = `<svg class="spending-arcs" viewBox="0 0 620 350" role="group" aria-label="Spending by category">${arcs}${center}</svg><div class="spending-mobile"><svg class="mobile-spending-chart" viewBox="195 55 230 230" role="group" aria-label="Spending by category">${arcs}${center}</svg>${visible.map((item,i)=>`<div class="direct-category"><span class="direct-category-name">${escape(item.name)}</span><strong>${money(item.value,currency)}</strong><span>${percent(item.value,total).toFixed(1)}%</span><div class="direct-category-track"><span style="width:${percent(item.value,total)}%;background:${colors[i]}"></span></div></div>`).join('')}</div><p class="spending-comparison">${escape(comparison)}</p>${details(items,total,currency,false,open)}`;
   }
@@ -67,7 +77,7 @@ window.FinTracker = window.FinTracker || {};
     const total=items.reduce((sum,item)=>sum+item.value,0);
     if(!total){host.innerHTML='<p class="visual-empty">Add a holding to see allocation and performance.</p>';return;}
     const visible=summarize(items).map((item,i)=>({...item,color:colors[i]}));
-    host.innerHTML=`<div class="allocation-title"><h3>Allocation & performance</h3><span>Area represents current value &middot; IDR</span></div><div class="holding-treemap">${split(visible,0,0,1000,310).map(box=>{ const item={...box,x:box.x/10,y:box.y/3.1,width:box.width/10,height:box.height/3.1}; return `<button type="button" class="holding-tile" style="left:${item.x}%;top:${item.y}%;width:${item.width}%;height:${item.height}%;--holding-color:${item.color}" data-holding="${escape(item.id||'')}" ${item.other?'data-other="true"':''}><span class="holding-name">${escape(item.name)}</span><strong>${money(item.value)}</strong><span class="holding-weight">${percent(item.value,total).toFixed(1)}% of portfolio</span><span class="holding-performance ${item.pnl<0?'loss':'gain'}">${item.cash?'Unallocated cash':`${item.pnl>=0?'+':'-'}${money(Math.abs(item.pnl))} P&L`}</span></button>`; }).join('')}</div>${details(items,total,'IDR',true,open)}`;
+    host.innerHTML=`<div class="allocation-title"><h3>Allocation &amp; performance</h3><span>Area represents current value &middot; IDR</span></div><div class="holding-treemap">${split(visible,0,0,1000,310).map(box=>{ const item={...box,x:box.x/10,y:box.y/3.1,width:box.width/10,height:box.height/3.1}; return `<button type="button" class="holding-tile" style="left:${item.x}%;top:${item.y}%;width:${item.width}%;height:${item.height}%;--holding-color:${item.color}" data-holding="${escape(item.id||'')}" ${item.other?'data-other="true"':''}><span class="holding-name">${escape(item.name)}</span><strong>${money(item.value)}</strong><span class="holding-weight">${percent(item.value,total).toFixed(1)}% of portfolio</span><span class="holding-performance ${item.pnl<0?'loss':'gain'}">${pnlDisplay(item)}</span></button>`; }).join('')}</div>${details(items,total,'IDR',true,open)}`;
     // Exact values remain readable when a phone's chart tiles are too small for amounts.
     host.querySelector('.holding-treemap').insertAdjacentHTML('afterend', `<div class="portfolio-mobile-values">${rows(visible,total,'IDR',true)}</div>`);
     if (visible.some(item => item.value / total < 0.06)) { host.querySelector('.holding-treemap').classList.add('is-list'); host.querySelector('.allocation-title > span').textContent = 'Current value, allocation and P&L · IDR'; }

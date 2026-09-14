@@ -49,6 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
   outlook.id = "financial-outlook";
   outlook.setAttribute("aria-label", "Cash flow outlook and scenario planner");
   outlook.innerHTML = `<div class="outlook-main"><div class="outlook-heading"><h3>Your month, ahead.</h3><span id="outlook-month" class="outlook-month"></span></div><dl class="outlook-metrics"><div><dt>Daily burn rate</dt><dd id="burn-rate">Calculating</dd></div><div><dt>Projected month-end cash</dt><dd id="projected-balance" class="projected">Calculating</dd></div></dl><p id="outlook-basis" class="outlook-note"></p><p id="workspace-status" class="workspace-status" role="status"></p></div><div class="scenario-panel"><h4>What if you changed the pace?</h4><label for="scenario-reduction">Reduce remaining spending by <output id="reduction-label">0%</output></label><input id="scenario-reduction" type="range" min="0" max="100" step="5" value="0"><label for="scenario-incoming">Expected additional income · IDR</label><input id="scenario-incoming" type="number" min="0" max="1000000000000" step="1000" value="0"><div class="scenario-result"><span>Scenario month-end cash</span><strong id="scenario-balance"></strong></div><p class="outlook-note">Explore an estimate. This does not create transactions.</p></div>`;
+  const currentCash = node("div", "outlook-current-cash");
+  currentCash.innerHTML = '<dt>Current cash</dt><dd id="current-cash">Calculating</dd><small>Excludes investment accounts</small>';
+  outlook.querySelector('.outlook-metrics').prepend(currentCash);
   document.querySelector(".summary-layout").after(outlook);
   let frame;
   function renderOutlook() {
@@ -65,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       month: "long",
       year: "numeric",
     }).format(new Date());
+    $("current-cash").textContent = money(model.balance);
     $("burn-rate").textContent = model.hasHistory
       ? money(model.burn)
       : "No spending yet";
