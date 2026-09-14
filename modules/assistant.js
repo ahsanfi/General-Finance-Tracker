@@ -473,6 +473,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  document.addEventListener('touchcancel', () => {
+    isPulling = false;
+    if (!isRefreshing) resetPtr();
+  });
+
   function resetPtr() {
     ptrIndicator.style.transform = "translateY(-100%)";
     setTimeout(() => {

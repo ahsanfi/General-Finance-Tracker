@@ -26,12 +26,22 @@
     color: var(--accent) !important;
   }
   .modern-shell .app-header {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     flex-wrap: nowrap;
     min-height: 64px;
     gap: 8px;
     z-index: 45;
+  }
+  .mobile-header-spacer {
+    flex: 0 0 auto;
+    height: var(--mobile-header-height, calc(72px + var(--safe-top)));
+  }
+  #ptr-indicator {
+    top: var(--mobile-header-height, calc(72px + var(--safe-top)));
+    z-index: 44;
   }
   .app-header .quick-actions {
     flex-wrap: nowrap;
