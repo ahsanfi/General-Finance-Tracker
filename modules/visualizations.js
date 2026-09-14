@@ -23,7 +23,7 @@ window.FinTracker = window.FinTracker || {};
   function details(items, total, currency, performance, previous) {
     return `<details class="allocation-breakdown" ${previous ? 'open' : ''}><summary>View all ${items.length} ${performance ? 'holdings' : 'categories'}</summary><div class="allocation-data ${performance ? 'with-performance' : ''}">${rows(items, total, currency, performance)}</div></details>`;
   }
-  function spending(items, currency, comparison, periodLabel = 'All recorded expenses') {
+  function spending(items, currency, comparison) {
     const host = document.getElementById('spending-visualization');
     const open = host.querySelector('details')?.open;
     const total = items.reduce((sum, item) => sum + item.value, 0);
@@ -55,7 +55,7 @@ window.FinTracker = window.FinTracker || {};
       return `<g class="spending-segment" tabindex="0" aria-label="${escape(item.name)}, ${money(item.value,currency)}, ${percent(item.value,total).toFixed(1)} percent"><title>${escape(item.name)}: ${money(item.value,currency)}</title><path d="${path}" fill="none" stroke="${colors[i]}" stroke-width="22"/><path class="segment-connector" d="M ${mx} ${my} L ${elbow} ${y+7} L ${slot.left?175:440} ${y+7}" fill="none" stroke="${colors[i]}" stroke-width="1"/><text x="${textX}" y="${y}" class="segment-name">${escape(item.name.length > 22 ? item.name.slice(0,21)+'...' : item.name)}</text><text x="${textX}" y="${y+21}" class="segment-value">${money(item.value,currency)}</text><text x="${textX}" y="${y+37}" class="segment-value">${percent(item.value,total).toFixed(1)}%</text></g>`;
     }).join('');
     const totalDisplay = window.isBalancesHidden ? '***' : money(total, currency);
-    const center = `<text x="310" y="150" text-anchor="middle" class="radial-caption">TOTAL SPENDING</text><text x="310" y="177" text-anchor="middle" class="radial-total">${totalDisplay}</text><text x="310" y="199" text-anchor="middle" class="radial-caption">${escape(periodLabel)}</text>`;
+    const center = `<text x="310" y="150" text-anchor="middle" class="radial-caption">TOTAL SPENDING</text><text x="310" y="177" text-anchor="middle" class="radial-total">${totalDisplay}</text><text x="310" y="199" text-anchor="middle" class="radial-caption">All recorded expenses</text>`;
     // Reuse the same arcs; the phone view crops out desktop callouts and labels them below.
     host.innerHTML = `<svg class="spending-arcs" viewBox="0 0 620 350" role="group" aria-label="Spending by category">${arcs}${center}</svg><div class="spending-mobile"><svg class="mobile-spending-chart" viewBox="195 55 230 230" role="group" aria-label="Spending by category">${arcs}${center}</svg>${visible.map((item,i)=>`<div class="direct-category"><span class="direct-category-name">${escape(item.name)}</span><strong>${money(item.value,currency)}</strong><span>${percent(item.value,total).toFixed(1)}%</span><div class="direct-category-track"><span style="width:${percent(item.value,total)}%;background:${colors[i]}"></span></div></div>`).join('')}</div><p class="spending-comparison">${escape(comparison)}</p>${details(items,total,currency,false,open)}`;
   }
@@ -86,11 +86,10 @@ window.FinTracker = window.FinTracker || {};
       else if(button.dataset.holding) window.openPortfolioModal(button.dataset.holding);
     });
   }
-  function trendData(data, rate, today = new Date(), timeframe = '30', currency = null) {
+  function trendData(data, rate, today = new Date(), timeframe = '30') {
     const day = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
     // Calendar windows end today; comparison uses the same number of preceding days.
     const end = new Date(today.getFullYear(),today.getMonth(),today.getDate());
-    const eligible = data.filter(item => item.type === 'expense' && item.cat !== 'Transfer' && (!currency || item.curr === currency) && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date <= day(end));
     let count = timeframe === '7' ? 7 : 30;
     if (timeframe === '3m' || timeframe === '1y') {
       const months = timeframe === '3m' ? 3 : 12;
@@ -99,23 +98,12 @@ window.FinTracker = window.FinTracker || {};
       const start = new Date(monthStart.getFullYear(),monthStart.getMonth(),Math.min(end.getDate(),lastDay));
       count = Math.round((Date.UTC(end.getFullYear(),end.getMonth(),end.getDate())-Date.UTC(start.getFullYear(),start.getMonth(),start.getDate()))/86400000);
     }
-    if (timeframe === 'all') {
-      const earliest = eligible.reduce((first,item)=>item.date<first?item.date:first,day(end));
-      count = Math.max(1,Math.round((Date.UTC(end.getFullYear(),end.getMonth(),end.getDate())-Date.parse(earliest+'T00:00:00Z'))/86400000)+1);
-    }
-    const preceding = timeframe === 'all' ? 0 : count;
-    const dates = Array.from({length:count+preceding},(_,i)=>day(new Date(end.getFullYear(),end.getMonth(),end.getDate()-count-preceding+1+i)));
+    const dates = Array.from({length:count*2},(_,i)=>day(new Date(end.getFullYear(),end.getMonth(),end.getDate()-count*2+1+i)));
     const totals = new Map(dates.map(date=>[date,0]));
-    const categories = new Map(), start = dates[preceding];
-    eligible.forEach(item=>{
-      if (!totals.has(item.date)) return;
-      const amount = Number(item.amt) * (!currency && item.curr === 'USD' ? rate : 1);
-      totals.set(item.date,totals.get(item.date)+amount);
-      if(item.date>=start)categories.set(item.cat,(categories.get(item.cat)||0)+amount);
-    });
-    const values=dates.slice(preceding).map(date=>totals.get(date)), total=values.reduce((a,b)=>a+b,0);
-    const previous=timeframe==='all'?null:dates.slice(0,preceding).reduce((sum,date)=>sum+totals.get(date),0);
-    return {dates:dates.slice(preceding),values,total,previous,average:total/count,peak:values.reduce((peak,value)=>Math.max(peak,value),0),count,categories:[...categories].map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value)};
+    data.forEach(item=>{ const date=String(item.date).slice(0,10); if(item.type==='expense' && item.cat!=='Transfer' && totals.has(date)) totals.set(date,totals.get(date)+item.amt*(item.curr==='USD'?rate:1)); });
+    const values=dates.slice(count).map(date=>totals.get(date)), total=values.reduce((a,b)=>a+b,0);
+    const previous=dates.slice(0,count).reduce((sum,date)=>sum+totals.get(date),0);
+    return {dates:dates.slice(count),values,total,previous,average:total/count,peak:Math.max(...values),count};
   }
   FinTracker.visualizations={spending,portfolio,summarize,split,trendData};
   document.addEventListener('DOMContentLoaded',()=>{
