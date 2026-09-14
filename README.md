@@ -6,6 +6,21 @@ This guide describes the current source as of September 14, 2026. Features becom
 
 ## Architecture and deployment
 
+### Install on an iPhone (free)
+
+1. Publish the updated contents of this folder, including `manifest.webmanifest`, `sw.js`, `offline.html`, `icons/` and `modules/pwa.*`.
+2. Open your GitHub Pages URL in Safari on the iPhone.
+3. Tap **Share → Add to Home Screen**. Keep **Open as Web App** enabled if shown, then tap **Add**.
+4. Open **FinTracker** from its Home Screen icon. You may need to sign in once in this app view; the existing session expiry rules still apply.
+
+FinTracker opens in standalone mode, with its own icon and the existing phone layout. Installation instructions are also in **Settings & access**, reachable through **More** on mobile. No Mac or paid Apple membership is needed. See [Apple's installation instructions](https://support.apple.com/en-mide/guide/iphone/iphea86e5236/ios).
+
+Internet is required for financial data and saves. After one successful online visit, an offline launch shows a reconnect screen. Only that generic screen is stored in the service-worker cache; financial responses are not cached or queued. A connection change does not reload the app or discard an open form. An interrupted save must be checked before retrying. Existing local session/settings storage is unchanged.
+
+The service worker is scoped to this repository's URL and does not intercept Apps Script or AI requests. This is the website installed as a web app, not the separate Capacitor project. No Apps Script redeployment is required for this installation update. Native Safari/Home Screen sign-in and keyboard behavior still need a real-iPhone check.
+
+The wallet icon is adapted from [Font Awesome Free 6.4.0](https://fontawesome.com/license/free), licensed CC BY 4.0.
+
 ```text
 GitHub Pages app -> authenticated Apps Script API -> Google Sheets
 Windows background job -> Tokocrypto API -> scoped Apps Script API -> Google Sheets

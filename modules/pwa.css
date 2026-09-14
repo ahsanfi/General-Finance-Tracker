@@ -1,0 +1,10 @@
+.pwa-install-card{padding:24px;border:1px solid var(--border,#d7e0db);border-radius:18px;background:var(--surface,#fff);color:var(--text,#17221d)}
+.pwa-install-card h2{font-size:18px;font-weight:650;margin:0 0 8px}
+.pwa-install-card p,.pwa-install-card li{font-size:15px;line-height:1.6;color:var(--text-muted,#52625b)}
+.pwa-install-card ol{list-style:decimal;padding-left:22px;margin:12px 0}
+.pwa-install-card button{min-height:44px;padding:10px 18px;border-radius:10px;background:var(--accent,#006d55);color:white;margin-top:12px;font:inherit}
+.pwa-install-card button:active{transform:scale(.95)}
+.pwa-install-card [hidden]{display:none!important}
+.pwa-connection{position:fixed;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 8px);left:16px;right:16px;max-width:540px;margin:auto;padding:12px 16px;border-radius:12px;background:#fff3d8;color:#533700;box-shadow:0 4px 20px #0002;font:500 14px/1.5 system-ui}
+.pwa-connection[hidden]{display:none}
+@media(display-mode:standalone){html,body{overscroll-behavior-y:contain}}
