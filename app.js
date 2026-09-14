@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const WEB_APP_URL = window.FinTrackerConfig?.apiUrl || "";
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const WEB_APP_URL = isLocal ? '/proxy/' + (window.FinTrackerConfig?.apiUrl || "") : (window.FinTrackerConfig?.apiUrl || "");
 
   let SYSTEM_CONFIG = {
     exp: [],
@@ -1756,36 +1757,42 @@ Do not wrap in markdown or code blocks.`;
 
   function updateChart(data) {
     const currency = document.getElementById('chart-currency-toggle').value;
-    const expenses = data.filter(item => item.type === 'expense' && item.curr === currency && item.cat !== 'Transfer');
+    const trend = FinTracker.visualizations.trendData(data, exchangeRate, new Date(), trendTimeframe, currency);
+    const validDates = new Set(trend.dates);
+    
+    const expenses = data.filter(item => item.type === 'expense' && item.curr === currency && item.cat !== 'Transfer' && validDates.has(String(item.date).slice(0, 10)));
     const totals = new Map();
     expenses.forEach(item => totals.set(item.cat, (totals.get(item.cat) || 0) + item.amt));
-    const now = new Date(), thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-    const last = new Date(now.getFullYear(), now.getMonth()-1, 1);
-    const lastMonth = last.getFullYear() + '-' + String(last.getMonth()+1).padStart(2,'0');
-    const sum = month => expenses.filter(item => String(item.date).startsWith(month)).reduce((total,item) => total+item.amt,0);
-    const prior = sum(lastMonth), current = sum(thisMonth);
-    const comparison = prior ? `This month so far vs full last month: ${current >= prior ? '+' : ''}${((current-prior)/prior*100).toFixed(1)}%` : 'Monthly comparison unavailable: no expenses recorded last month.';
+    
+    const comparison = trend.previous > 0
+      ? `vs previous ${trend.count} days: ${trend.total >= trend.previous ? '+' : ''}${((trend.total-trend.previous)/trend.previous*100).toFixed(1)}%`
+      : `No spending recorded in previous period`;
+      
     FinTracker.visualizations.spending([...totals].map(([name,value])=>({name,value})).filter(item=>item.value>0).sort((a,b)=>b.value-a.value), currency, comparison);
   }
   let trendChart;
   let trendTimeframe = "30";
   document.getElementById("trend-timeframe").addEventListener("change", event => {
-    trendTimeframe = event.target.value; updateTrendChart(masterData);
+    trendTimeframe = event.target.value; 
+    updateTrendChart(masterData);
+    updateChart(masterData);
   });
   function updateTrendChart(data) {
+    const currency = document.getElementById('chart-currency-toggle').value;
     const ctx = document.getElementById("trend-line-chart").getContext("2d");
 
-    const trend = FinTracker.visualizations.trendData(data, exchangeRate, new Date(), trendTimeframe);
+    const trend = FinTracker.visualizations.trendData(data, exchangeRate, new Date(), trendTimeframe, currency);
     document.getElementById('trend-line-chart').setAttribute('aria-label', `Daily expense trend for the last ${trend.count} days`);
     document.getElementById("trend-period-label").textContent = `Spent in ${trend.count} days`;
-    document.getElementById("trend-period-note").textContent = `${trend.count} calendar days through today · IDR equivalent · Transfers excluded`;
+    document.getElementById("trend-period-note").textContent = `${trend.count} calendar days through today · ${currency} only · Transfers excluded`;
     const sortedDates = trend.dates, values = trend.values;
-    document.getElementById('trend-total').textContent = fmt(trend.total, 'IDR');
-    document.getElementById('trend-average').textContent = fmt(trend.average, 'IDR');
-    document.getElementById('trend-peak').textContent = fmt(trend.peak, 'IDR');
+    document.getElementById('trend-total').textContent = fmt(trend.total, currency);
+    document.getElementById('trend-average').textContent = fmt(trend.average, currency);
+    document.getElementById('trend-peak').textContent = fmt(trend.peak, currency);
     document.getElementById('trend-comparison').textContent = trend.previous > 0
       ? `${trend.total >= trend.previous ? '+' : ''}${((trend.total-trend.previous)/trend.previous*100).toFixed(1)}% vs previous ${trend.count} days`
-      : `No spending recorded in the previous ${trend.count} days`;    const labels = sortedDates.map((d) => {
+      : `No spending recorded in the previous ${trend.count} days`;
+    const labels = sortedDates.map((d) => {
       const dateObj = new Date(d + "T12:00:00");
       return dateObj.toLocaleDateString("en-US", {
         month: "short",
@@ -1799,7 +1806,7 @@ Do not wrap in markdown or code blocks.`;
         labels: labels,
         datasets: [
           {
-            label: "Total Expenses (IDR)",
+            label: `Total Expenses (${currency})`,
             data: values,
             borderColor: "#4F46E5",
             backgroundColor: (context) => {
@@ -2131,7 +2138,10 @@ Do not wrap in markdown or code blocks.`;
   });
   document
     .getElementById("chart-currency-toggle")
-    .addEventListener("change", () => updateChart(masterData));
+    .addEventListener("change", () => {
+      updateChart(masterData);
+      updateTrendChart(masterData);
+    });
   document.querySelectorAll(".sortable").forEach((s) =>
     s.addEventListener("click", (e) => {
       sortState.k = e.target.dataset.sort;
