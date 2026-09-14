@@ -8,7 +8,7 @@ This guide describes the current source as of September 14, 2026. Features becom
 
 ### Install on an iPhone (free)
 
-1. Publish the updated contents of this folder, including `manifest.webmanifest`, `sw.js`, `offline.html`, `icons/` and `modules/pwa.*`.
+1. Publish the updated contents of `money-tracker-github/`, including `manifest.webmanifest`, `sw.js`, `offline.html`, `icons/` and `modules/pwa.*`.
 2. Open your GitHub Pages URL in Safari on the iPhone.
 3. Tap **Share → Add to Home Screen**. Keep **Open as Web App** enabled if shown, then tap **Add**.
 4. Open **FinTracker** from its Home Screen icon. You may need to sign in once in this app view; the existing session expiry rules still apply.
@@ -72,7 +72,8 @@ Calculation details:
 - The default chart summarizes larger allocations and groups remaining categories as Other. Expand the breakdown to inspect all categories.
 - Phones show a donut with readable category values below.
 - **The Bigger Picture:** spending over time, total, daily average, peak spending, and comparison with a preceding period.
-- Timeframes: Last 7 Days, Last 30 Days (default), 3 Months, and 1 Year.
+- Timeframes: Last 7 Days, Last 30 Days (default), 3 Months, 1 Year, and All Time.
+- The Bigger Picture and category allocation charts share the same timeframe and currency filters.
 - The trend includes zero-spending days and excludes transfers and future-dated entries.
 - The category chart shows all recorded expenses; the trend uses the selected timeframe.
 
@@ -206,6 +207,8 @@ The monthly AI review accepts optional goals/questions and optionally includes t
 ## Navigation and mobile behavior
 
 - Desktop navigation and mobile Home, History, Add, Plan, and More tabs.
+- AI Assistant button integrated into the top header on mobile to maximize screen real estate, remaining as a floating button on desktop.
+- Polished pull-to-refresh interactions and optimized layout padding on mobile devices.
 - Cmd+K / Ctrl+K command palette for navigation, quick actions, and transaction search.
 - Keyboard navigation in the command palette.
 - Mobile bottom sheets, swipe-to-dismiss support, safe-area spacing, and keyboard-aware positioning.
@@ -234,6 +237,8 @@ node tests/browser.cjs
 ```
 
 - Preview fixtures are isolated from live accounts.
+- A local proxy server (`node proxy.js`) runs at `localhost:8080` during development to bypass browser CORS restrictions and proxy API requests reliably to Google Apps Script.
+- The client automatically retries interrupted API requests to mitigate intermittent connection drops, especially on mobile networks or strict tracking-prevention browsers.
 - `npm.cmd run build` generates the preview and `deploy-step3/` artifacts. It does not automatically copy every change into `money-tracker-github/`.
 - Keep changed hosting files synchronized before publishing.
 - Browser checks require Chrome and access to frontend CDN dependencies.
