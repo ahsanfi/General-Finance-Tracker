@@ -2140,7 +2140,6 @@ Do not wrap in markdown or code blocks.`;
     }),
   );
   function getSnapshotSummary(data) {
-    const today = FinTracker.domain.localDateKey();
     const bals = {};
     let incIDR = 0,
       expIDR = 0,
@@ -2150,11 +2149,11 @@ Do not wrap in markdown or code blocks.`;
       const k = `${d.acc}-${d.curr}`;
       if (!bals[k]) bals[k] = { n: d.acc, c: d.curr, v: 0 };
       if (d.type === "income") {
-        if (d.date <= today) bals[k].v += d.amt;
+        bals[k].v += d.amt;
         if (d.cat !== "Transfer" && d.cat !== "Initial Balance")
           d.curr === "IDR" ? (incIDR += d.amt) : (incUSD += d.amt);
       } else {
-        if (d.date <= today) bals[k].v -= d.amt;
+        bals[k].v -= d.amt;
         if (d.cat !== "Transfer")
           d.curr === "IDR" ? (expIDR += d.amt) : (expUSD += d.amt);
       }
@@ -2717,11 +2716,11 @@ Do not wrap in markdown or code blocks.`;
   // Reconcile Balances Feature
   window.openReconcileModal = function () {
     const bals = {};
-    const today = FinTracker.domain.localDateKey();
     masterData.forEach((d) => {
       const k = `${d.acc}-${d.curr}`;
       if (!bals[k]) bals[k] = { n: d.acc, c: d.curr, v: 0 };
-      if (d.date <= today) bals[k].v += (d.type === "income" ? 1 : -1) * d.amt;
+      if (d.type === "income") bals[k].v += d.amt;
+      else bals[k].v -= d.amt;
     });
 
     const listEl = document.getElementById("reconcile-list");
@@ -2796,7 +2795,7 @@ Do not wrap in markdown or code blocks.`;
     );
     const type = diff > 0 ? "income" : "expense";
     const amt = Math.abs(diff);
-    const date = FinTracker.domain.localDateKey();
+    const date = new Date().toISOString().split("T")[0];
 
     const payload = {
       action: "add",

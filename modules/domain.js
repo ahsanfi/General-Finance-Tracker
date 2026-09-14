@@ -2,10 +2,7 @@
 (function (root) {
   const convert = (value, from, to, rate) =>
     from === to ? value : from === "USD" ? value * rate : value / rate;
-  const localDateKey = (date = new Date()) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  function summarize(transactions, portfolio, investmentAccounts, rate, now = new Date()) {
-    const today = localDateKey(now);
+  function summarize(transactions, portfolio, investmentAccounts, rate) {
     const wallets = new Map();
     let income = 0,
       expense = 0;
@@ -13,8 +10,7 @@
       const key = JSON.stringify([t.acc, t.curr]);
       if (!wallets.has(key)) wallets.set(key, { n: t.acc, c: t.curr, v: 0 });
       const wallet = wallets.get(key);
-      // Future records remain in history, but have not changed today's cash yet.
-      if (t.date <= today) wallet.v += (t.type === "income" ? 1 : -1) * t.amt;
+      wallet.v += (t.type === "income" ? 1 : -1) * t.amt;
       if (t.cat !== "Transfer") {
         if (t.type === "income" && t.cat !== "Initial Balance")
           income += convert(t.amt, t.curr, "IDR", rate);
@@ -105,7 +101,7 @@
           convert(source, sourceCurrency, targetCurrency, rate) * 100,
         ) / 100;
   }
-  const domain = { summarize, calculate, convert, transferAmount, localDateKey };
+  const domain = { summarize, calculate, convert, transferAmount };
   if (typeof module !== "undefined" && module.exports) module.exports = domain;
   else {
     root.FinTracker ??= {};
