@@ -39,10 +39,6 @@
     flex: 0 0 auto;
     height: var(--mobile-header-height, calc(72px + var(--safe-top)));
   }
-  #ptr-indicator {
-    top: var(--mobile-header-height, calc(72px + var(--safe-top)));
-    z-index: 44;
-  }
   .app-header .quick-actions {
     flex-wrap: nowrap;
     margin-left: auto;
