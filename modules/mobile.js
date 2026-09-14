@@ -2,6 +2,21 @@
 document.addEventListener("DOMContentLoaded", () => {
   const phone = matchMedia("(max-width: 768px)"),
     root = document.documentElement;
+  const header = document.querySelector('.app-header');
+  if (header) {
+    // A fixed header stays outside document overscroll; reserve its measured space.
+    const spacer = document.createElement('div');
+    spacer.className = 'mobile-header-spacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    header.before(spacer);
+    const measureHeader = () => {
+      if (phone.matches && header.getBoundingClientRect().height > 0)
+        root.style.setProperty('--mobile-header-height', `${header.getBoundingClientRect().height}px`);
+    };
+    new ResizeObserver(measureHeader).observe(header);
+    phone.addEventListener('change', measureHeader);
+    measureHeader();
+  }
   function prepareSheets() {
     document.querySelectorAll('.workspace-dialog, #copy-month-modal, #calendar-detail-modal, #reconcile-modal, #portfolio-modal').forEach(panel => {
       if (panel.dataset.dragReady) return;
