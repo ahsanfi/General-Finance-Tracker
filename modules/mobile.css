@@ -432,7 +432,7 @@
   #tab-content {
     padding-left: max(14px, var(--safe-left));
     padding-right: max(14px, var(--safe-right));
-    padding-bottom: calc(100px + var(--safe-bottom));
+    padding-bottom: 16px;
   }
   .quick-add-launch {
     bottom: calc(86px + var(--safe-bottom));
