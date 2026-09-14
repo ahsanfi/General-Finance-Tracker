@@ -347,7 +347,7 @@
     overscroll-behavior-y: contain;
   }
   body {
-    padding-bottom: calc(90px + var(--safe-bottom));
+    padding-bottom: calc(76px + var(--safe-bottom)) !important;
   }
   button:active:not(:disabled),
   a:active,
@@ -432,7 +432,7 @@
   #tab-content {
     padding-left: max(14px, var(--safe-left));
     padding-right: max(14px, var(--safe-right));
-    padding-bottom: 16px;
+    padding-bottom: 4px;
   }
   .quick-add-launch {
     bottom: calc(86px + var(--safe-bottom));
