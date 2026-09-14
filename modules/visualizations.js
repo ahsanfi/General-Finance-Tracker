@@ -86,12 +86,19 @@ window.FinTracker = window.FinTracker || {};
       else if(button.dataset.holding) window.openPortfolioModal(button.dataset.holding);
     });
   }
-  function trendData(data, rate, today = new Date(), timeframe = '30') {
+  function trendData(data, rate, today = new Date(), timeframe = '30', currency = 'IDR') {
     const day = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
     // Calendar windows end today; comparison uses the same number of preceding days.
     const end = new Date(today.getFullYear(),today.getMonth(),today.getDate());
     let count = timeframe === '7' ? 7 : 30;
-    if (timeframe === '3m' || timeframe === '1y') {
+    if (timeframe === 'all') {
+      const allDates = data.filter(i => i.type === 'expense' && i.cat !== 'Transfer' && i.curr === currency).map(i => new Date(String(i.date).slice(0,10)).getTime());
+      if (allDates.length === 0) count = 30;
+      else {
+        const earliest = new Date(Math.min(...allDates));
+        count = Math.max(1, Math.round((end.getTime() - earliest.getTime()) / 86400000) + 1);
+      }
+    } else if (timeframe === '3m' || timeframe === '1y') {
       const months = timeframe === '3m' ? 3 : 12;
       const monthStart = new Date(end.getFullYear(),end.getMonth()-months,1);
       const lastDay = new Date(monthStart.getFullYear(),monthStart.getMonth()+1,0).getDate();
@@ -100,7 +107,7 @@ window.FinTracker = window.FinTracker || {};
     }
     const dates = Array.from({length:count*2},(_,i)=>day(new Date(end.getFullYear(),end.getMonth(),end.getDate()-count*2+1+i)));
     const totals = new Map(dates.map(date=>[date,0]));
-    data.forEach(item=>{ const date=String(item.date).slice(0,10); if(item.type==='expense' && item.cat!=='Transfer' && totals.has(date)) totals.set(date,totals.get(date)+item.amt*(item.curr==='USD'?rate:1)); });
+    data.forEach(item=>{ const date=String(item.date).slice(0,10); if(item.type==='expense' && item.cat!=='Transfer' && item.curr===currency && totals.has(date)) totals.set(date,totals.get(date)+item.amt); });
     const values=dates.slice(count).map(date=>totals.get(date)), total=values.reduce((a,b)=>a+b,0);
     const previous=dates.slice(0,count).reduce((sum,date)=>sum+totals.get(date),0);
     return {dates:dates.slice(count),values,total,previous,average:total/count,peak:Math.max(...values),count};
