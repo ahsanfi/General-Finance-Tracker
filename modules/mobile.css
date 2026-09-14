@@ -45,8 +45,7 @@
     gap: 6px;
   }
   .app-header :is(#export-csv-btn, #export-btn, #logout-btn),
-  #quick-add-launch,
-  #ai-chat-btn {
+  #quick-add-launch {
     display: none !important;
   }
   #mobile-nav .mob-nav-btn[data-target="view-daily"] {
