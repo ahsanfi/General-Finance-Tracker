@@ -1,4 +1,4 @@
-﻿/* Shared runtime: observable state, native RPC, read deduplication and compatibility adapters. */
+/* Shared runtime: observable state, native RPC, read deduplication and compatibility adapters. */
 window.FinTracker = window.FinTracker || {};
 (() => {
   const listeners = new Set();
@@ -57,20 +57,31 @@ window.FinTracker = window.FinTracker || {};
               .financeApi({ action, ...payload }),
           );
         else {
-          const url = window.FinTrackerConfig?.apiUrl || "";
+          let url = window.FinTrackerConfig?.apiUrl || "";
           if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url))
             throw new Error("Set your Apps Script deployment /exec URL in config.js.");
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isLocal) url = '/proxy/' + url;
           const credential = await FinTracker.auth.credential();
           let response;
-          try {
-            response = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" },
-              credentials: "omit",
-              redirect: "follow",
-              body: JSON.stringify({ ...payload, action, credential }),
-            });
-          } catch (_) {
+          let fetchError;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+              response = await fetch(url + "?t=" + Date.now(), {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                credentials: "omit",
+                redirect: "follow",
+                body: JSON.stringify({ ...payload, action, credential }),
+              });
+              fetchError = null;
+              break; // Success, exit loop
+            } catch (err) {
+              fetchError = err;
+              await new Promise(resolve => setTimeout(resolve, 1000)); // wait 1s before retry
+            }
+          }
+          if (fetchError) {
             throw new Error("Connection interrupted. Verify the result before retrying a save. Check the Apps Script deployment allows Anyone access.");
           }
           if (!response.ok) throw new Error("The Apps Script API is unavailable. Check its deployment settings.");
