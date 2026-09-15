@@ -63,9 +63,11 @@ window.FinTracker = window.FinTracker || {};
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           if (isLocal) url = '/proxy/' + url;
           const credential = await FinTracker.auth.credential();
+          const requestStarted = Date.now();
           let response;
           let fetchError;
-          for (let attempt = 0; attempt < 3; attempt++) {
+          const attempts = read ? 3 : 1;
+          for (let attempt = 0; attempt < attempts; attempt++) {
             try {
               response = await fetch(url + "?t=" + Date.now(), {
                 method: "POST",
@@ -78,7 +80,8 @@ window.FinTracker = window.FinTracker || {};
               break; // Success, exit loop
             } catch (err) {
               fetchError = err;
-              await new Promise(resolve => setTimeout(resolve, 1000)); // wait 1s before retry
+              // A failed response does not prove a save failed: never replay writes.
+              if (attempt + 1 < attempts) await new Promise(resolve => setTimeout(resolve, 1000));
             }
           }
           if (fetchError) {
@@ -87,6 +90,7 @@ window.FinTracker = window.FinTracker || {};
           if (!response.ok) throw new Error("The Apps Script API is unavailable. Check its deployment settings.");
           try { result = await response.json(); }
           catch (_) { throw new Error("The API did not return JSON. Check the /exec URL and deploy the updated code.gs as Me, with Anyone access."); }
+          FinTracker.api.lastTiming = { action, requestMs:Date.now()-requestStarted, server:result.timing || null };
           if (result?.code === "AUTH_REQUIRED") FinTracker.auth.clear();
         }
         if (!result || result.status !== "success")
