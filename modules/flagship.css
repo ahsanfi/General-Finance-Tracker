@@ -297,7 +297,7 @@ kbd {
 }
 .outlook-metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 28px;
 }
 .outlook-metrics dt {
@@ -316,7 +316,8 @@ kbd {
   font-weight: 650;
   letter-spacing: -1px;
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 .outlook-metrics dd.projected {
   color: var(--accent);
