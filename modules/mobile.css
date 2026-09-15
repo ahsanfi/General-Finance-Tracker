@@ -14,9 +14,17 @@
 .mobile-entry-host {
   display: contents;
 }
-.phone-scenario > summary,
-.phone-method > summary {
+.phone-scenario > summary {
   display: none;
+}
+.phone-method > summary {
+  display: list-item;
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  font-size: 13px;
+  color: var(--accent);
+  list-style-position: inside;
 }
 .phone-scenario .scenario-panel {
   height: 100%;

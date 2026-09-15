@@ -56,6 +56,13 @@ document.addEventListener("DOMContentLoaded", () => {
   spendingForecast.innerHTML = '<dt>Forecasted monthly spending</dt><dd id="forecast-spending">Calculating</dd><small>Spent so far + remaining variable spending</small>';
   outlook.querySelector('#burn-rate').parentElement.after(spendingForecast);
   document.querySelector(".summary-layout").after(outlook);
+  const scenarioPanel = outlook.querySelector('.scenario-panel');
+  for (const id of ['scenario-reduction', 'scenario-incoming']) {
+    const control = node('div', 'scenario-control');
+    const input = $(id), label = scenarioPanel.querySelector(`label[for="${id}"]`);
+    label.before(control);
+    control.append(label, input);
+  }
   let frame;
   function renderOutlook() {
     const state = store.get();
