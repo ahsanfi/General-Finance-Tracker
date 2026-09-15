@@ -229,6 +229,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadSystemConfig() {
     const loader = document.getElementById("init-loader");
+    const heading = loader.querySelector("h2");
+    const unsubscribe = FinTracker.store.subscribe(({ connection }) => {
+      if (heading && connection?.action === "getBootstrap") {
+        heading.textContent = connection.message;
+        heading.setAttribute("aria-live", "polite");
+      }
+    });
     try {
       SYSTEM_CONFIG = await FinTracker.api.bootstrap();
       updateWalletOptions("IDR", "entry-acc-source");
@@ -247,6 +254,8 @@ document.addEventListener("DOMContentLoaded", () => {
       retry.textContent = "Try again";
       retry.addEventListener("click", () => location.reload());
       loader.append(message, retry);
+    } finally {
+      unsubscribe();
     }
   }
 

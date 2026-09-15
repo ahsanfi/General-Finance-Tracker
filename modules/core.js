@@ -24,6 +24,76 @@ window.FinTracker = window.FinTracker || {};
   let bootstrapPromise, initialData, initialBudgets;
   const native = () =>
     !!(window.google?.script?.run || window.FinTrackerPreview);
+  async function httpRequest(url, action, payload, credential, read) {
+    const timing = { action, requestMs: 0, attempts: [], server: null };
+    const started = Date.now();
+    const maximumAttempts = read ? 2 : 1;
+    try {
+      for (let attempt = 1; attempt <= maximumAttempts; attempt++) {
+        const controller = new AbortController();
+        const entry = { attempt, durationMs: 0, status: null, stage: "connection", outcome: "pending" };
+        timing.attempts.push(entry);
+        store.patch({ connection: { action, message: attempt === 1 ? "Connecting to your spreadsheet…" : "Retrying connection (2 of 2)…" } });
+        const attemptStarted = Date.now();
+        let timer, timedOut = false, retryable = false;
+        try {
+          // Bound both headers and body reads. Saves are never replayed after an uncertain response.
+          const exchange = (async () => {
+            const response = await fetch(url + "?t=" + Date.now(), {
+              method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+              credentials: "omit", redirect: "follow", signal: controller.signal,
+              body: JSON.stringify({ ...payload, action, credential }),
+            });
+            if (timedOut) return;
+            entry.status = response.status;
+            const redirected = /^https:\/\/script\.googleusercontent\.com\//.test(response.url || "");
+            entry.stage = redirected ? "redirected-response" : "endpoint";
+            if (!response.ok) {
+              retryable = (redirected && response.status === 404) || [429, 500, 502, 503, 504].includes(response.status);
+              entry.outcome = "http-error";
+              throw new Error(`${redirected ? "Google's redirected response" : "The Apps Script endpoint"} returned HTTP ${response.status}. ${read ? "Could not load data. Try again shortly." : "The save result is unknown. Check your transactions before trying again."}`);
+            }
+            let result;
+            try { result = await response.json(); }
+            catch (error) {
+              if (timedOut) throw error;
+              entry.outcome = "invalid-json";
+              throw new Error("The API did not return JSON. Check the /exec URL and deployment settings.");
+            }
+            return result;
+          })();
+          const result = await (read ? Promise.race([exchange, new Promise((_, reject) => {
+            timer = setTimeout(() => {
+              timedOut = true;
+              controller.abort();
+              reject(new Error("The connection took too long. Your data was not loaded. Try again."));
+            }, 12000);
+          })]) : exchange);
+          entry.outcome = result?.status === "success" ? "success" : "api-error";
+          timing.server = result?.timing || null;
+          return result;
+        } catch (error) {
+          if (timedOut) { entry.outcome = "timeout"; retryable = true; }
+          else if (entry.outcome === "pending") {
+            entry.outcome = "network-error";
+            retryable = true;
+            error = new Error(read ? "Connection interrupted. Try again to load your data." : "Connection interrupted. Verify the result before retrying a save.");
+          }
+          if (!read || !retryable || attempt === maximumAttempts) throw error;
+        } finally {
+          clearTimeout(timer);
+          entry.durationMs = Date.now() - attemptStarted;
+        }
+        // Retry from /exec to obtain a fresh redirect, never reuse its one-time URL.
+        store.patch({ connection: { action, message: "Connection interrupted. Retrying…" } });
+        await new Promise(resolve => setTimeout(resolve, 750));
+      }
+    } finally {
+      timing.requestMs = Date.now() - started;
+      FinTracker.api.lastTiming = timing;
+      if (state.connection?.action === action) store.patch({ connection: null });
+    }
+  }
   async function request(action, payload = {}) {
     const read = [
       "getBootstrap",
@@ -63,42 +133,7 @@ window.FinTracker = window.FinTracker || {};
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           if (isLocal) url = '/proxy/' + url;
           const credential = await FinTracker.auth.credential();
-          const requestStarted = Date.now();
-          let response;
-          let fetchError;
-          const attempts = read ? 3 : 1;
-          for (let attempt = 0; attempt < attempts; attempt++) {
-            try {
-              response = await fetch(url + "?t=" + Date.now(), {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                credentials: "omit",
-                redirect: "follow",
-                body: JSON.stringify({ ...payload, action, credential }),
-              });
-              fetchError = null;
-              const redirected404 = response.status === 404 && /^https:\/\/script\.googleusercontent\.com\//.test(response.url || "");
-              if (read && attempt + 1 < attempts && (redirected404 || [429,500,502,503,504].includes(response.status))) {
-                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-                continue;
-              }
-              break; // Success, exit loop
-            } catch (err) {
-              fetchError = err;
-              // A failed response does not prove a save failed: never replay writes.
-              if (attempt + 1 < attempts) await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          }
-          if (fetchError) {
-            throw new Error("Connection interrupted. Verify the result before retrying a save. Check the Apps Script deployment allows Anyone access.");
-          }
-          if (!response.ok) {
-            const stage = /^https:\/\/script\.googleusercontent\.com\//.test(response.url || "") ? "Google's redirected response" : "The Apps Script endpoint";
-            throw new Error(`${stage} returned HTTP ${response.status}. ${read ? 'Could not load data. Try again shortly; if it persists, check the deployment.' : 'The save result is unknown. Check your transactions before trying again.'}`);
-          }
-          try { result = await response.json(); }
-          catch (_) { throw new Error("The API did not return JSON. Check the /exec URL and deploy the updated code.gs as Me, with Anyone access."); }
-          FinTracker.api.lastTiming = { action, requestMs:Date.now()-requestStarted, server:result.timing || null };
+          result = await httpRequest(url, action, payload, credential, read);
           if (result?.code === "AUTH_REQUIRED") FinTracker.auth.clear();
         }
         if (!result || result.status !== "success")
