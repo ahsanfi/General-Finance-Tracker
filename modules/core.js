@@ -73,6 +73,25 @@ window.FinTracker = window.FinTracker || {};
           timing.server = result?.timing || null;
           return result;
         } catch (error) {
+          if (read && entry.status === 404 && entry.stage === "redirected-response" && FinTracker.readBridge) {
+            clearTimeout(timer);
+            entry.durationMs = Date.now() - attemptStarted;
+            const recovery = { attempt: attempt + 1, stage: "html-recovery", outcome: "pending", durationMs: 0 };
+            timing.attempts.push(recovery);
+            const recoveryStarted = Date.now();
+            store.patch({ connection: { action, message: "Trying an alternative connection…" } });
+            try {
+              const result = await FinTracker.readBridge(url, {...payload, action, credential});
+              recovery.outcome = result?.status === "success" ? "success" : "api-error";
+              timing.server = result?.timing || null;
+              return result;
+            } catch (failure) {
+              recovery.outcome = "failed";
+              throw failure;
+            } finally {
+              recovery.durationMs = Date.now() - recoveryStarted;
+            }
+          }
           if (timedOut) { entry.outcome = "timeout"; retryable = true; }
           else if (entry.outcome === "pending") {
             entry.outcome = "network-error";
@@ -82,7 +101,7 @@ window.FinTracker = window.FinTracker || {};
           if (!read || !retryable || attempt === maximumAttempts) throw error;
         } finally {
           clearTimeout(timer);
-          entry.durationMs = Date.now() - attemptStarted;
+          if (!entry.durationMs) entry.durationMs = Date.now() - attemptStarted;
         }
         // Retry from /exec to obtain a fresh redirect, never reuse its one-time URL.
         store.patch({ connection: { action, message: "Connection interrupted. Retrying…" } });
