@@ -184,6 +184,7 @@
   .outlook-current-cash small { flex-basis: 100%; margin-top: 0; }
   .outlook-metrics > div {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
