@@ -9,6 +9,7 @@
     now = new Date(),
     reduction = 0,
     incoming = 0,
+    burnExcludedCategories = ["Insurance"],
   ) {
     const today = dateKey(now),
       month = today.slice(0, 7),
@@ -32,7 +33,11 @@
         t.date.startsWith(month),
     );
     const spending = expenses.reduce((n, t) => n + convert(t), 0);
-    const burn = spending / elapsed;
+    const normalize = value => String(value || "").trim().toLowerCase();
+    const excludedCategories = new Set(burnExcludedCategories.map(normalize));
+    const variableExpenses = expenses.filter(t => !excludedCategories.has(normalize(t.cat)));
+    const variableSpending = variableExpenses.reduce((n, t) => n + convert(t), 0);
+    const burn = variableSpending / elapsed;
     const hasHistory = expenses.length > 0;
     const baseline = balance - burn * remaining;
     return {
@@ -41,6 +46,8 @@
       remaining,
       balance,
       spending,
+      variableSpending,
+      excludedSpending: spending - variableSpending,
       burn,
       // Full calendar month: recorded spending plus the remaining days at today's pace.
       forecastSpending: spending + burn * remaining,

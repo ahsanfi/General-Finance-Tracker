@@ -2881,7 +2881,14 @@ Do not wrap in markdown or code blocks.`;
   window.renderConfigUI = renderConfigUI;
   function renderConfigUI() {
     const container = document.getElementById("config-sections-container");
+    if (!Array.isArray(SYSTEM_CONFIG.burnExcludedCategories)) SYSTEM_CONFIG.burnExcludedCategories = ["Insurance"];
     const sections = [
+      {
+        title: "Exclude from daily burn rate",
+        key: "burnExcludedCategories",
+        color: "amber",
+        icon: "fa-calendar-check",
+      },
       {
         title: "Expense Categories",
         key: "exp",
@@ -2920,7 +2927,11 @@ Do not wrap in markdown or code blocks.`;
       const list = SYSTEM_CONFIG[s.key];
 
       let inputHtml = "";
-      if (s.key === "investmentAccounts") {
+      if (s.key === "burnExcludedCategories") {
+        const options = (SYSTEM_CONFIG.exp || []).filter(category => !list.includes(category))
+          .map(category => `<option value="${FinTracker.escape(category)}">${FinTracker.escape(category)}</option>`).join("");
+        inputHtml = `<select aria-label="Category to exclude from daily burn rate" id="config-new-${s.key}" class="flex-grow input-glow rounded-xl px-3 py-2">${options || '<option value="">All categories selected</option>'}</select>`;
+      } else if (s.key === "investmentAccounts") {
         const allWallets = [
           ...(SYSTEM_CONFIG.walletsIDR || []),
           ...(SYSTEM_CONFIG.walletsUSD || []),
@@ -2941,12 +2952,13 @@ Do not wrap in markdown or code blocks.`;
       html += `
                         <div class="glass-card p-5 rounded-2xl border border-white/5 bg-black/20 flex flex-col">
                             <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i class="fas ${s.icon} mr-2 text-${s.color}-400"></i> ${s.title}</h3>
+                            ${s.key === "burnExcludedCategories" ? '<p class="text-sm mb-4">Monthly or one-time payments count once in actual spending and the forecast, but do not increase your daily spending pace. Save configuration to apply.</p>' : ''}
                             <div class="flex-grow flex flex-wrap gap-2 mb-4">
                                 ${list
                                   .map(
                                     (item, idx) => `
                                     <div class="bg-${s.color}-500/10 text-${s.color}-400 border border-${s.color}-500/20 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
-                                        ${item} <button onclick="removeConfigItem('${s.key}', ${idx})" class="hover:text-white transition"><i class="fas fa-times"></i></button>
+                                        ${FinTracker.escape(item)} <button aria-label="Remove ${FinTracker.escape(item)}" onclick="removeConfigItem('${s.key}', ${idx})" class="hover:text-white transition"><i class="fas fa-times"></i></button>
                                     </div>
                                 `,
                                   )
