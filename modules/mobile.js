@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   function adapt() {
     scenarioDetails.open = !phone.matches;
-    explanation.open = !phone.matches;
+    // Keep the calculation details available without dominating the forecast card.
     if (phone.matches) {
       sheet.append(entry);
       syncEntry();

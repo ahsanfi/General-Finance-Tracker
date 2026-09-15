@@ -77,6 +77,11 @@ window.FinTracker = window.FinTracker || {};
                 body: JSON.stringify({ ...payload, action, credential }),
               });
               fetchError = null;
+              const redirected404 = response.status === 404 && /^https:\/\/script\.googleusercontent\.com\//.test(response.url || "");
+              if (read && attempt + 1 < attempts && (redirected404 || [429,500,502,503,504].includes(response.status))) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                continue;
+              }
               break; // Success, exit loop
             } catch (err) {
               fetchError = err;
@@ -87,7 +92,10 @@ window.FinTracker = window.FinTracker || {};
           if (fetchError) {
             throw new Error("Connection interrupted. Verify the result before retrying a save. Check the Apps Script deployment allows Anyone access.");
           }
-          if (!response.ok) throw new Error("The Apps Script API is unavailable. Check its deployment settings.");
+          if (!response.ok) {
+            const stage = /^https:\/\/script\.googleusercontent\.com\//.test(response.url || "") ? "Google's redirected response" : "The Apps Script endpoint";
+            throw new Error(`${stage} returned HTTP ${response.status}. ${read ? 'Could not load data. Try again shortly; if it persists, check the deployment.' : 'The save result is unknown. Check your transactions before trying again.'}`);
+          }
           try { result = await response.json(); }
           catch (_) { throw new Error("The API did not return JSON. Check the /exec URL and deploy the updated code.gs as Me, with Anyone access."); }
           FinTracker.api.lastTiming = { action, requestMs:Date.now()-requestStarted, server:result.timing || null };
