@@ -668,6 +668,15 @@
 .transaction-date { font-family: inherit; font-size: 13px; font-weight: 400; color: var(--text-muted); }
 #toast { width: max-content; max-width: min(440px, calc(100vw - 32px)); white-space: normal; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; padding: 14px 18px; }
 #toast i { flex-shrink: 0; }
+#toast[popover] {
+  margin: 0;
+  right: auto;
+  bottom: auto;
+  color: var(--text);
+  background: var(--surface-raised);
+  pointer-events: none;
+}
+#toast[popover]::backdrop { background: transparent; pointer-events: none; }
 #toast[data-kind="warning"] { border-color: var(--text-muted); }
 .spending-surface { container-type: inline-size; }
 #dashboard-charts-grid { align-items: start; }

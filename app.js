@@ -2098,8 +2098,14 @@ Do not wrap in markdown or code blocks.`;
       maximumFractionDigits: maxDigits,
     }).format(n);
   }
+  let toastTimeout, toastExitTimeout;
   function showToast(m, type) {
     const t = document.getElementById("toast");
+    clearTimeout(toastTimeout);
+    clearTimeout(toastExitTimeout);
+    t.setAttribute("role", "status");
+    t.setAttribute("aria-live", "polite");
+    t.setAttribute("aria-atomic", "true");
     t.className = `fixed top-5 left-1/2 transform -translate-x-1/2 glass text-white px-6 py-4 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] border z-[90] flex items-center gap-3 min-w-[250px] justify-center transition-all duration-300 translate-y-0 opacity-100 ${type === "error" ? "border-rose-500/30 bg-rose-950/80" : "border-emerald-500/30 bg-emerald-950/80"}`;
     const icon = document.createElement("i");
     icon.className = "fas " + (type === "error" ? "fa-circle-exclamation" : type === "warning" ? "fa-triangle-exclamation" : type === "info" ? "fa-circle-info" : "fa-check");
@@ -2108,9 +2114,24 @@ Do not wrap in markdown or code blocks.`;
     t.replaceChildren(icon,message);
     t.dataset.kind = type;
     t.classList.remove("hidden");
-    setTimeout(() => {
+    if (typeof t.showPopover === "function") {
+      // Native dialogs outrank every z-index. Reopen above the active dialog.
+      t.setAttribute("popover", "manual");
+      if (t.matches(":popover-open")) t.hidePopover();
+      t.showPopover();
+    } else {
+      const dialog = [...document.querySelectorAll("dialog[open]")].pop();
+      (dialog || document.body).append(t);
+      if (dialog) dialog.addEventListener("close", () => {
+        if (t.parentElement === dialog) document.body.append(t);
+      }, {once:true});
+    }
+    toastTimeout = setTimeout(() => {
       t.classList.add("translate-y-[-100px]", "opacity-0");
-      setTimeout(() => t.classList.add("hidden"), 300);
+      toastExitTimeout = setTimeout(() => {
+        if (typeof t.hidePopover === "function" && t.matches(":popover-open")) t.hidePopover();
+        t.classList.add("hidden");
+      }, 300);
     }, 3000);
   }
 
