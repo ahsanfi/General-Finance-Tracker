@@ -34,7 +34,7 @@ window.FinTracker = window.FinTracker || {};
       if (read && FinTracker.readBridge && window.location.origin === "https://ahsanfi.github.io") {
         const entry = { attempt: 1, stage: "html-read", outcome: "pending", durationMs: 0 };
         timing.attempts.push(entry);
-        store.patch({ connection: { action, message: "Loading your spreadsheet…" } });
+        store.patch({ connection: { action, message: "Fetching your data…" } });
         try {
           const result = await FinTracker.readBridge(url, {...payload, action, credential});
           entry.outcome = result?.status === "success" ? "success" : "api-error";
