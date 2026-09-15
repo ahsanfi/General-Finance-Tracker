@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   currentCash.innerHTML = '<dt>Current cash</dt><dd id="current-cash">Calculating</dd><small>Excludes investment accounts</small>';
   outlook.querySelector('.outlook-metrics').prepend(currentCash);
   const spendingForecast = node("div", "outlook-current-cash");
-  spendingForecast.innerHTML = '<dt>Forecasted monthly spending</dt><dd id="forecast-spending">Calculating</dd><small>Full month at your current daily pace</small>';
+  spendingForecast.innerHTML = '<dt>Forecasted monthly spending</dt><dd id="forecast-spending">Calculating</dd><small>Spent so far + remaining variable spending</small>';
   outlook.querySelector('#burn-rate').parentElement.after(spendingForecast);
   document.querySelector(".summary-layout").after(outlook);
   let frame;
@@ -66,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
       new Date(),
       $("scenario-reduction").value,
       $("scenario-incoming").value,
+      state.config.burnExcludedCategories || ["Insurance"],
     );
     $("outlook-month").textContent = new Intl.DateTimeFormat(undefined, {
       month: "long",
@@ -86,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : "Not enough history";
     $("reduction-label").textContent = $("scenario-reduction").value + "%";
     $("outlook-basis").textContent = model.hasHistory
-      ? `${model.entries} recorded expenses across ${model.elapsed} calendar days; ${model.remaining} days remain. Current cash less spending at this month's daily pace. Excludes investment accounts and future income. USD uses your current rate. Estimates depend on complete records.`
+      ? `${model.entries} recorded expenses across ${model.elapsed} calendar days; ${model.remaining} days remain. Daily burn rate excludes the categories selected in Settings. Their recorded expenses count once in the monthly forecast. Unpaid upcoming bills are not included. Transfers, opening balances and investment-account activity are excluded from spending forecasts. USD uses your current rate.`
       : "Record everyday expenses to estimate your spending pace. Transfers and investment-account activity are excluded. Future-dated entries are not counted.";
     $("workspace-status").textContent = state.busy
       ? "Updating your workspace…"
