@@ -42,6 +42,8 @@
       balance,
       spending,
       burn,
+      // Full calendar month: recorded spending plus the remaining days at today's pace.
+      forecastSpending: spending + burn * remaining,
       baseline,
       hasHistory,
       projected:

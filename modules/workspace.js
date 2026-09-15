@@ -52,6 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const currentCash = node("div", "outlook-current-cash");
   currentCash.innerHTML = '<dt>Current cash</dt><dd id="current-cash">Calculating</dd><small>Excludes investment accounts</small>';
   outlook.querySelector('.outlook-metrics').prepend(currentCash);
+  const spendingForecast = node("div", "outlook-current-cash");
+  spendingForecast.innerHTML = '<dt>Forecasted monthly spending</dt><dd id="forecast-spending">Calculating</dd><small>Full month at your current daily pace</small>';
+  outlook.querySelector('#burn-rate').parentElement.after(spendingForecast);
   document.querySelector(".summary-layout").after(outlook);
   let frame;
   function renderOutlook() {
@@ -72,6 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
     $("burn-rate").textContent = model.hasHistory
       ? money(model.burn)
       : "No spending yet";
+    $("forecast-spending").textContent = model.hasHistory
+      ? money(model.forecastSpending)
+      : "Needs spending history";
     $("projected-balance").textContent = model.hasHistory
       ? money(model.baseline)
       : "Needs spending history";
