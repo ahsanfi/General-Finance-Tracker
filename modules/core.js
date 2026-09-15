@@ -29,6 +29,24 @@ window.FinTracker = window.FinTracker || {};
     const started = Date.now();
     const maximumAttempts = read ? 2 : 1;
     try {
+      // This origin is also pinned by the backend. Its HTML route has succeeded
+      // where ContentService redirects timed out, so do not wait for that failure.
+      if (read && FinTracker.readBridge && window.location.origin === "https://ahsanfi.github.io") {
+        const entry = { attempt: 1, stage: "html-read", outcome: "pending", durationMs: 0 };
+        timing.attempts.push(entry);
+        store.patch({ connection: { action, message: "Loading your spreadsheet…" } });
+        try {
+          const result = await FinTracker.readBridge(url, {...payload, action, credential});
+          entry.outcome = result?.status === "success" ? "success" : "api-error";
+          timing.server = result?.timing || null;
+          return result;
+        } catch (error) {
+          entry.outcome = "failed";
+          throw error;
+        } finally {
+          entry.durationMs = Date.now() - started;
+        }
+      }
       for (let attempt = 1; attempt <= maximumAttempts; attempt++) {
         const controller = new AbortController();
         const entry = { attempt, durationMs: 0, status: null, stage: "connection", outcome: "pending" };
