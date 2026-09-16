@@ -1604,6 +1604,42 @@ Do not wrap in markdown or code blocks.`;
     }
   };
 
+  window.syncMakmurPrices = async function () {
+    const button = document.getElementById("btn-sync-makmur-prices");
+    if (button.disabled) return;
+    const label = button.innerHTML;
+    button.disabled = true;
+    button.textContent = "Refreshing prices.";
+    try {
+      const result = await FinTracker.api.request("syncMakmurPrices");
+      showToast([result.message, ...(result.warnings || [])].join(" "), result.warnings?.length || !result.updated ? "warning" : "success");
+      if (result.updated) await fetchData();
+    } catch (error) {
+      showToast(error.message || "Price refresh failed.", "error");
+    } finally {
+      button.innerHTML = label;
+      button.disabled = false;
+    }
+  };
+
+  window.syncBibitPrices = async function () {
+    const button = document.getElementById("btn-sync-bibit-prices");
+    if (button.disabled) return;
+    const label = button.innerHTML;
+    button.disabled = true;
+    button.textContent = "Refreshing prices.";
+    try {
+      const result = await FinTracker.api.request("syncBibitPrices");
+      showToast([result.message, ...(result.warnings || [])].join(" "), result.warnings?.length || !result.updated ? "warning" : "success");
+      if (result.updated) await fetchData();
+    } catch (error) {
+      showToast(error.message || "Price refresh failed.", "error");
+    } finally {
+      button.innerHTML = label;
+      button.disabled = false;
+    }
+  };
+
   window.syncTokocrypto = async function () {
     const button = document.getElementById("btn-sync-toko");
     if (button.disabled) return;
