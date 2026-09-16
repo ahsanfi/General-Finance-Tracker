@@ -1,8 +1,7 @@
-﻿/* Theme is applied before first paint. Follows OS until an explicit choice is saved. */
+﻿/* Theme is applied before first paint. Defaults to light until an explicit choice is saved. */
 window.FinTracker = window.FinTracker || {};
 (() => {
-  const key = "fintracker.theme",
-    media = matchMedia("(prefers-color-scheme: dark)");
+  const key = "fintracker.theme";
   let preference;
   try {
     preference = localStorage.getItem(key);
@@ -100,23 +99,15 @@ window.FinTracker = window.FinTracker || {};
   apply(
     ["dark", "light"].includes(preference)
       ? preference
-      : media.matches
-        ? "dark"
-        : "light",
+      : "light",
   );
-  media.addEventListener("change", () => {
-    if (!["dark", "light"].includes(preference))
-      apply(media.matches ? "dark" : "light");
-  });
   window.addEventListener("storage", (event) => {
     if (event.key === key) {
       preference = event.newValue;
       apply(
         ["dark", "light"].includes(preference)
           ? preference
-          : media.matches
-            ? "dark"
-            : "light",
+          : "light",
       );
     }
   });
