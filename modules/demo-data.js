@@ -23,6 +23,20 @@ for (const name of ['localStorage', 'sessionStorage']) {
     portfolio:[{id:'preview-asset',name:'BTC',platform:'Tokocrypto',currency:'IDR',invested:1500000,currentValue:1750000,balance:0.001}]
   };
   const config = {status:'success',exp:['Food','Housing','Bills','Transport','Software','Transfer'],inc:['Salary','Freelance','Initial Balance','Transfer'],walletsIDR:['Bank','Cash','Tokocrypto'],walletsUSD:['PayPal'],allowedEmails:['preview@example.invalid'],investmentAccounts:['Tokocrypto'],pin:null,tokoApiKey:'',tokoSecretKey:''};
+
+  data.portfolio = [{"id":"demo-asset-0","name":"Money Market Fund","platform":"Makmur","currency":"IDR","invested":8000000,"currentValue":8240000,"balance":6000},{"id":"demo-asset-1","name":"Balanced Fund","platform":"Makmur","currency":"IDR","invested":4500000,"currentValue":4350000,"balance":3000},{"id":"demo-asset-2","name":"Government Bond Fund","platform":"Bibit","currency":"IDR","invested":7000000,"currentValue":7280000,"balance":5000},{"id":"demo-asset-3","name":"SR025-T3","platform":"Bibit","currency":"IDR","invested":5000000,"currentValue":5000000,"balance":5},{"id":"demo-asset-4","name":"VTI","platform":"Pluang USD","currency":"USD","invested":1000,"currentValue":1120,"balance":4},{"id":"demo-asset-5","name":"SCHD","platform":"Pluang USD","currency":"USD","invested":750,"currentValue":790,"balance":25},{"id":"demo-asset-6","name":"AAPL","platform":"Pluang USD","currency":"USD","invested":650,"currentValue":615,"balance":3},{"id":"demo-asset-7","name":"BTC","platform":"Tokocrypto","currency":"IDR","invested":3000000,"currentValue":3420000,"balance":0.002},{"id":"demo-asset-8","name":"ETH","platform":"Tokocrypto","currency":"IDR","invested":2000000,"currentValue":1840000,"balance":0.04},{"id":"demo-asset-9","name":"PAXG","platform":"Tokocrypto","currency":"IDR","invested":1500000,"currentValue":1635000,"balance":0.03}];
+  config.investmentAccounts = ['Makmur', 'Bibit', 'Pluang USD', 'Tokocrypto'];
+  config.walletsIDR.push('Makmur', 'Bibit');
+  config.walletsUSD.push('Pluang USD');
+  // Fund each platform at cost so demo wallet balances and portfolio P&L agree.
+  data.income = data.income.filter(row => row[1] !== 'Investment funding');
+  data.expenses = data.expenses.filter(row => row[1] !== 'Investment funding');
+  for (const platform of config.investmentAccounts) {
+    const assets = data.portfolio.filter(asset => asset.platform === platform);
+    const currency = assets[0].currency;
+    const invested = assets.reduce((sum, asset) => sum + asset.invested, 0);
+    data.income.push([date(1), 'Opening investment balance', 'Initial Balance', platform, currency, invested]);
+  }
   let budgets = {[month]:{Food:1500000,Housing:3500000,Transport:600000}};
   // Opt-in historical sample for reviewing the wellness panel, never real account data.
   if (true) {
