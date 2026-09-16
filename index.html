@@ -644,7 +644,15 @@
                                 <input type="file" id="makmur-upload" accept="image/*" class="hidden">
                                 <button id="btn-sync-makmur"
                                     class="text-xs bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 px-3 py-2 rounded-xl font-bold transition border border-emerald-500/20 flex items-center gap-2">
-                                    <i class="fas fa-camera"></i> Sync Makmur
+                                    <i class="fas fa-camera"></i> Import Makmur (Img)
+                                </button>
+                                <button onclick="syncMakmurPrices()" id="btn-sync-makmur-prices"
+                                    class="text-xs bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 px-3 py-2 rounded-xl font-bold transition border border-emerald-500/20 flex items-center gap-2">
+                                    <i class="fas fa-sync-alt"></i> Refresh Makmur
+                                </button>
+                                <button onclick="syncBibitPrices()" id="btn-sync-bibit-prices"
+                                    class="text-xs bg-green-600/30 hover:bg-green-600/50 text-green-300 px-3 py-2 rounded-xl font-bold transition border border-green-500/20 flex items-center gap-2">
+                                    <i class="fas fa-sync-alt"></i> Refresh Bibit
                                 </button>
                                 <button onclick="syncTokocryptoPrices()" id="btn-sync-toko"
                                     class="text-xs bg-black/30 hover:bg-black/50 text-slate-300 px-3 py-2 rounded-xl font-bold transition border border-white/5 flex items-center gap-2">
