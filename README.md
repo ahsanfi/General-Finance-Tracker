@@ -38,6 +38,39 @@ See [GitHub Pages setup](GITHUB-PAGES-SETUP.md) for additional deployment instru
 
 ## Dashboard
 
+### Financial Wellness Score
+
+A custom 0–100 FinTracker indicator with a debt-free profile provided by the owner.
+The dashboard shows four components and an expandable explanation of every formula:
+
+| Component | Weight | Full-score reference |
+| --- | --- | --- |
+| Cash reserve | 35% | Available cash covers six months of average expenses. |
+| Savings rate | 30% | Income minus expenses is at least 20% of income. |
+| Cash-flow stability | 20% | Income covers expenses in every assessed month. |
+| Budget adherence | 15% | No configured category exceeds its monthly budget. |
+
+Uses up to three completed months, excluding an initial partial month of records.
+Transfers, initial balances and investment-account activity are excluded from
+income/spending metrics. Current cash includes initial balances and transfers,
+excludes investment accounts and future transactions, and uses the current USD rate.
+Monthly expenses such as insurance are included in average spending.
+
+Unassessed components, including missing budgets or missing income, are omitted
+and the remaining weights are rescaled. The UI shows assessment coverage, the
+period, and an early-estimate label for fewer than three months. Missing records
+can distort results; an empty month inside the history window counts as recorded
+zero activity. Budgets only assess configured categories, with their share of
+spending displayed. No extra API calls or new spreadsheet columns are needed.
+
+The targets and weights are app design choices, not a standardized financial
+well-being assessment or a credit score. The balance privacy toggle also hides
+the wellness values. The calculation details explain these limitations.
+
+For an isolated sample preview, run `node scripts/preview.cjs 8080` and open
+`http://localhost:8080/`. This preview contains labeled sample history; edits reset
+on reload and do not touch the spreadsheet. Preview scripts stay out of GitHub Pages.
+
 ### Account summaries
 
 - Summary cards for balance, income, and expenses.
