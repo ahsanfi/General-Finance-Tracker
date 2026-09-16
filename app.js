@@ -1585,6 +1585,25 @@ Do not wrap in markdown or code blocks.`;
     }
   };
 
+  window.syncTokocryptoPrices = async function () {
+    const button = document.getElementById("btn-sync-toko");
+    if (button.disabled) return;
+    const label = button.innerHTML;
+    button.disabled = true;
+    button.textContent = "Refreshing prices…";
+    try {
+      const result = await FinTracker.api.request("syncTokocryptoPrices");
+      document.getElementById("toko-sync-notice").classList.add("hidden");
+      showToast([result.message, ...(result.warnings || [])].join(" "), result.warnings?.length || !result.updated ? "warning" : "success");
+      if (result.updated) await fetchData();
+    } catch (error) {
+      showToast(error.message || "Price refresh failed. Check your holdings before retrying.", "error");
+    } finally {
+      button.innerHTML = label;
+      button.disabled = false;
+    }
+  };
+
   window.syncTokocrypto = async function () {
     const button = document.getElementById("btn-sync-toko");
     if (button.disabled) return;
@@ -2507,6 +2526,11 @@ Do not wrap in markdown or code blocks.`;
     const tokoSec = document.getElementById("config-toko-secret");
     if (tokoApi) tokoApi.value = SYSTEM_CONFIG.tokoApiKey || "";
     if (tokoSec) tokoSec.value = SYSTEM_CONFIG.tokoSecretKey || "";
+    document.getElementById("config-zapi-key").value = "";
+    document.getElementById("config-clear-zapi").checked = false;
+    document.getElementById("config-zapi-status").textContent = SYSTEM_CONFIG.zapiConfigured
+      ? "Zapi key saved. Leave blank to keep it, or enter a replacement."
+      : "Add your Zapi key for Pluang and Tokocrypto price refresh. Saved in Apps Script Properties.";
 
     // Restore provider tab state
     window.scanSelectProvider(scanProvider);
@@ -3065,7 +3089,7 @@ Do not wrap in markdown or code blocks.`;
         method: "POST",
         body: JSON.stringify({
           action: "updateSystemConfig",
-          config: SYSTEM_CONFIG,
+          config: {...SYSTEM_CONFIG, zapiKey: document.getElementById("config-zapi-key").value.trim(), clearZapiKey: document.getElementById("config-clear-zapi").checked},
         }),
       })
       .then((r) => r.json())

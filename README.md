@@ -162,14 +162,36 @@ Calculation details:
 
 | Platform | Available sync |
 | --- | --- |
-| Tokocrypto | Account balances through Apps Script, local browser-assisted sync, or the fully background Windows job. |
-| Pluang / Pluang USD | Refresh prices for recorded holdings using market tickers and unit balances. This does not import a Pluang account. |
+| Tokocrypto | Zapi price refresh on phone or desktop using saved quantities. Desktop local sync and the Windows background job still import account balances. |
+| Pluang / Pluang USD | Zapi price refresh for recorded US stock/ETF tickers and unit balances. This does not import a Pluang account. |
 | Makmur | Extract holdings from a screenshot using the selected AI provider. |
 | Bibit and Pintu | Manual tracking; no automatic account-sync integration is currently implemented. |
 
 Tokocrypto missing-price warnings preserve previous valuations. The local/background importer skips invalid balance rows and identifies them in the result; if every returned row is invalid, it stops without saving. Partial success can include warnings.
 
 Cloud Tokocrypto requests can encounter HTTP 451. Local execution uses the computer's connection, but is not guaranteed to avoid provider restrictions.
+
+**Zapi setup:** copy the updated root `code.gs` into the existing spreadsheet Apps
+Script project, deploy a new version of the same deployment, then add the Zapi API
+key in Settings > API Integrations and save. The key is stored as `ZAPI_KEY` in
+Script Properties. Only a configured/not-configured flag is returned to the app.
+Leave the key field blank to retain it; use the explicit removal checkbox to delete it.
+Never put the key in `config.js` or GitHub files.
+
+`Refresh Toko prices` uses the [Zapi Tokocrypto ticker](https://zpi.web.id/api/finance/tokocrypto)
+with IDR pairs. It does not discover trades, deposits, withdrawals, or balances.
+Unavailable pairs retain their saved value. `Sync Toko locally` remains available
+on desktop; its helper and scheduled background job are unchanged.
+`Refresh Pluang prices` resolves an exact US ticker with
+[Zapi Pluang search and US quotes](https://zpi.web.id/api/finance/pluang).
+Quotes may be delayed; unsupported or ambiguous symbols retain their values.
+
+Price refresh only changes current valuations; units and invested amounts stay
+unchanged. Partial failures are reported. Authentication/rate-limit failures save
+nothing, and concurrent portfolio changes reject the save. Successful price saves
+update Investment column B, but this does not mean quantities were synchronized.
+Each refresh supports up to 25 holdings to bound provider requests. Live verification
+requires your Zapi key; documented-response simulations cover the integration.
 
 ### Latest sync in Google Sheets
 
