@@ -876,3 +876,7 @@
   #expense-details .allocation-value small, #portfolio-chart-legend .allocation-value small { display: block; margin-left: 0; }
   #dashboard-charts-grid .trend-container { height: 220px; margin-inline: 16px; }
 }
+/* A phone cannot connect to the Windows helper on its own loopback address. */
+@media (max-width: 768px) {
+  #btn-sync-toko-local {display:none;}
+}

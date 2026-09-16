@@ -646,14 +646,14 @@
                                     class="text-xs bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 px-3 py-2 rounded-xl font-bold transition border border-emerald-500/20 flex items-center gap-2">
                                     <i class="fas fa-camera"></i> Sync Makmur
                                 </button>
-                                <button onclick="syncTokocrypto()" id="btn-sync-toko"
+                                <button onclick="syncTokocryptoPrices()" id="btn-sync-toko"
                                     class="text-xs bg-black/30 hover:bg-black/50 text-slate-300 px-3 py-2 rounded-xl font-bold transition border border-white/5 flex items-center gap-2">
-                                    <i class="fas fa-sync-alt"></i> Sync Toko
+                                    <i class="fas fa-sync-alt"></i> Refresh Toko prices
                                 </button>
                                 <button type="button" id="btn-sync-toko-local" class="secondary-button small">Sync Toko locally</button>
                                 <button onclick="syncPluang()" id="btn-sync-pluang"
                                     class="text-xs bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 px-3 py-2 rounded-xl font-bold transition border border-blue-500/20 flex items-center gap-2">
-                                    <i class="fas fa-sync-alt"></i> Sync Pluang
+                                    <i class="fas fa-sync-alt"></i> Refresh Pluang prices
                                 </button>
                                 <button onclick="openPortfolioModal()"
                                     class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl font-bold transition shadow-md flex items-center gap-2">
@@ -662,6 +662,7 @@
                             </div>
                         </div>
                         <div id="toko-sync-notice" class="toko-sync-notice hidden" role="status"></div>
+                        <p class="text-sm text-slate-400 mb-4">Price refresh uses saved quantities. Desktop local sync updates Tokocrypto account balances.</p>
                         <div id="portfolio-assets-list" class="space-y-3">
                             <!-- Populated by JS -->
                         </div>
@@ -775,6 +776,12 @@
                                     class="fas fa-coins mr-2 text-slate-500"></i> API Integrations</h3>
                                     
                             <div class="space-y-3">
+                                <div>
+                                    <label for="config-zapi-key" class="block text-sm font-bold mb-2">Zapi API key</label>
+                                    <input type="password" id="config-zapi-key" autocomplete="new-password" maxlength="500" placeholder="Enter Zapi API key" class="w-full input-glow rounded-xl px-4 py-2.5 text-sm">
+                                    <p id="config-zapi-status" class="text-xs text-slate-400 mt-2">Used for Pluang and Tokocrypto price refresh. Stored only in Apps Script Properties.</p>
+                                    <label class="flex items-center gap-2 mt-2 text-sm"><input type="checkbox" id="config-clear-zapi">Remove saved Zapi key</label>
+                                </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Tokocrypto API Key</label>
                                     <input type="password" id="config-toko-api" placeholder="Enter API Key..."
