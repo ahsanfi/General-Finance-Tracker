@@ -33,7 +33,7 @@
   let pairedToken=null;
   document.addEventListener('DOMContentLoaded',()=>{
     const button=document.getElementById('btn-sync-toko-local');
-    button.onclick=()=>openSyncDialog(pairedToken);
+    if(button)button.onclick=()=>openSyncDialog(pairedToken);
     function openSyncDialog(token){
       const dialog=document.createElement('dialog');dialog.className='workspace-dialog';dialog.setAttribute('aria-label','Local Tokocrypto sync');
       dialog.innerHTML='<div class="dialog-heading"><h2>Sync Toko locally</h2><button class="dialog-close" type="button">Close</button></div><form class="quick-form"><p>Double-click Start_Toko_Sync.bat on this computer and use the page it opens. Pairing and sync start automatically. The field below is only for manual terminal setup; it is not your API key.</p><label for="toko-local-token">Manual pairing token</label><input id="toko-local-token" type="password" autocomplete="off" required><p role="status" id="toko-local-status"></p><button class="primary-button" type="submit">Sync from this computer</button></form>';
