@@ -315,3 +315,7 @@ node tests/browser.cjs
 
 Google Sheets does not provide full database transaction guarantees. The backend uses locks, validation, conflict checks, and compensating writes where implemented. After an interrupted write, inspect the saved state before retrying.
 
+
+### Public demo
+
+Choose **Try demo ? no login needed** on the sign-in screen, or open `demo.html`. It uses synthetic data, permits sample edits in memory, and resets on reload. Live integrations are disabled. Choose **Exit demo** to return to the real app.
