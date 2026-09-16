@@ -60,7 +60,11 @@ window.FinTracker = window.FinTracker || {};
       message.setAttribute("role", "status");
       const button = document.createElement("div");
       button.className = "auth-google-button";
-      card.append(brand, title, message, button);
+      const demo = document.createElement("a");
+      demo.href = "demo.html";
+      demo.className = "secondary-button";
+      demo.textContent = "Try demo ? no login needed";
+      card.append(brand, title, message, button, demo);
       modal.append(card);
       try {
         await loadIdentity();
