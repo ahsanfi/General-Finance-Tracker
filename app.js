@@ -1565,8 +1565,48 @@ Do not wrap in markdown or code blocks.`;
       btn.disabled = false;
     }
   }
+  window.refreshInvestmentPrices = async function () {
+    const button = document.getElementById("btn-refresh-investments");
+    if (!button || button.disabled) return;
+    const status = document.getElementById("investment-refresh-status");
+    const label = button.innerHTML;
+    const results = [];
+    let updated = false;
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    status.hidden = false;
+    try {
+      // Each provider saves a portfolio snapshot; serialize requests to avoid conflicts.
+      const platforms = [
+        ["Makmur", "syncMakmurPrices"], ["Bibit", "syncBibitPrices"],
+        ["Pluang", "syncPluang"], ["Toko", "syncTokocryptoPrices"]
+      ];
+      for (const [name, action] of platforms) {
+        button.textContent = "Refreshing " + name + "?";
+        status.textContent = [...results, "Refreshing " + name + "?"].join(" ");
+        try {
+          const result = await FinTracker.api.request(action);
+          updated = updated || Boolean(result.updated);
+          results.push(name + ": " + (result.message || (result.updated ? "Prices refreshed." : "No prices updated.")));
+          if (result.warnings?.length) results.push(result.warnings.join(" "));
+        } catch (error) {
+          // Keep successful platform updates and report failures without retrying writes.
+          results.push(name + ": " + (error.message || "Refresh failed."));
+        }
+      }
+      if (updated) await fetchData();
+    } catch (error) {
+      results.push("Could not reload the portfolio: " + error.message);
+    } finally {
+      status.textContent = results.join(" ");
+      button.innerHTML = label;
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+    }
+  };
+
   window.syncPluang = async function () {
-    const btn = document.getElementById("btn-sync-pluang");
+    const btn = (document.getElementById("btn-sync-pluang") || document.getElementById("btn-refresh-investments"));
     if (!btn) return;
     const origHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
@@ -1586,7 +1626,7 @@ Do not wrap in markdown or code blocks.`;
   };
 
   window.syncTokocryptoPrices = async function () {
-    const button = document.getElementById("btn-sync-toko");
+    const button = (document.getElementById("btn-sync-toko") || document.getElementById("btn-refresh-investments"));
     if (button.disabled) return;
     const label = button.innerHTML;
     button.disabled = true;
@@ -1605,7 +1645,7 @@ Do not wrap in markdown or code blocks.`;
   };
 
   window.syncMakmurPrices = async function () {
-    const button = document.getElementById("btn-sync-makmur-prices");
+    const button = (document.getElementById("btn-sync-makmur-prices") || document.getElementById("btn-refresh-investments"));
     if (button.disabled) return;
     const label = button.innerHTML;
     button.disabled = true;
@@ -1623,7 +1663,7 @@ Do not wrap in markdown or code blocks.`;
   };
 
   window.syncBibitPrices = async function () {
-    const button = document.getElementById("btn-sync-bibit-prices");
+    const button = (document.getElementById("btn-sync-bibit-prices") || document.getElementById("btn-refresh-investments"));
     if (button.disabled) return;
     const label = button.innerHTML;
     button.disabled = true;
@@ -1641,7 +1681,7 @@ Do not wrap in markdown or code blocks.`;
   };
 
   window.syncTokocrypto = async function () {
-    const button = document.getElementById("btn-sync-toko");
+    const button = (document.getElementById("btn-sync-toko") || document.getElementById("btn-refresh-investments"));
     if (button.disabled) return;
     const original = button.innerHTML;
     button.disabled = true;
