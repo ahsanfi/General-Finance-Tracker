@@ -687,6 +687,7 @@ document.addEventListener("DOMContentLoaded", () => {
       FinTracker.store.patch({
         transactions: masterData,
         portfolio: window.portfolioData,
+        ledgerLoaded: true,
       });
       window.exchangeRate = exchangeRate;
 
@@ -3115,6 +3116,7 @@ Do not wrap in markdown or code blocks.`;
           Object.assign(normalized[normKey], cats);
         });
         allBudgets = normalized;
+        FinTracker.store.patch({budgets: structuredClone(allBudgets)});
         budgetLoaded = true;
         console.log("[Budget] Loaded (normalized):", allBudgets);
       } else {
@@ -3156,6 +3158,7 @@ Do not wrap in markdown or code blocks.`;
       });
       const result = await res.json();
       if (result.status !== "success") throw new Error(result.message);
+      FinTracker.store.patch({budgets: structuredClone(allBudgets)});
     } catch (e) {
       showToast("Failed to save budget: " + e.message, "error");
     }

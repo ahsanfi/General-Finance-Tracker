@@ -1,0 +1,23 @@
+.wellness-panel {margin:24px 0; padding:28px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:20px;}
+.wellness-header {display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin-bottom:24px;}
+.wellness-header h3 {font-size:20px; font-weight:600; margin:0 0 8px;}
+.wellness-panel p {font-size:14px; color:var(--text-muted); line-height:1.6; margin:4px 0;}
+.wellness-total {text-align:right; flex-shrink:0;}
+.wellness-total strong {font-size:44px; font-weight:700; line-height:1.1; color:var(--accent); font-variant-numeric:tabular-nums;}
+.wellness-components {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 32px;}
+.wellness-component {min-width:0;}
+.wellness-component-heading {display:flex; align-items:baseline; justify-content:space-between; gap:12px;}
+.wellness-component h4 {font-size:15px; font-weight:600; margin:0;}
+.wellness-component-heading span {font-size:13px; white-space:nowrap; color:var(--text-muted);}
+.wellness-bar {height:5px; background:var(--surface-raised); margin-top:12px; border-radius:3px; overflow:hidden;}
+.wellness-bar span {display:block; height:100%; background:var(--accent);}
+.wellness-method {border-top:1px solid var(--border); margin-top:24px; padding-top:12px;}
+.wellness-method summary {cursor:pointer; padding:12px 0; color:var(--accent); font-size:14px;}
+.wellness-method ul {padding-left:20px; list-style:disc; font-size:14px; line-height:1.6; color:var(--text-muted);}
+.wellness-method summary:focus-visible {outline:2px solid var(--accent); outline-offset:4px;}
+@media(max-width:600px) {
+  .wellness-panel {padding:20px; margin:16px 0;}
+  .wellness-header {flex-direction:column; gap:12px;}
+  .wellness-total {text-align:left;}
+  .wellness-components {grid-template-columns:minmax(0,1fr); gap:22px;}
+}
