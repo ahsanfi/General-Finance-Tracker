@@ -1565,7 +1565,7 @@ Do not wrap in markdown or code blocks.`;
       btn.disabled = false;
     }
   }
-  window.refreshPluang = async function () {
+  window.syncPluang = async function () {
     const btn = document.getElementById("btn-sync-pluang");
     if (!btn) return;
     const origHtml = btn.innerHTML;
@@ -1573,7 +1573,7 @@ Do not wrap in markdown or code blocks.`;
     btn.disabled = true;
 
     try {
-      const result = await FinTracker.api.request("refreshPluang");
+      const result = await FinTracker.api.request("syncPluang");
       showToast([result.message, ...(result.warnings || [])].join(" "), result.warnings?.length ? "warning" : "success");
       if (result.updated) await fetchData();
     } catch (error) {
@@ -1585,14 +1585,14 @@ Do not wrap in markdown or code blocks.`;
     }
   };
 
-  window.refreshTokocryptoPrices = async function () {
+  window.syncTokocryptoPrices = async function () {
     const button = document.getElementById("btn-sync-toko");
     if (button.disabled) return;
     const label = button.innerHTML;
     button.disabled = true;
     button.textContent = "Refreshing prices…";
     try {
-      const result = await FinTracker.api.request("refreshTokocryptoPrices");
+      const result = await FinTracker.api.request("syncTokocryptoPrices");
       document.getElementById("toko-sync-notice").classList.add("hidden");
       showToast([result.message, ...(result.warnings || [])].join(" "), result.warnings?.length || !result.updated ? "warning" : "success");
       if (result.updated) await fetchData();
