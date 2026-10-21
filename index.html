@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob:; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://script.google.com https://*.googleusercontent.com https://accounts.google.com https://api.groq.com https://generativelanguage.googleapis.com http://127.0.0.1:8787; frame-src https://script.google.com https://*.googleusercontent.com https://accounts.google.com; form-action 'self' https://script.google.com; worker-src 'self'; object-src 'none'; base-uri 'self'">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -736,7 +737,7 @@
                                 <input type="password" id="groq-api-key" placeholder="gsk_..."
                                     class="w-full input-glow bg-black/40 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 font-mono">
                                 <p class="text-[10px] text-slate-500 mt-2">Vision: <strong class="text-slate-300">Qwen 3.6, with Qwen 3.8 fallback</strong>. Manage your key at <a href="https://console.groq.com/keys"
-                                        target="_blank" class="text-violet-400 underline">console.groq.com</a></p>
+                                        target="_blank" rel="noopener" class="text-violet-400 underline">console.groq.com</a></p>
                             </div>
 
                             <!-- Google AI Studio section -->
@@ -760,7 +761,7 @@
                                     </select>
                                 </div>
                                 <p class="text-[10px] text-slate-500 mt-2">Uses your Google AI Studio key &bull; <a
-                                        href="https://aistudio.google.com/apikey" target="_blank"
+                                        href="https://aistudio.google.com/apikey" target="_blank" rel="noopener"
                                         class="text-cyan-400 underline">aistudio.google.com/apikey</a></p>
                             </div>
 
@@ -1156,7 +1157,7 @@
                         style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3)"><i
                             class="fas fa-bolt"></i></div>
                     <h3 class="text-white font-bold text-sm mb-1">Groq API Key</h3>
-                    <p class="text-slate-500 text-xs">Free at <a href="https://console.groq.com/keys" target="_blank"
+                    <p class="text-slate-500 text-xs">Free at <a href="https://console.groq.com/keys" target="_blank" rel="noopener"
                             class="text-violet-400 hover:underline">console.groq.com/keys</a></p>
                 </div>
                 <input id="ai-key-groq" type="password" placeholder="gsk_..."
@@ -1174,7 +1175,7 @@
                             class="fas fa-star"></i></div>
                     <h3 class="text-white font-bold text-sm mb-1">Google AI Studio API Key</h3>
                     <p class="text-slate-500 text-xs">Get key at <a href="https://aistudio.google.com/apikey"
-                            target="_blank" class="text-cyan-400 hover:underline">aistudio.google.com/apikey</a></p>
+                            target="_blank" rel="noopener" class="text-cyan-400 hover:underline">aistudio.google.com/apikey</a></p>
                 </div>
                 <input id="ai-key-gemini" type="password" placeholder="Google AI Studio API key"
                     class="w-full rounded-xl px-4 py-3 text-sm text-slate-200 border border-cyan-500/30 focus:border-cyan-500/60 focus:outline-none"

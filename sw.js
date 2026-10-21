@@ -1,11 +1,15 @@
 /* Only the generic offline screen is cached. Account data and API calls never are. */
-const CACHE = 'fintracker-offline-v1';
+const CACHE = 'fintracker-offline-v2';
 const offlineURL = new URL('offline.html', self.registration.scope).href;
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.add(new Request(offlineURL, {cache:'reload'}))));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
 });
 self.addEventListener('fetch', event => {
   const request = event.request;
