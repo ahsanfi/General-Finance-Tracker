@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob:; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://script.google.com https://*.googleusercontent.com https://accounts.google.com https://api.groq.com https://generativelanguage.googleapis.com http://127.0.0.1:8787; frame-src https://script.google.com https://*.googleusercontent.com https://accounts.google.com; form-action 'self' https://script.google.com; worker-src 'self'; object-src 'none'; base-uri 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob:; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://script.google.com https://*.googleusercontent.com https://accounts.google.com https://api.groq.com https://generativelanguage.googleapis.com http://127.0.0.1:8787; frame-src https://script.google.com https://*.googleusercontent.com https://accounts.google.com; form-action 'self' https://script.google.com; worker-src 'self'; object-src 'none'; base-uri 'self'">
 <script src="modules/demo-data.js?v=20260916-assets"></script>
     <meta charset="UTF-8">
     <link rel="manifest" href="manifest.webmanifest">
@@ -18,30 +18,7 @@
         content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>FinTracker Demo</title>
     <script src="modules/theme.js?v=20260916-light"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        theme: {
-                            bg: '#050B14',
-                            card: '#0B1325',
-                            border: '#1E293B',
-                            primary: '#4F46E5', /* Indigo 600 */
-                            primaryHover: '#4338CA', /* Indigo 700 */
-                            primaryLight: '#818CF8', /* Indigo 400 */
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['system-ui', 'sans-serif'],
-                        mono: ['ui-monospace', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="tailwind.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
     
