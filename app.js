@@ -265,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currency === "USD" ? SYSTEM_CONFIG.walletsUSD : SYSTEM_CONFIG.walletsIDR;
     const safeList = list && list.length > 0 ? list : ["General"];
     sel.innerHTML = safeList
-      .map((w) => `<option value="${w}">${w}</option>`)
+      .map((w) => `<option value="${FinTracker.escape(w)}">${FinTracker.escape(w)}</option>`)
       .join("");
   }
 
@@ -789,9 +789,9 @@ document.addEventListener("DOMContentLoaded", () => {
           (d) => `
                 <tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0 group">
                     <td class="px-6 py-4 text-sm text-slate-400 whitespace-nowrap font-mono">${d.date}</td>
-                    <td class="px-6 py-4 text-sm text-slate-200 font-medium">${d.desc}</td>
-                    <td class="px-6 py-4 text-sm"><span class="bg-theme-primary/10 text-theme-primaryLight border border-theme-primary/20 px-2.5 py-1 rounded-lg text-xs font-medium">${d.acc}</span></td>
-                    <td class="px-6 py-4 text-sm text-slate-400"><span class="bg-black/30 border border-white/5 px-2.5 py-1 rounded-lg text-xs">${d.cat}</span></td>
+                    <td class="px-6 py-4 text-sm text-slate-200 font-medium">${FinTracker.escape(d.desc)}</td>
+                    <td class="px-6 py-4 text-sm"><span class="bg-theme-primary/10 text-theme-primaryLight border border-theme-primary/20 px-2.5 py-1 rounded-lg text-xs font-medium">${FinTracker.escape(d.acc)}</span></td>
+                    <td class="px-6 py-4 text-sm text-slate-400"><span class="bg-black/30 border border-white/5 px-2.5 py-1 rounded-lg text-xs">${FinTracker.escape(d.cat)}</span></td>
                     <td class="px-6 py-4 text-sm text-right font-mono font-bold ${d.type === "income" ? "text-emerald-400" : "text-rose-400"}">${d.type === "income" ? "+" : "-"} ${fmt(d.amt, d.curr)}</td>
                     <td class="px-4 py-4 text-center">
                         <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition">
@@ -892,7 +892,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div class="flex items-center gap-3">
                                     <div class="w-2.5 h-2.5 rounded-full ${isWarning ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" : "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]"}"></div>
                                     <div>
-                                        <div class="font-bold text-slate-200 text-sm sm:text-base">${b.n}</div>
+                                        <div class="font-bold text-slate-200 text-sm sm:text-base">${FinTracker.escape(b.n)}</div>
                                         ${syncHtml}
                                         ${warningHtml}
                                     </div>
@@ -949,11 +949,11 @@ document.addEventListener("DOMContentLoaded", () => {
           const sign = isProfit ? "+" : "";
 
           return `
-                        <div class="p-4 bg-black/20 rounded-2xl border border-white/5 hover:bg-black/40 transition relative group cursor-pointer" onclick="openPortfolioModal('${a.id}')">
+                        <div class="p-4 bg-black/20 rounded-2xl border border-white/5 hover:bg-black/40 transition relative group cursor-pointer" data-asset-id="${FinTracker.escape(a.id)}" onclick="openPortfolioModal(this.dataset.assetId)">
                             <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <div class="font-bold text-white text-base">${a.name}</div>
-                                    <div class="text-[10px] uppercase font-bold tracking-wider text-slate-500">${a.platform}</div>
+                                    <div class="font-bold text-white text-base">${FinTracker.escape(a.name)}</div>
+                                    <div class="text-[10px] uppercase font-bold tracking-wider text-slate-500">${FinTracker.escape(a.platform)}</div>
                                 </div>
                                 <div class="text-right">
                                     <div class="font-bold font-mono ${colorClass} text-sm">${sign}${fmt(pnl, "IDR")}</div>
@@ -1765,7 +1765,7 @@ Do not wrap in markdown or code blocks.`;
     document.getElementById("cal-detail-content").innerHTML = items
       .map(
         (x) =>
-          `<div class="flex justify-between items-center p-4 bg-black/30 rounded-2xl border border-white/5 mb-2 hover:bg-black/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(225,29,72,0.8)]"></div><div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">${x.cat} • ${x.acc}</div></div></div><div class="text-rose-400 font-mono text-sm font-bold bg-white/5 px-2 py-1 rounded-lg">${fmt(x.amt, x.curr)}</div></div>`,
+          `<div class="flex justify-between items-center p-4 bg-black/30 rounded-2xl border border-white/5 mb-2 hover:bg-black/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(225,29,72,0.8)]"></div><div><div class="text-sm text-white font-bold">${FinTracker.escape(x.desc)}</div><div class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">${FinTracker.escape(x.cat)} • ${FinTracker.escape(x.acc)}</div></div></div><div class="text-rose-400 font-mono text-sm font-bold bg-white/5 px-2 py-1 rounded-lg">${fmt(x.amt, x.curr)}</div></div>`,
       )
       .join("");
     document.getElementById("calendar-detail-modal").classList.remove("hidden");
@@ -1839,7 +1839,7 @@ Do not wrap in markdown or code blocks.`;
     document.getElementById("cal-detail-content").innerHTML = items
       .map(
         (x) =>
-          `<div class="flex justify-between items-center p-4 bg-black/30 rounded-2xl border border-white/5 mb-2 hover:bg-black/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(225,29,72,0.8)]"></div><div><div class="text-sm text-white font-bold">${x.desc}</div><div class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">${x.date} • ${x.acc}</div></div></div><div class="text-rose-400 font-mono text-sm font-bold bg-white/5 px-2 py-1 rounded-lg">${fmt(x.amt, x.curr)}</div></div>`,
+          `<div class="flex justify-between items-center p-4 bg-black/30 rounded-2xl border border-white/5 mb-2 hover:bg-black/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(225,29,72,0.8)]"></div><div><div class="text-sm text-white font-bold">${FinTracker.escape(x.desc)}</div><div class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">${FinTracker.escape(x.date)} • ${FinTracker.escape(x.acc)}</div></div></div><div class="text-rose-400 font-mono text-sm font-bold bg-white/5 px-2 py-1 rounded-lg">${fmt(x.amt, x.curr)}</div></div>`,
       )
       .join("");
     document.getElementById("calendar-detail-modal").classList.remove("hidden");
@@ -2365,8 +2365,8 @@ Do not wrap in markdown or code blocks.`;
             (d) => `
                     <div class="share-row">
                         <div class="share-row-main">
-                            <div class="share-row-title">${d.desc}</div>
-                            <div class="share-row-sub">${d.date} • ${d.cat}</div>
+                            <div class="share-row-title">${FinTracker.escape(d.desc)}</div>
+                            <div class="share-row-sub">${FinTracker.escape(d.date)} • ${FinTracker.escape(d.cat)}</div>
                         </div>
                         <div class="share-row-amt ${d.type === "income" ? "share-green" : "share-red"}">${d.type === "income" ? "+" : "-"} ${money(d.amt, d.curr, isMobile)}</div>
                     </div>
@@ -2397,7 +2397,7 @@ Do not wrap in markdown or code blocks.`;
             ([cat, val]) => `
                     <div class="share-row">
                         <div class="share-row-main">
-                            <div class="share-row-title">${cat}</div>
+                            <div class="share-row-title">${FinTracker.escape(cat)}</div>
                             <div class="share-row-sub">This month</div>
                         </div>
                         <div class="share-row-amt">${money(val, "IDR", isMobile)}</div>
@@ -3048,7 +3048,7 @@ Do not wrap in markdown or code blocks.`;
         ];
         const availableWallets = allWallets.filter((w) => !list.includes(w));
         const options = availableWallets
-          .map((w) => `<option value="${w}">${w}</option>`)
+          .map((w) => `<option value="${FinTracker.escape(w)}">${FinTracker.escape(w)}</option>`)
           .join("");
         inputHtml = `
                             <select id="config-new-${s.key}" class="flex-grow input-glow bg-black/40 rounded-xl px-3 py-2 text-xs text-slate-100 appearance-none">
@@ -3374,11 +3374,11 @@ Do not wrap in markdown or code blocks.`;
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     ${isOver ? '<i class="fas fa-exclamation-circle text-rose-400 text-xs"></i>' : isWarning ? '<i class="fas fa-exclamation-triangle text-amber-400 text-xs"></i>' : '<i class="fas fa-check-circle text-emerald-500/60 text-xs"></i>'}
-                                    <span class="text-sm font-bold text-slate-200">${cat}</span>
+                                    <span class="text-sm font-bold text-slate-200">${FinTracker.escape(cat)}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs ${statusClass} font-mono font-bold">${statusText}</span>
-                                    <button class="budget-delete-btn opacity-0 group-hover:opacity-100 transition text-slate-600 hover:text-rose-400 text-xs" data-cat="${cat}">
+                                    <button class="budget-delete-btn opacity-0 group-hover:opacity-100 transition text-slate-600 hover:text-rose-400 text-xs" data-cat="${FinTracker.escape(cat)}">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
@@ -3421,10 +3421,10 @@ Do not wrap in markdown or code blocks.`;
         .map(
           ([cat, val]) => `
                         <div class="flex items-center justify-between py-2.5 px-3 bg-black/20 rounded-xl border border-white/5 hover:border-white/10 transition">
-                            <span class="text-sm text-slate-300 font-medium">${cat}</span>
+                            <span class="text-sm text-slate-300 font-medium">${FinTracker.escape(cat)}</span>
                             <div class="flex items-center gap-2">
                                 <span class="font-mono text-sm font-bold text-amber-400">${fmt(val, "IDR")}</span>
-                                <button class="budget-quick-add text-[10px] bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/30 font-bold transition" data-cat="${cat}" data-amt="${Math.round(val)}">
+                                <button class="budget-quick-add text-[10px] bg-theme-primary/20 hover:bg-theme-primary/30 text-theme-primaryLight px-2 py-1 rounded-md border border-theme-primary/30 font-bold transition" data-cat="${FinTracker.escape(cat)}" data-amt="${Math.round(val)}">
                                     + Budget
                                 </button>
                             </div>
